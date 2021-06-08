@@ -15,7 +15,8 @@
 
 .imglist {
   overflow: auto;
-  padding-top: 50px;
+  box-sizing: border-box;
+  padding: 50px 0;
   width: 80%;
   height: 100%;
   margin-left: auto;

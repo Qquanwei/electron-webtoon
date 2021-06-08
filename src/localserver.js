@@ -28,11 +28,25 @@ async function getComicList(ctx, next) {
   await next();
 }
 
+function flatten(tree) {
+  let list = [];
+  for (let t of tree) {
+    if (!t.name) {
+      list.push(t);
+    } else {
+      list = list.concat(flatten(t.list));
+    }
+  }
+  return list;
+}
+
 // 生成一个新的漫画书，包括id, 预览图
 async function buildNewCommic(pathstr) {
   const ps = pathstr.split(path.sep);
+  const list = flatten(await buildComicImgList(pathstr));
   return {
     path: pathstr,
+    cover: list[1] || list[0],
     name: ps[ps.length - 1],
     id: uuidv4(),
   };
@@ -78,6 +92,43 @@ async function addComicToLibrary(ctx, next) {
     const oldLibrary = config?.library || [];
     const newComicItem = await buildNewCommic(ctx.request.body.path);
     const newLibrary = oldLibrary.concat(newComicItem);
+    await fsPromisese.writeFile(
+      configFileFullPath,
+      JSON.stringify({
+        ...config,
+        library: newLibrary,
+      })
+    );
+    console.log('写入配置 ', configFileFullPath);
+    ctx.status = 200;
+    ctx.body = {
+      success: true,
+    };
+  } catch (e) {
+    console.error(e);
+  }
+
+  await next();
+}
+
+async function removeComic(ctx, next) {
+  // 如果配置文件不存在，则创建一个新的
+  if (!fs.existsSync(configFileFullPath)) {
+    await fsPromisese.writeFile(
+      configFileFullPath,
+      JSON.stringify({
+        library: [],
+      })
+    );
+  }
+
+  try {
+    const { id } = ctx.params;
+    const config = JSON.parse(await fsPromisese.readFile(configFileFullPath));
+    const oldLibrary = config?.library || [];
+    const newLibrary = oldLibrary.filter(item => {
+      return item.id !== id;
+    });
     await fsPromisese.writeFile(
       configFileFullPath,
       JSON.stringify({
@@ -187,6 +238,7 @@ export default async function hostServer() {
   const app = new Koa();
   const router = new Router();
   router
+    .delete('/comic/:id', removeComic)
     .get('/imgproxy/:filename', responseImg)
     .get('/comic/:id/imglist', getComicImgList)
     .get('/comic/:id', getComic)

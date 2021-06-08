@@ -37,3 +37,9 @@ export function addComicToLibrary(path) {
 export function fetchImgList(id) {
   return fetch(`/comic/${id}/imglist`);
 }
+
+export function removeComic(id) {
+  return fetch(`/comic/${id}`, {
+    method: 'DELETE',
+  });
+}
