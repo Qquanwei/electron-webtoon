@@ -1,0 +1,39 @@
+.gridlist {
+  height: 100%;
+  width: 100%;
+}
+
+.flexcenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.full {
+  height: 100%;
+  height: 100%;
+}
+
+.plusicon {
+  width: 50px;
+  height: 50px;
+}
+
+.card {
+}
+
+.addcard {
+  box-sizing: border-box;
+  opacity: 0.8;
+  border: 1px solid #333;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.addcard:hover {
+  opacity: 1;
+}
+
+.support {
+  color: #666;
+}

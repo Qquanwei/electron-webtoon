@@ -15,6 +15,8 @@ import { app, BrowserWindow, shell } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
+import initIpc from './ipcMain';
+import hostServer from './localserver';
 
 export default class AppUpdater {
   constructor() {
@@ -109,6 +111,10 @@ const createWindow = async () => {
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
+  // 初始化本地Server
+  const server = await hostServer();
+  // 初始化IPC
+  initIpc(app, mainWindow, server);
 };
 
 /**
@@ -128,5 +134,7 @@ app.whenReady().then(createWindow).catch(console.log);
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) createWindow();
+  if (mainWindow === null) {
+    createWindow();
+  }
 });
