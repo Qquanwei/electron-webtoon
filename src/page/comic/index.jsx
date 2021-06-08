@@ -22,6 +22,39 @@ function Header({ comic }) {
   );
 }
 
+function sortImgList(imgList) {
+  const list = [...imgList];
+
+  function tonum(name) {
+    const num = Number(name.replace(/[^\d-]/g, '')) || Infinity;
+    return num;
+  }
+
+  list.sort((a, b) => {
+    if (a.name) {
+      a.list = sortImgList(a.list || []);
+    }
+    if (b.name) {
+      b.list = sortImgList(b.list || []);
+    }
+
+    if (a.name && b.name) {
+      return tonum(a.name) - tonum(b.name);
+    }
+
+    if (!a.name && !b.name) {
+      return tonum(a) - tonum(b);
+    }
+    if (a.name) {
+      return 1;
+    }
+
+    return -1;
+  });
+
+  return list;
+}
+
 function ImgList({ comic }) {
   const [loading, setLoading] = useState(false);
   const [imgList, setImgList] = useState([]);
@@ -31,7 +64,7 @@ function ImgList({ comic }) {
     if (comic) {
       // 获取到树状列表之后，前端排序
       const imgList = await api.fetchImgList(comic.id);
-      setImgList(imgList);
+      setImgList(sortImgList(imgList));
       const picName = window.localStorage.getItem(comic.id);
       const element = document.getElementById(picName);
       if (element) {

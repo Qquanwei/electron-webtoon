@@ -42,6 +42,7 @@ function IndexPage() {
     const element = showMenu;
     const { id } = element.dataset;
     await api.removeComic(id);
+    window.localStorage.setItem(id, '');
     setShowMenu(null);
     setComicList(await api.fetchComicList());
   }, [showMenu]);
