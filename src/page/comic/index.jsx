@@ -26,7 +26,7 @@ function sortImgList(imgList) {
   const list = [...imgList];
 
   function tonum(name) {
-    const num = Number(name.replace(/[^\d-]/g, '')) || Infinity;
+    const num = Number(name.replace(/[^\d]/g, '')) || Infinity;
     return num;
   }
 
