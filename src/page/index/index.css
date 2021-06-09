@@ -37,3 +37,28 @@
 .support {
   color: #666;
 }
+
+.search {
+  position: relative;
+  border-radius: 10px;
+  margin-left: 20px;
+}
+
+.searchicon {
+  box-sizing: border-box;
+  position: absolute;
+  pointer-events: none;
+  padding: 0 2px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.searchinput {
+  padding-left: 30px;
+}
+
+.container {
+  padding-top: 50px;
+}

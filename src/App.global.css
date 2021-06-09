@@ -4,13 +4,15 @@
  */
 body {
   position: relative;
-  color: white;
+  color: #000;
   height: 100vh;
   font-family: sans-serif;
   overflow-y: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
+  margin: 0;
+  background: #f5f5f5;
 }
 
 #root {

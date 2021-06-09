@@ -1,4 +1,5 @@
-.fullpage {
+.container {
+  padding-top: 50px;
   width: 100%;
   height: 100%;
 }
@@ -21,12 +22,16 @@
   height: 100%;
   margin-left: auto;
   font-size: 0;
+  background: #fff;
 }
 
 .imglist::-webkit-scrollbar {
-  display: none;
 }
 
 .imglist img {
   max-width: 100%;
+}
+
+.chapter {
+  float: left;
 }

@@ -55,55 +55,8 @@ function sortImgList(imgList) {
   return list;
 }
 
-function ImgList({ comic }) {
-  const [loading, setLoading] = useState(false);
-  const [imgList, setImgList] = useState([]);
-  const containerRef = useRef(null);
 
-  useEffect(async () => {
-    if (comic) {
-      // 获取到树状列表之后，前端排序
-      const imgList = await api.fetchImgList(comic.id);
-      setImgList(sortImgList(imgList));
-      const picName = window.localStorage.getItem(comic.id);
-      const element = document.getElementById(picName);
-      if (element) {
-        // 跳转到该位置
-        element.scrollIntoView();
-      }
-    }
-  }, [comic]);
-
-  useEffect(() => {
-    const options = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 1.0
-    };
-
-    const observer = new IntersectionObserver((e) => {
-      e.forEach((entry) => {
-        if (entry.intersectionRatio === 1) {
-          // 这张图片完全进入可视区域
-          const { target } = entry;
-          // 上次看到的位置
-          const { id, pic } = target.dataset;
-          window.localStorage.setItem(id, pic);
-        }
-      });
-    }, options);
-
-
-    const imgs = containerRef.current.getElementsByTagName('img');
-    imgs.forEach(img => {
-      observer.observe(img);
-    });
-
-    return () => {
-      observer.disconnect();
-    }
-  }, [imgList]);
-
+function ImgList({ imgList }) {
   function renderList(list) {
     return list.map((item, index) => {
       if (item.name) {
@@ -115,16 +68,89 @@ function ImgList({ comic }) {
         );
       }
 
-      return <img key={index} id={item} data-id={comic?.id} data-pic={item} src={item} />;
+      return <img key={index} src={item} />;
     });
   }
 
-  return <div className={styles.imglist} ref={containerRef}>{renderList(imgList)}</div>;
+  return <div className={styles.imglist}>{renderList(imgList)}</div>;
 }
+
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import Divider from '@material-ui/core/Divider';
+import ImportContactsIcon from '@material-ui/icons/ImportContacts';
+
+function ChapterList({ imgList, value, onChange }) {
+  const onClick = useCallback((chapter) => {
+    if (onChange) {
+      console.log('onChange', chapter);
+      onChange(chapter);
+    }
+  }, [onChange]);
+
+  let deep = 0;
+  function renderList(list) {
+    deep += 1;
+
+    if (list === null) {
+      return null;
+    }
+
+    return list.map((item, index) => {
+      if (item.name) {
+        return (
+          <ListItem key={index}>
+            <ListItemIcon>
+              <ImportContactsIcon />
+            </ListItemIcon>
+            <ListItemText>
+              <div onClick={() => onClick(item)}>{ item.name }</div>
+            </ListItemText>
+            <Divider />
+            {
+              (item.list.length && deep < 2) ? (
+                <List>
+                  {renderList(item.list)}
+                </List>
+              ) : null
+            }
+          </ListItem>
+        );
+      }
+    });
+  }
+
+  return (
+    <div className={styles.chapter}>
+      <List>
+        { renderList(imgList) }
+      </List>
+    </div>
+  )
+}
+
+import {
+  GridList,
+  GridListTile,
+  GridListTileBar,
+  Menu,
+  MenuItem
+} from '@material-ui/core';
 
 function ComicPage({ history }) {
   const [comic, setComic] = useState(null);
+  const [chapter, setChapter] = useState([]);
+  const [imgList, setImgList] = useState([]);
   const { id } = useParams();
+
+  useEffect(async () => {
+    // 获取到树状列表之后，前端排序
+    const imgList = await api.fetchImgList(id);
+    setImgList(sortImgList(imgList));
+    setChapter(imgList[0]);
+  }, [id]);
 
   useEffect(async () => {
     const requestcomic = await api.fetchComic(id);
@@ -132,9 +158,10 @@ function ComicPage({ history }) {
   }, [id]);
 
   return (
-    <Container className={styles.fullpage}>
+    <Container className={styles.container}>
       <Header comic={comic} />
-      <ImgList comic={comic} />
+      <ChapterList imgList={imgList} value={chapter} onChange={setChapter} />
+      <ImgList imgList={chapter?.list || []} />
     </Container>
   );
 }
