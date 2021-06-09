@@ -3,9 +3,8 @@
 
 ## 软件截图
 
-![](/screenshots/home.png?raw=true)
-
 ![](/screenhosts/one.png?raw=true)
+![](/screenshots/home.png?raw=true)
 
 ## Install
 
