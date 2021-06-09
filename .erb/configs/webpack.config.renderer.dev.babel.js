@@ -14,7 +14,7 @@ if (process.env.NODE_ENV === 'production') {
   CheckNodeEnv('development');
 }
 
-const port = process.env.PORT || 1212;
+const port = process.env.PORT || 8989;
 const publicPath = `http://localhost:${port}/dist`;
 const dllDir = path.join(__dirname, '../dll');
 const manifest = path.resolve(dllDir, 'renderer.json');

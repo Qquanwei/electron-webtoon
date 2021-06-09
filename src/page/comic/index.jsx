@@ -57,6 +57,7 @@ function sortImgList(imgList) {
 
 
 function ImgList({ imgList }) {
+  const containerRef = useRef(null);
   function renderList(list) {
     return list.map((item, index) => {
       if (item.name) {
@@ -72,7 +73,10 @@ function ImgList({ imgList }) {
     });
   }
 
-  return <div className={styles.imglist}>{renderList(imgList)}</div>;
+  useEffect(() => {
+    containerRef.current.scrollTop = 0;
+  }, [imgList]);
+  return <div ref={containerRef} className={styles.imglist}>{renderList(imgList)}</div>;
 }
 
 import List from '@material-ui/core/List';
@@ -85,7 +89,6 @@ import ImportContactsIcon from '@material-ui/icons/ImportContacts';
 function ChapterList({ imgList, value, onChange }) {
   const onClick = useCallback((chapter) => {
     if (onChange) {
-      console.log('onChange', chapter);
       onChange(chapter);
     }
   }, [onChange]);
@@ -105,7 +108,7 @@ function ChapterList({ imgList, value, onChange }) {
             <ListItemIcon>
               <ImportContactsIcon />
             </ListItemIcon>
-            <ListItemText>
+            <ListItemText className={styles.chaptername}>
               <div onClick={() => onClick(item)}>{ item.name }</div>
             </ListItemText>
             <Divider />
