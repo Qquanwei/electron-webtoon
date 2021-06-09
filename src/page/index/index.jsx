@@ -133,7 +133,7 @@ function IndexPage() {
                 <Link to={`/comic/${comic.id}`} >
                   <img alt="" src={comic.cover} width="100%" />
                 </Link>
-                <GridListTileBar title={comic.path} />
+                <GridListTileBar title={comic.name} />
               </GridListTile>
             );
           })}

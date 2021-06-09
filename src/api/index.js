@@ -43,3 +43,13 @@ export function removeComic(id) {
     method: 'DELETE',
   });
 }
+
+export function saveComicTag(id, tag) {
+  return fetch(`/bookmark`, {
+    method: 'POST',
+    body: JSON.stringify({
+      tag,
+      id,
+    }),
+  });
+}

@@ -86,10 +86,11 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
 import ImportContactsIcon from '@material-ui/icons/ImportContacts';
 
-function ChapterList({ imgList, value, onChange }) {
-  const onClick = useCallback((chapter) => {
+function ChapterList({ comicId, imgList, value, onChange }) {
+  const onClick = useCallback(async (chapter) => {
     if (onChange) {
       onChange(chapter);
+      api.saveComicTag(comicId, chapter.name);
     }
   }, [onChange]);
 
@@ -108,8 +109,8 @@ function ChapterList({ imgList, value, onChange }) {
             <ListItemIcon>
               <ImportContactsIcon />
             </ListItemIcon>
-            <ListItemText className={styles.chaptername}>
-              <div onClick={() => onClick(item)}>{ item.name }</div>
+            <ListItemText className={classNames(styles.chaptername, { [styles.current]: value === item})}>
+              <div onClick={() => onClick(item)} title={item.name}>{ item.name }</div>
             </ListItemText>
             <Divider />
             {
@@ -150,20 +151,20 @@ function ComicPage({ history }) {
 
   useEffect(async () => {
     // 获取到树状列表之后，前端排序
-    const imgList = await api.fetchImgList(id);
-    setImgList(sortImgList(imgList));
-    setChapter(imgList[0]);
-  }, [id]);
-
-  useEffect(async () => {
     const requestcomic = await api.fetchComic(id);
+    const imgList = await api.fetchImgList(id);
     setComic(requestcomic);
+    setImgList(sortImgList(imgList));
+    const defaultChapter = imgList.filter(item => {
+      return item.name === requestcomic.tag;
+    });
+    setChapter(defaultChapter[0] || imgList[0]);
   }, [id]);
 
   return (
     <Container className={styles.container}>
       <Header comic={comic} />
-      <ChapterList imgList={imgList} value={chapter} onChange={setChapter} />
+      <ChapterList comicId={id} imgList={imgList} value={chapter} onChange={setChapter} />
       <ImgList imgList={chapter?.list || []} />
     </Container>
   );

@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import bodyParser from 'koa-bodyparser';
 import mime from 'mime-types';
 import config from './config.json';
+import { saveLocation } from './api';
 
 const basePath = app.getPath('userData');
 const configPath = basePath;
@@ -16,7 +17,19 @@ const configPath = basePath;
 const configFilename = '.electron-webtton-comic.json';
 const configFileFullPath = path.resolve(configPath, configFilename);
 
-// config.library [Array<string>] 存放已经添加的漫画书
+// config.library [Array<{id}>] 存放已经添加的漫画书
+
+async function getConfig() {
+  return JSON.parse(await fsPromisese.readFile(configFileFullPath));
+}
+
+async function saveConfig(config) {
+  console.log('write config:', configFileFullPath);
+  await fsPromisese.writeFile(
+    configFileFullPath,
+    JSON.stringify(config)
+  );
+}
 
 async function getComicList(ctx, next) {
   if (fs.existsSync(configFileFullPath)) {
@@ -59,9 +72,7 @@ async function getComic(ctx, next) {
     ctx.body = 'config not found';
   } else {
     const { id } = ctx.params;
-    const configJSON = JSON.parse(
-      await fsPromisese.readFile(configFileFullPath)
-    );
+    const configJSON = await getConfig();
     const comics = configJSON.library.filter((comic) => {
       return comic.id === id;
     });
@@ -79,27 +90,20 @@ async function getComic(ctx, next) {
 async function addComicToLibrary(ctx, next) {
   // 如果配置文件不存在，则创建一个新的
   if (!fs.existsSync(configFileFullPath)) {
-    await fsPromisese.writeFile(
-      configFileFullPath,
-      JSON.stringify({
-        library: [],
-      })
-    );
+    await saveConfig({
+      library: [],
+    });
   }
 
   try {
-    const config = JSON.parse(await fsPromisese.readFile(configFileFullPath));
+    const config = await getConfig();
     const oldLibrary = config?.library || [];
     const newComicItem = await buildNewCommic(ctx.request.body.path);
     const newLibrary = oldLibrary.concat(newComicItem);
-    await fsPromisese.writeFile(
-      configFileFullPath,
-      JSON.stringify({
+    await saveConfig({
         ...config,
         library: newLibrary,
-      })
-    );
-    console.log('写入配置 ', configFileFullPath);
+    });
     ctx.status = 200;
     ctx.body = {
       success: true,
@@ -107,8 +111,6 @@ async function addComicToLibrary(ctx, next) {
   } catch (e) {
     console.error(e);
   }
-
-  await next();
 }
 
 async function removeComic(ctx, next) {
@@ -136,7 +138,7 @@ async function removeComic(ctx, next) {
         library: newLibrary,
       })
     );
-    console.log('写入配置 ', configFileFullPath);
+    console.log('write config ', configFileFullPath);
     ctx.status = 200;
     ctx.body = {
       success: true,
@@ -144,8 +146,6 @@ async function removeComic(ctx, next) {
   } catch (e) {
     console.error(e);
   }
-
-  await next();
 }
 
 const supportExts = [
@@ -207,7 +207,7 @@ async function getComicImgList(ctx, next) {
     ctx.body = 'config not found';
   } else {
     const { id } = ctx.params;
-    const config = JSON.parse(await fsPromisese.readFile(configFileFullPath));
+    const config = await getConfig();
     const comics = config.library.filter((comic) => {
       return comic.id === id;
     });
@@ -222,7 +222,6 @@ async function getComicImgList(ctx, next) {
       ctx.status = 200;
     }
   }
-  await next();
 }
 
 async function responseImg(ctx, next) {
@@ -231,23 +230,49 @@ async function responseImg(ctx, next) {
   const ext = path.extname(filename);
   ctx.response.set('Content-Type', mime.lookup(ext));
   ctx.body = fs.createReadStream(p);
-  await next();
+}
+
+async function saveComicTag(ctx, next) {
+  try {
+    const { tag, id } = ctx.request.body;
+    const config = await getConfig();
+    const comics = config.library.filter(item => {
+      return item.id === id;
+    });
+
+    if (comics.length === 0) {
+      ctx.body = 'comic not found';
+      ctx.status = 404;
+    } else {
+      comics[0].tag = tag;
+      await saveConfig(config);
+      ctx.status = 200;
+      ctx.body = {
+        success: true
+      };
+    }
+} catch(e) {
+  console.error(e);
+}
 }
 
 export default async function hostServer() {
   const app = new Koa();
   const router = new Router();
+  console.log('i think you are not eval')
   router
+    .post('/bookmark', saveComicTag)
+    .post('/comic', addComicToLibrary)
     .delete('/comic/:id', removeComic)
     .get('/imgproxy/:filename', responseImg)
     .get('/comic/:id/imglist', getComicImgList)
     .get('/comic/:id', getComic)
     .get('/comic', getComicList)
-    .post('/comic', addComicToLibrary);
+
   app.use(bodyParser());
   app.use(router.routes());
   app.use(router.allowedMethods());
   const server = app.listen(config.localserverport);
-  console.log('启动本地服务成功');
+  console.log('start localserver success');
   return server;
 }

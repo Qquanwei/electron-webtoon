@@ -43,7 +43,11 @@
 }
 
 .chaptername span {
-  font-size: 13px;
+  font-size: 12px;
   white-space: nowrap;
   cursor: pointer;
+}
+
+.chaptername.current span {
+  color: dodgerblue;
 }
