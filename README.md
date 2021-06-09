@@ -1,6 +1,12 @@
 - base on https://electron-react-boilerplate.js.org
 - 组件库 @material-ui/core
 
+## 软件截图
+
+![](./screenshots/home.png | width=200)
+
+![](./screenhosts/one.png | width=200)
+
 ## Install
 
 - **If you have installation or compilation issues with this project, please see [our debugging guide](https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues/400)**
