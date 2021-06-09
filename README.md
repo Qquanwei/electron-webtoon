@@ -6,6 +6,10 @@
 ![](/screenhosts/one.png?raw=true)
 ![](/screenshots/home.png?raw=true)
 
+## 下载
+
+https://github.com/Qquanwei/electron-webtoon/releases
+
 ## Install
 
 - **If you have installation or compilation issues with this project, please see [our debugging guide](https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues/400)**
