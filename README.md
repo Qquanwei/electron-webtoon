@@ -3,9 +3,9 @@
 
 ## 软件截图
 
-![](/screenshots/home.png | width=200)
+![](/screenshots/home.png?raw=true)
 
-![](/screenhosts/one.png | width=200)
+![](/screenhosts/one.png?raw=true)
 
 ## Install
 
