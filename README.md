@@ -3,7 +3,7 @@
 
 ## 软件截图
 
-![](/screenshots/two.png?raw=true)
+![](/screenshots/two.jpeg?raw=true)
 ![](/screenshots/home.png?raw=true)
 
 ## 下载
