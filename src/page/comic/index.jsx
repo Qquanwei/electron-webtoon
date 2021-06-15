@@ -158,7 +158,12 @@ function ComicPage({ history }) {
     const defaultChapter = imgList.filter(item => {
       return item.name === requestcomic.tag;
     });
-    setChapter(defaultChapter[0] || imgList[0]);
+
+    if (imgList[0].name) {
+      setChapter(defaultChapter[0] || imgList[0]);
+    } else {
+      setChapter({ list: imgList});
+    }
   }, [id]);
 
   return (

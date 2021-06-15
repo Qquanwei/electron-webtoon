@@ -1,6 +1,5 @@
 .gridlist {
-  height: 100%;
-  width: 800px;
+  width: 100%;
 }
 
 .flexcenter {
@@ -20,6 +19,13 @@
 }
 
 .card {
+  height: 200px;
+}
+
+.card a {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .addcard {
@@ -60,5 +66,15 @@
 }
 
 .container {
-  padding-top: 50px;
+  padding: 0;
+}
+
+.starbar {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.starlist {
+  margin: 30px 0 20px;
+  flex-wrap: nowrap;
 }
