@@ -30,6 +30,34 @@ import plusSVG from './plus.svg';
 import styles from './index.css';
 import * as api from '../../api';
 
+// 展示收藏
+function StarBar({ list }) {
+  return (
+    <div className={styles.starbar}>
+    <h1>收藏列表</h1>
+    <GridList direction="row"
+    justify="center"
+    alignItems="center"
+    cellHeight={160} cols={3} className={styles.starlist}>
+      {
+        list.map((comic, index) => {
+          return (
+            <GridListTile key={index} className={styles.card}
+                data-id={comic.id}
+            >
+                <Link to={`/comic/${comic.id}`} >
+                  <img alt="" src={comic.cover} width="100%" />
+                </Link>
+                <GridListTileBar title={comic.name} />
+              </GridListTile>
+          )
+        })
+      }
+      </GridList>
+      </div>
+  );
+}
+
 function IndexPage() {
   const [comicList, setComicList] = useState([]);
   const [showMenu, setShowMenu] = useState(null);
@@ -78,6 +106,7 @@ function IndexPage() {
   return (
     <div>
       <AppBar position="static">
+
         <Toolbar>
           <Typography variant="h6" noWrap>
             ElectronWebtoon
@@ -98,6 +127,8 @@ function IndexPage() {
           <div  />
         </Toolbar>
       </AppBar>
+      <StarBar list={comicList} />
+      <h1>漫画库</h1>
       <Container className={styles.container}>
         <Menu
           id="simple-menu"
@@ -110,7 +141,7 @@ function IndexPage() {
         </Menu>
 
 
-        <GridList cellHeight={160} cols={3} className={styles.gridlist}>
+        <GridList cellHeight={160} spacing={2} cols={3} className={styles.gridlist}>
           <GridListTile cols={1} className={classNames(styles.card)}>
             <div
               className={classNames(
