@@ -57,7 +57,6 @@ function sortImgList(imgList) {
 
 
 function ImgList({ imgList }) {
-  const containerRef = useRef(null);
   function renderList(list) {
     return list.map((item, index) => {
       if (item.name) {
@@ -74,9 +73,9 @@ function ImgList({ imgList }) {
   }
 
   useEffect(() => {
-    containerRef.current.scrollTop = 0;
+    document.scrollingElement.scrollTop = 0;
   }, [imgList]);
-  return <div ref={containerRef} className={styles.imglist}>{renderList(imgList)}</div>;
+  return <div className={styles.imglist}>{renderList(imgList)}</div>;
 }
 
 import List from '@material-ui/core/List';

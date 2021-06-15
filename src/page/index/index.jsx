@@ -34,27 +34,24 @@ import * as api from '../../api';
 function StarBar({ list }) {
   return (
     <div className={styles.starbar}>
-    <h1>收藏列表</h1>
-    <GridList direction="row"
-    justify="center"
-    alignItems="center"
-    cellHeight={160} cols={3} className={styles.starlist}>
+      <h1>收藏列表</h1>
+      <div className={styles.starlist}>
       {
         list.map((comic, index) => {
           return (
-            <GridListTile key={index} className={styles.card}
+            <div key={index} className={styles.card}
                 data-id={comic.id}
             >
                 <Link to={`/comic/${comic.id}`} >
                   <img alt="" src={comic.cover} width="100%" />
                 </Link>
-                <GridListTileBar title={comic.name} />
-              </GridListTile>
+                <div>{ comic.name } </div>
+              </div>
           )
         })
       }
-      </GridList>
       </div>
+    </div>
   );
 }
 
