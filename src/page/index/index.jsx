@@ -100,6 +100,7 @@ function IndexPage() {
     setComicList(list);
   }, []);
 
+  // <StarBar list={comicList} />
   return (
     <div>
       <AppBar position="static">
@@ -124,7 +125,7 @@ function IndexPage() {
           <div  />
         </Toolbar>
       </AppBar>
-      <StarBar list={comicList} />
+
       <h1>漫画库</h1>
       <Container className={styles.container}>
         <Menu

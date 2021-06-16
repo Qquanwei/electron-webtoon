@@ -72,10 +72,27 @@ function ImgList({ imgList }) {
     });
   }
 
+  const autoScrollRef = useRef(false);
+
+  const onMouseUp = useCallback(() => {
+    autoScrollRef.current = false;
+  }, []);
+
+  const onMouseDown = useCallback(() => {
+    function scroll() {
+      document.scrollingElement.scrollTop += 5;
+      if (autoScrollRef.current) {
+        requestAnimationFrame(scroll);
+      }
+    }
+    autoScrollRef.current = true;
+    requestAnimationFrame(scroll);
+  }, []);
+
   useEffect(() => {
     document.scrollingElement.scrollTop = 0;
   }, [imgList]);
-  return <div className={styles.imglist}>{renderList(imgList)}</div>;
+  return <div className={styles.imglist} onMouseUp={onMouseUp} onMouseDown={onMouseDown}>{renderList(imgList)}</div>;
 }
 
 import List from '@material-ui/core/List';
