@@ -3,6 +3,7 @@ import Koa from 'koa';
 import { app } from 'electron';
 import Router from 'koa-router';
 import fsPromisese from 'fs.promises';
+import cors from '@koa/cors';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -269,6 +270,7 @@ export default async function hostServer() {
     .get('/comic/:id', getComic)
     .get('/comic', getComicList)
 
+  app.use(cors());
   app.use(bodyParser());
   app.use(router.routes());
   app.use(router.allowedMethods());

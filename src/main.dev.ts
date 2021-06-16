@@ -115,7 +115,7 @@ const createWindow = async () => {
   // 初始化本地Server
   const server = await hostServer();
   // 初始化IPC
-  initIpc(app, mainWindow, server);
+  initIpc(app, mainWindow);
 };
 
 /**

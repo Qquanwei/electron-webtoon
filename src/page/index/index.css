@@ -1,6 +1,5 @@
 .gridlist {
-  height: 100%;
-  width: 800px;
+  width: 100%;
 }
 
 .flexcenter {
@@ -10,6 +9,7 @@
 }
 
 .full {
+  box-sizing: border-box;
   height: 100%;
   height: 100%;
 }
@@ -20,6 +20,13 @@
 }
 
 .card {
+  height: 200px;
+}
+
+.card a {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .addcard {
@@ -60,5 +67,28 @@
 }
 
 .container {
-  padding-top: 50px;
+  padding: 0;
+}
+
+.starbar {
+}
+
+.starlist {
+  box-sizing: border-box;
+  margin: 30px 0 20px;
+  height: 200px;
+  padding: 0 30px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+
+.starlist::after {
+  clear: both;
+}
+
+.starbar .card {
+  display: inline-block;
+  width: 200px;
+  height: 200px;
 }

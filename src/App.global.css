@@ -7,7 +7,6 @@ body {
   color: #000;
   height: 100vh;
   font-family: sans-serif;
-  overflow-y: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -18,6 +17,7 @@ body {
 #root {
   width: 100%;
   height: 100%;
+  overflow: auto;
 }
 
 button {

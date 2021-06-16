@@ -57,7 +57,6 @@ function sortImgList(imgList) {
 
 
 function ImgList({ imgList }) {
-  const containerRef = useRef(null);
   function renderList(list) {
     return list.map((item, index) => {
       if (item.name) {
@@ -73,10 +72,27 @@ function ImgList({ imgList }) {
     });
   }
 
+  const autoScrollRef = useRef(false);
+
+  const onMouseUp = useCallback(() => {
+    autoScrollRef.current = false;
+  }, []);
+
+  const onMouseDown = useCallback(() => {
+    function scroll() {
+      document.scrollingElement.scrollTop += 5;
+      if (autoScrollRef.current) {
+        requestAnimationFrame(scroll);
+      }
+    }
+    autoScrollRef.current = true;
+    requestAnimationFrame(scroll);
+  }, []);
+
   useEffect(() => {
-    containerRef.current.scrollTop = 0;
+    document.scrollingElement.scrollTop = 0;
   }, [imgList]);
-  return <div ref={containerRef} className={styles.imglist}>{renderList(imgList)}</div>;
+  return <div className={styles.imglist} onMouseUp={onMouseUp} onMouseDown={onMouseDown}>{renderList(imgList)}</div>;
 }
 
 import List from '@material-ui/core/List';
@@ -158,7 +174,12 @@ function ComicPage({ history }) {
     const defaultChapter = imgList.filter(item => {
       return item.name === requestcomic.tag;
     });
-    setChapter(defaultChapter[0] || imgList[0]);
+
+    if (imgList[0].name) {
+      setChapter(defaultChapter[0] || imgList[0]);
+    } else {
+      setChapter({ list: imgList});
+    }
   }, [id]);
 
   return (
