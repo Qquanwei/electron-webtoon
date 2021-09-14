@@ -44,12 +44,18 @@ export default merge(baseConfig, {
   entry: [
     'core-js',
     'regenerator-runtime/runtime',
-    require.resolve('../../src/index.tsx'),
+    require.resolve('../../src/client/index.tsx'),
   ],
 
   output: {
     publicPath: `http://localhost:${port}/dist/`,
     filename: 'renderer.dev.js',
+  },
+
+
+  resolve: {
+    alias: {
+    }
   },
 
   module: {

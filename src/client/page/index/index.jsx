@@ -10,14 +10,10 @@ import {
   MenuItem
 } from '@material-ui/core';
 
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
+
 import IconButton from '@material-ui/core/IconButton';
-import Typography from '@material-ui/core/Typography';
-import InputBase from '@material-ui/core/InputBase';
 import Badge from '@material-ui/core/Badge';
 import MenuIcon from '@material-ui/icons/Menu';
-import SearchIcon from '@material-ui/icons/Search';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import MailIcon from '@material-ui/icons/Mail';
 import NotificationsIcon from '@material-ui/icons/Notifications';
@@ -25,7 +21,8 @@ import MoreIcon from '@material-ui/icons/MoreVert';
 
 
 import { Link } from 'react-router-dom';
-import { takeDirectory } from '../../utils';
+import ElectronWebtoonAppBar from './appbar';
+import { takeDirectory } from '../../../shared/utils';
 import plusSVG from './plus.svg';
 import styles from './index.css';
 import * as api from '../../api';
@@ -47,7 +44,7 @@ function StarBar({ list }) {
                 </Link>
                 <div>{ comic.name } </div>
               </div>
-          )
+          );
         })
       }
       </div>
@@ -59,7 +56,6 @@ function IndexPage() {
   const [comicList, setComicList] = useState([]);
   const [showMenu, setShowMenu] = useState(null);
   const [searchKey, setSearchKey] = useState('');
-  const searchRef = useRef(null);
 
   const onClickAdd = useCallback(async () => {
     const path = await takeDirectory();
@@ -80,10 +76,8 @@ function IndexPage() {
     setShowMenu(null);
   }, []);
 
-  const onSubmitSearch = useCallback((e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setSearchKey(searchRef.current.value);
+  const onSubmitSearch = useCallback((value) => {
+    setSearchKey(value);
   }, []);
 
   const onDeleteComic = useCallback(async () => {
@@ -103,29 +97,7 @@ function IndexPage() {
   // <StarBar list={comicList} />
   return (
     <div>
-      <AppBar position="static">
-
-        <Toolbar>
-          <Typography variant="h6" noWrap>
-            ElectronWebtoon
-          </Typography>
-          <div className={styles.search}>
-            <div className={styles.searchicon}>
-              <SearchIcon />
-            </div>
-            <form onSubmit={onSubmitSearch}>
-              <InputBase
-                inputRef={searchRef}
-                className={styles.searchinput}
-                placeholder="Search…"
-                inputProps={{ 'aria-label': 'search' }}
-              />
-            </form>
-          </div>
-          <div  />
-        </Toolbar>
-      </AppBar>
-
+      <ElectronWebtoonAppBar onSearch={onSubmitSearch} />
       <h1>漫画库</h1>
       <Container className={styles.container}>
         <Menu

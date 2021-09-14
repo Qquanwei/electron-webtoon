@@ -1,6 +1,7 @@
-import config from '../config.json';
+import { getConfig } from '../../shared/utils';
 
 function fetch(url, data) {
+  const config = getConfig();
   return window
     .fetch(`http://localhost:${config.localserverport}${url}`, {
       ...data,

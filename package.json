@@ -126,7 +126,7 @@
     "hot",
     "reload"
   ],
-  "homepage": "https://github.com/electron-react-boilerplate/electron-react-boilerplate#readme",
+  "homepage": "https://github.com/Qquanwei/electron-webtoon",
   "jest": {
     "testURL": "http://localhost/",
     "moduleNameMapper": {

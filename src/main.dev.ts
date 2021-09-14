@@ -14,9 +14,9 @@ import path from 'path';
 import { app, BrowserWindow, shell } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-import MenuBuilder from './menu';
-import initIpc from './ipcMain';
-import hostServer from './localserver';
+import MenuBuilder from './server/menu';
+import initIpc from './server/ipcMain';
+import hostServer from './server/localserver';
 
 export default class AppUpdater {
   constructor() {
