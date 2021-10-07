@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import bodyParser from 'koa-bodyparser';
 import mime from 'mime-types';
 import config from './config.json';
-import { saveLocation } from '../api';
+import { saveLocation } from './api';
 
 const basePath = app.getPath('userData');
 const configPath = basePath;

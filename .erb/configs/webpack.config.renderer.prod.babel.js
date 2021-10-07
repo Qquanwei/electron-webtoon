@@ -39,6 +39,12 @@ export default merge(baseConfig, {
     filename: 'renderer.prod.js',
   },
 
+  resolve: {
+    alias: {
+      'shared': path.resolve(__dirname, '../../src/shared-electron')
+    }
+  },
+
   module: {
     rules: [
       {

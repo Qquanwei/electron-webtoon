@@ -1,7 +1,7 @@
-import { getConfig } from '../../shared/utils';
+import { ipc } from '../utils';
 
 function fetch(url, data) {
-  const config = getConfig();
+  const config = ipc.getConfig();
   return window
     .fetch(`http://localhost:${config.localserverport}${url}`, {
       ...data,

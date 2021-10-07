@@ -21,6 +21,7 @@ yarn start
 ### 开发说明
 
 - 本软件可分为两种模 1. Electron 客户端模式 2. 在线模式。 在线模式适合转移手机端使用。
+- 在线模式时需要向 html 注入对应的配置信息，例如本机 IP，端口
 
 ## Packaging for Production
 

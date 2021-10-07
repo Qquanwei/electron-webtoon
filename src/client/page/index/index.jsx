@@ -22,7 +22,7 @@ import MoreIcon from '@material-ui/icons/MoreVert';
 
 import { Link } from 'react-router-dom';
 import ElectronWebtoonAppBar from './appbar';
-import { takeDirectory } from '../../../shared/utils';
+import ipc from '../../utils';
 import plusSVG from './plus.svg';
 import styles from './index.css';
 import * as api from '../../api';
@@ -58,7 +58,7 @@ function IndexPage() {
   const [searchKey, setSearchKey] = useState('');
 
   const onClickAdd = useCallback(async () => {
-    const path = await takeDirectory();
+    const path = await ipc.takeDirectory();
     if (!path.canceled) {
       await api.addComicToLibrary(path.filePaths[0]);
       setComicList(await api.fetchComicList());
