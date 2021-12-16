@@ -113,7 +113,7 @@ const createWindow = async () => {
   // eslint-disable-next-line
   new AppUpdater();
   // 初始化本地Server
-  const server = await hostServer();
+  const server = await hostServer(mainWindow);
   // 初始化IPC
   initIpc(app, mainWindow);
 };

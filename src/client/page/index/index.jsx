@@ -1,6 +1,7 @@
 /* eslint-disable */
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import classNames from 'classnames';
+import { useRecoilValue } from 'recoil';
 import {
   GridList,
   GridListTile,
@@ -22,7 +23,6 @@ import MoreIcon from '@material-ui/icons/MoreVert';
 
 import { Link } from 'react-router-dom';
 import ElectronWebtoonAppBar from './appbar';
-import ipc from '../../utils';
 import plusSVG from './plus.svg';
 import styles from './index.css';
 import * as api from '../../api';
@@ -52,18 +52,13 @@ function StarBar({ list }) {
   );
 }
 
+import * as  selector from '../../selector';
+
 function IndexPage() {
-  const [comicList, setComicList] = useState([]);
+  // const [comicList, setComicList] = useState([]);
   const [showMenu, setShowMenu] = useState(null);
   const [searchKey, setSearchKey] = useState('');
-
-  const onClickAdd = useCallback(async () => {
-    const path = await ipc.takeDirectory();
-    if (!path.canceled) {
-      await api.addComicToLibrary(path.filePaths[0]);
-      setComicList(await api.fetchComicList());
-    }
-  }, []);
+  const comicList = useRecoilValue(selector.comicList);
 
   const onContextMenu = useCallback((e) => {
     e.preventDefault();
@@ -86,13 +81,7 @@ function IndexPage() {
     await api.removeComic(id);
     window.localStorage.setItem(id, '');
     setShowMenu(null);
-    setComicList(await api.fetchComicList());
   }, [showMenu]);
-
-  useEffect(async () => {
-    const list = await api.fetchComicList();
-    setComicList(list);
-  }, []);
 
   // <StarBar list={comicList} />
   return (
@@ -112,18 +101,6 @@ function IndexPage() {
 
 
         <GridList cellHeight={160} spacing={2} cols={3} className={styles.gridlist}>
-          <GridListTile cols={1} className={classNames(styles.card)}>
-            <div
-              className={classNames(
-                styles.flexcenter,
-                styles.full,
-                styles.addcard
-              )}
-              onClick={onClickAdd}
-            >
-              <img alt="" src={plusSVG} className={styles.plusicon} />
-            </div>
-          </GridListTile>
           {comicList.filter(comic => {
             return comic.name.indexOf(searchKey) !== -1
           }).map((comic, index) => {

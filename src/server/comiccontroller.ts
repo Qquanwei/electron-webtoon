@@ -1,8 +1,8 @@
 import ComicService from './comicsservice';
 
 export default class ComicController {
-  constructor() {
-    this.service = new ComicService();
+  constructor(mainWindow) {
+    this.service = new ComicService(mainWindow);
   }
 
   async getConfig(ctx, next) {
@@ -30,13 +30,23 @@ export default class ComicController {
     }
   }
 
-  async addComicToLibrary() {
+  async addComicToLibrary(ctx) {
     const { path } = ctx.request.body;
     await this.service.addComicToLibrary(path);
     ctx.status = 200;
+    ctx.body = {};
   }
 
   async getComicImgList(ctx) {
     const { id } = ctx.params;
+    try {
+      ctx.body = await this.service.getComicImgList(id);
+    } catch (e) {
+      ctx.status = 404;
+    }
+  }
+
+  async takeDirectory(ctx) {
+    ctx.body = await this.service.takeDirectory();
   }
 }

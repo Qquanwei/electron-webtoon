@@ -1,9 +1,7 @@
-export default (url, data) => {
-  // IMPORTANT 这里需要注入对应的配置信息
-  const ip = window.LOCALSERVER_IP;
-  const port = window.LOCALSERVER_PORT;
+import config from '../server/config.json';
 
-  return fetch(`http://${ip}:${port}{url}`, {
+const myfetch = (url) => {
+  return fetch(`http://localhost:${config.localserverport}${url}`, {
     headers: {
       'Content-Type': 'application/json',
     },
@@ -15,3 +13,21 @@ export default (url, data) => {
     return resp.json();
   });
 };
+
+myfetch.post = (url, data) => {
+  return fetch(`http://localhost:${config.localserverport}${url}`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  }).then((resp) => {
+    if (resp.status !== 200) {
+      // eslint-disable-next-line
+      throw resp;
+    }
+    return resp.json();
+  });
+};
+
+export default myfetch;

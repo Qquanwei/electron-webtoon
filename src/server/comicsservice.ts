@@ -1,8 +1,32 @@
-import { app } from 'electron';
+import electron, { app } from 'electron';
+
+import URL from 'url';
+import { v4 as uuidv4 } from 'uuid';
 import * as R from 'ramda';
 import path from 'path';
-import fsP from 'fs/promises';
+import fs from 'fs';
 import fsPromisese from 'fs.promises';
+
+function isDirectory(fullpath) {
+  return fs.lstatSync(fullpath).isDirectory();
+}
+
+const supportExts = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.gif',
+  '.bmp',
+  '.apng',
+  '.avif',
+  '.tiff',
+];
+
+function extNameLegal(file) {
+  const ext = path.extname(file);
+  return supportExts.includes(ext);
+}
 
 function flatten(tree) {
   let list = [];
@@ -38,11 +62,7 @@ async function buildComicImgList(pathname: string) {
       });
     } else {
       const ext = path.extname(fileOrDirName);
-      const url = `http://localhost:${
-        config.localserverport
-      }/imgproxy/transparent${ext}?p=${encodeURIComponent(
-        path.resolve(pathname, fileOrDirName)
-      )}`;
+      const url = URL.pathToFileURL(path.resolve(pathname, fileOrDirName));
       result.push(url);
     }
   }
@@ -50,15 +70,19 @@ async function buildComicImgList(pathname: string) {
 }
 
 export default class ComicService {
-  constructor() {
+  constructor(mainWindow) {
+    this.mainWindow = mainWindow;
     this.basePath = app.getPath('userData');
-    this.configPath = basePath;
+    this.configPath = this.basePath;
     this.configFilename = '.electron-webtton-comic.json';
-    this.configFileFullPath = path.resolve(configPath, configFilename);
+    this.configFileFullPath = path.resolve(
+      this.configPath,
+      this.configFilename
+    );
   }
 
   private async ensureConfigExists() {
-    const exists = await fsP.exists(this.configFileFullPath);
+    const exists = fs.existsSync(this.configFileFullPath);
 
     if (exists) {
       return;
@@ -87,6 +111,29 @@ export default class ComicService {
     return [];
   }
 
+  async getComicImgList(id) {
+    // 如果配置文件不存在，则创建一个新的
+    if (!fs.existsSync(this.configFileFullPath)) {
+      const error = new Error();
+      error.code = 404;
+      throw error;
+    } else {
+      const config = await this.getConfig();
+      const comics = config.library.filter((comic) => {
+        return comic.id === id;
+      });
+
+      if (!comics.length === 0) {
+        const error = new Error();
+        error.code = 404;
+        throw error;
+      } else {
+        const comic = comics[0];
+        return await buildComicImgList(comic.path);
+      }
+    }
+  }
+
   // 生成一个新的漫画书，包括id，预览图
   async buildNewComic(pathstr: string) {
     const ps = pathstr.split(path.sep);
@@ -108,6 +155,19 @@ export default class ComicService {
   async addComicToLibrary(comicpath: string) {
     await this.ensureConfigExists();
     const config = await this.getConfig();
-    (config.library || []).concat(await this.buildNewComic(comicpath));
+    const newLibrary = (config.library || []).concat(
+      await this.buildNewComic(comicpath)
+    );
+    await this.saveConfig({
+      ...config,
+      library: newLibrary,
+    });
+  }
+
+  // 打开文件选择对话框
+  async takeDirectory() {
+    return electron.dialog.showOpenDialog(this.mainWindow, {
+      properties: ['openDirectory'],
+    });
   }
 }

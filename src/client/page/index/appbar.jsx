@@ -5,16 +5,31 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import InputBase from '@material-ui/core/InputBase';
 import SearchIcon from '@material-ui/icons/Search';
+import IconButton from '@material-ui/core/IconButton';
+
+import { useRecoilRefresher_UNSTABLE } from 'recoil';
+
 import { version } from '../../../package.json';
+import * as selector from '../../selector';
+import ipc from '../../ipc';
 import styles from './index.css';
 
 function ElectronWebtoonAppBar({ onSearch }) {
   const searchRef = useRef(null);
+  const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
 
   const onSubmitSearch = useCallback((e) => {
     e.stopPropagation();
     e.preventDefault();
     onSearch(searchRef.current.value);
+  }, []);
+
+  const onClickAdd = useCallback(async () => {
+    const path = await ipc.takeDirectory();
+    if (!path.canceled) {
+      await ipc.addComicToLibrary(path.filePaths[0]);
+      refreshComicList();
+    }
   }, []);
 
   return (
@@ -39,6 +54,7 @@ function ElectronWebtoonAppBar({ onSearch }) {
             />
           </form>
         </div>
+        <button onClick={onClickAdd}>添加</button>
         <div  />
       </Toolbar>
     </AppBar>

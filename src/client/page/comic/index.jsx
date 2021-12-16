@@ -5,7 +5,9 @@ import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 import Breadcrumbs from '@material-ui/core/Breadcrumbs';
 import classNames from 'classnames';
+import { useRecoilValue } from 'recoil';
 import * as api from '../../api';
+import * as selector from '../../selector';
 
 import styles from './index.css';
 
@@ -160,27 +162,20 @@ import {
 } from '@material-ui/core';
 
 function ComicPage({ history }) {
-  const [comic, setComic] = useState(null);
-  const [chapter, setChapter] = useState([]);
-  const [imgList, setImgList] = useState([]);
   const { id } = useParams();
+  const { imgList, comic } = useRecoilValue(selector.comicDetail(id));
 
-  useEffect(async () => {
-    // 获取到树状列表之后，前端排序
-    const requestcomic = await api.fetchComic(id);
-    const imgList = await api.fetchImgList(id);
-    setComic(requestcomic);
-    setImgList(sortImgList(imgList));
+  const [chapter, setChapter] = useState(() => {
     const defaultChapter = imgList.filter(item => {
-      return item.name === requestcomic.tag;
+      return item.name === comic.tag;
     });
 
     if (imgList[0].name) {
-      setChapter(defaultChapter[0] || imgList[0]);
+      return (defaultChapter[0] || imgList[0]);
     } else {
-      setChapter({ list: imgList});
+      return ({ list: imgList});
     }
-  }, [id]);
+  });
 
   return (
     <Container className={styles.container}>

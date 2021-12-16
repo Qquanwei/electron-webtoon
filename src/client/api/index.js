@@ -1,7 +1,7 @@
 import { ipc } from '../utils';
 
-function fetch(url, data) {
-  const config = ipc.getConfig();
+async function fetch(url, data) {
+  const config = await ipc.getConfig();
   return window
     .fetch(`http://localhost:${config.localserverport}${url}`, {
       ...data,
@@ -16,7 +16,7 @@ function fetch(url, data) {
 
 // 获取漫画列表
 export function fetchComicList() {
-  return fetch('/comic');
+  return ipc.fetchComicList();
 }
 
 // 获取某个漫画的信息
