@@ -1,8 +1,20 @@
 .container {
-  padding-top: 50px;
   box-sizing: border-box;
   width: 100%;
   height: 100%;
+}
+
+.container.closechapter .imglist {
+  width: 100% !important;
+  left: 0 !important;
+}
+
+.container.closechapter .navbar {
+  display: none;
+}
+
+.container.closechapter .chapter {
+  width: 0 !important;
 }
 
 .navbar {
@@ -11,20 +23,31 @@
   left: 20px;
 }
 
+.toolbar {
+  position: fixed;
+  right: 0;
+  top: 20px;
+  padding: 0 20px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.toggleicon {
+}
 .link {
   color: #333;
 }
-
 .imglist {
   position: absolute;
-  top: 0;
   left: 320px;
   width: calc(100% - 320px);
   box-sizing: border-box;
-  padding: 50px 0;
   font-size: 0;
   background: #fff;
   user-select: none;
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
 }
 
 .imglist img {

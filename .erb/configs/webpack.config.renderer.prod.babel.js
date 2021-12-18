@@ -30,13 +30,19 @@ export default merge(baseConfig, {
   entry: [
     'core-js',
     'regenerator-runtime/runtime',
-    path.join(__dirname, '../../src/index.tsx'),
+    path.join(__dirname, '../../src/client/index.tsx'),
   ],
 
   output: {
     path: path.join(__dirname, '../../src/dist'),
     publicPath: './dist/',
     filename: 'renderer.prod.js',
+  },
+
+  resolve: {
+    alias: {
+      'shared': path.resolve(__dirname, '../../src/shared-electron')
+    }
   },
 
   module: {

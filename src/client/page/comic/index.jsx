@@ -4,57 +4,32 @@ import { useParams, Link } from 'react-router-dom';
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 import Breadcrumbs from '@material-ui/core/Breadcrumbs';
+import AppIcon from '@material-ui/icons/Apps';
 import classNames from 'classnames';
+import { useRecoilValue } from 'recoil';
+import ipc from '../../ipc';
 import * as api from '../../api';
+import * as selector from '../../selector';
 
 import styles from './index.css';
 
-function Header({ comic }) {
+function Header({ comic, onToggleChapter }) {
   return (
-    <div className={styles.navbar}>
-      <Breadcrumbs aria-label="breadcrumb">
-        <Link to="/" className={styles.link}>
-          Home
-        </Link>
-        <Typography color="textPrimary">{comic?.name}</Typography>
-      </Breadcrumbs>
+    <div>
+      <div className={styles.toolbar}>
+        <AppIcon className={styles.toggleicon} onClick={onToggleChapter} />
+      </div>
+      <div className={styles.navbar}>
+        <Breadcrumbs aria-label="breadcrumb">
+          <Link to="/" className={styles.link}>
+            Home
+          </Link>
+          <Typography>{comic?.name}</Typography>
+        </Breadcrumbs>
+      </div>
     </div>
   );
 }
-
-function sortImgList(imgList) {
-  const list = [...imgList];
-
-  function tonum(name) {
-    const num = Number(name.replace(/[^\d]/g, '')) || Infinity;
-    return num;
-  }
-
-  list.sort((a, b) => {
-    if (a.name) {
-      a.list = sortImgList(a.list || []);
-    }
-    if (b.name) {
-      b.list = sortImgList(b.list || []);
-    }
-
-    if (a.name && b.name) {
-      return tonum(a.name) - tonum(b.name);
-    }
-
-    if (!a.name && !b.name) {
-      return tonum(a) - tonum(b);
-    }
-    if (a.name) {
-      return 1;
-    }
-
-    return -1;
-  });
-
-  return list;
-}
-
 
 function ImgList({ imgList }) {
   function renderList(list) {
@@ -106,7 +81,7 @@ function ChapterList({ comicId, imgList, value, onChange }) {
   const onClick = useCallback(async (chapter) => {
     if (onChange) {
       onChange(chapter);
-      api.saveComicTag(comicId, chapter.name);
+      ipc.saveComicTag(comicId, chapter.name);
     }
   }, [onChange]);
 
@@ -160,34 +135,35 @@ import {
 } from '@material-ui/core';
 
 function ComicPage({ history }) {
-  const [comic, setComic] = useState(null);
-  const [chapter, setChapter] = useState([]);
-  const [imgList, setImgList] = useState([]);
   const { id } = useParams();
+  const [toggleChapter, setToggleChapter] = useState(false);
+  const { imgList, comic } = useRecoilValue(selector.comicDetail(id));
 
-  useEffect(async () => {
-    // 获取到树状列表之后，前端排序
-    const requestcomic = await api.fetchComic(id);
-    const imgList = await api.fetchImgList(id);
-    setComic(requestcomic);
-    setImgList(sortImgList(imgList));
+  const [chapter, setChapter] = useState(() => {
     const defaultChapter = imgList.filter(item => {
-      return item.name === requestcomic.tag;
+      return item.name === comic.tag;
     });
 
     if (imgList[0].name) {
-      setChapter(defaultChapter[0] || imgList[0]);
+      return (defaultChapter[0] || imgList[0]);
     } else {
-      setChapter({ list: imgList});
+      return { list: imgList };
     }
-  }, [id]);
+  });
+
+  const onToggleChapter = useCallback(() => {
+    setToggleChapter(v => !v);
+  }, []);
 
   return (
-    <Container className={styles.container}>
-      <Header comic={comic} />
+    <div className={classNames(
+      styles.container,
+      toggleChapter ? styles.closechapter : ''
+    )}>
+      <Header comic={comic} onToggleChapter={onToggleChapter} />
       <ChapterList comicId={id} imgList={imgList} value={chapter} onChange={setChapter} />
       <ImgList imgList={chapter?.list || []} />
-    </Container>
+    </div>
   );
 }
 
