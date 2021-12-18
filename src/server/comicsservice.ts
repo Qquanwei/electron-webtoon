@@ -1,3 +1,5 @@
+/* eslint-disable no-plusplus */
+/* eslint-disable no-param-reassign */
 import electron, { app } from 'electron';
 
 import URL from 'url';
@@ -41,7 +43,8 @@ function flatten(tree) {
   return list;
 }
 
-async function buildComicImgList(pathname: string) {
+// deep 子文件夹个数
+async function buildComicImgList(pathname: string, deep = 1000) {
   const files = await fsPromisese.readdir(pathname);
 
   const legalFiles = files.filter((file) => {
@@ -49,7 +52,7 @@ async function buildComicImgList(pathname: string) {
   });
 
   const result = [];
-  for (let i = 0; i < legalFiles.length; i += 1) {
+  for (let i = 0; i < legalFiles.length && deep--; i += 1) {
     const fileOrDirName = legalFiles[i];
     if (isDirectory(path.resolve(pathname, fileOrDirName))) {
       // eslint-disable-next-line
@@ -66,6 +69,11 @@ async function buildComicImgList(pathname: string) {
     }
   }
   return result;
+}
+
+async function getCoverUrl(comicPath) {
+  const list = flatten(await buildComicImgList(comicPath, 1));
+  return list[0] || list[1];
 }
 
 export default class ComicService {
@@ -105,7 +113,15 @@ export default class ComicService {
   async getComicList() {
     if (fs.existsSync(this.configFileFullPath)) {
       const str = await fsPromisese.readFile(this.configFileFullPath);
-      return JSON.parse(str).library;
+      const { library } = JSON.parse(str);
+      return Promise.all(
+        library.map(async (comic) => {
+          return {
+            ...comic,
+            cover: await getCoverUrl(comic.path),
+          };
+        })
+      );
     }
     return [];
   }
@@ -136,10 +152,9 @@ export default class ComicService {
   // 生成一个新的漫画书，包括id，预览图
   async buildNewComic(pathstr: string) {
     const ps = pathstr.split(path.sep);
-    const list = flatten(await buildComicImgList(pathstr));
     return {
       path: pathstr,
-      cover: list[1] || list[0],
+      cover: await getCoverUrl(pathstr),
       name: ps[ps.length - 1],
       id: uuidv4(),
     };

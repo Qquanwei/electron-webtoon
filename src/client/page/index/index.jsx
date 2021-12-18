@@ -26,8 +26,7 @@ import ElectronWebtoonAppBar from './appbar';
 import plusSVG from './plus.svg';
 import styles from './index.css';
 import ipc from '../../ipc';
-import * as api from '../../api';
-
+import { useRecoilValueMemo } from '../../utils';
 // 展示收藏
 function StarBar({ list }) {
   return (
@@ -59,7 +58,7 @@ function IndexPage() {
   // const [comicList, setComicList] = useState([]);
   const [showMenu, setShowMenu] = useState(null);
   const [searchKey, setSearchKey] = useState('');
-  const comicList = useRecoilValue(selector.comicList);
+  const comicList = useRecoilValueMemo(selector.comicList);
   const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
 
   const onContextMenu = useCallback((e) => {
@@ -87,7 +86,7 @@ function IndexPage() {
 
   // <StarBar list={comicList} />
   return (
-    <div>
+    <div className={styles.main}>
       <ElectronWebtoonAppBar onSearch={onSubmitSearch} />
       <h1>漫画库</h1>
       <Container className={styles.container}>
@@ -102,34 +101,35 @@ function IndexPage() {
         </Menu>
 
 
-        <GridList cellHeight={160} spacing={2} cols={3} className={styles.gridlist}>
+        <div className={styles.gridlist}>
           {comicList.filter(comic => {
             return comic.name.indexOf(searchKey) !== -1
           }).map((comic, index) => {
             return (
-              <GridListTile key={index} cols={1} className={styles.card}
+              <div key={index} className={styles.card}
                 data-id={comic.id}
                 onContextMenu={onContextMenu}>
                 <Link to={`/comic/${comic.id}`} >
                   <img alt="" src={comic.cover} width="100%" />
+                  <div className={styles.name }>
+                    { comic.name}
+                  </div>
                 </Link>
-                <GridListTileBar title={comic.name} />
-              </GridListTile>
+              </div>
             );
           })}
-        </GridList>
-
-        <div className={styles.support}>
-          贡献和支持
-          <a
-            target="_blank"
-            href="https://github.com/Qquanwei/electron-webtoon"
-            rel="noreferrer"
-          >
-            Github
-          </a>
         </div>
       </Container>
+      <div className={styles.support}>
+        贡献和支持
+        <a
+          target="_blank"
+          href="https://github.com/Qquanwei/electron-webtoon"
+          rel="noreferrer"
+        >
+          Github
+        </a>
+      </div>
     </div>
   );
 }

@@ -6,6 +6,39 @@ export const comicList = selector({
   get: () => ipc.fetchComicList(),
 });
 
+function sortImgList(imgList) {
+  const list = [...imgList];
+
+  function tonum(name) {
+    const num = Number(name.replace(/[^\d]/g, '')) || Infinity;
+    return num;
+  }
+
+  list.sort((a, b) => {
+    if (a.name) {
+      a.list = sortImgList(a.list || []);
+    }
+    if (b.name) {
+      b.list = sortImgList(b.list || []);
+    }
+
+    if (a.name && b.name) {
+      return tonum(a.name) - tonum(b.name);
+    }
+
+    if (!a.name && !b.name) {
+      return tonum(a) - tonum(b);
+    }
+    if (a.name) {
+      return 1;
+    }
+
+    return -1;
+  });
+
+  return list;
+}
+
 export const comicDetail = selectorFamily({
   key: 'comicDetailFamily',
   get: (id) => async () => {
@@ -16,7 +49,7 @@ export const comicDetail = selectorFamily({
 
     return {
       comic,
-      imgList,
+      imgList: sortImgList(imgList),
     };
   },
 });

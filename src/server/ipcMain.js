@@ -27,4 +27,8 @@ export default function init(app, mainWindow) {
   ipcMain.handle('/comic/imglist', async (event, id) => {
     return service.getComicImgList(id);
   });
+
+  ipcMain.handle('/take-directory', () => {
+    return service.takeDirectory();
+  });
 }

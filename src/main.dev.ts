@@ -16,7 +16,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './server/menu';
 import initIpc from './server/ipcMain';
-import hostServer from './server/localserver';
+// import hostServer from './server/localserver';
 
 export default class AppUpdater {
   constructor() {
@@ -113,7 +113,7 @@ const createWindow = async () => {
   // eslint-disable-next-line
   new AppUpdater();
   // 初始化本地Server
-  const server = await hostServer(mainWindow);
+  // const server = await hostServer(mainWindow);
   // 初始化IPC
   initIpc(app, mainWindow);
 };

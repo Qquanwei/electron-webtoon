@@ -41,7 +41,7 @@ export default merge(baseConfig, {
 
   resolve: {
     alias: {
-      'shared': path.resolve(__dirname, '../../src/shared-online')
+      'shared': path.resolve(__dirname, '../../src/shared-electron')
     }
   },
 

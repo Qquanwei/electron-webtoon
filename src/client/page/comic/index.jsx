@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 import Breadcrumbs from '@material-ui/core/Breadcrumbs';
+import AppIcon from '@material-ui/icons/Apps';
 import classNames from 'classnames';
 import { useRecoilValue } from 'recoil';
 import ipc from '../../ipc';
@@ -12,52 +13,23 @@ import * as selector from '../../selector';
 
 import styles from './index.css';
 
-function Header({ comic }) {
+function Header({ comic, onToggleChapter }) {
   return (
-    <div className={styles.navbar}>
-      <Breadcrumbs aria-label="breadcrumb">
-        <Link to="/" className={styles.link}>
-          Home
-        </Link>
-        <Typography color="textPrimary">{comic?.name}</Typography>
-      </Breadcrumbs>
+    <div>
+      <div className={styles.toolbar}>
+        <AppIcon className={styles.toggleicon} onClick={onToggleChapter} />
+      </div>
+      <div className={styles.navbar}>
+        <Breadcrumbs aria-label="breadcrumb">
+          <Link to="/" className={styles.link}>
+            Home
+          </Link>
+          <Typography>{comic?.name}</Typography>
+        </Breadcrumbs>
+      </div>
     </div>
   );
 }
-
-function sortImgList(imgList) {
-  const list = [...imgList];
-
-  function tonum(name) {
-    const num = Number(name.replace(/[^\d]/g, '')) || Infinity;
-    return num;
-  }
-
-  list.sort((a, b) => {
-    if (a.name) {
-      a.list = sortImgList(a.list || []);
-    }
-    if (b.name) {
-      b.list = sortImgList(b.list || []);
-    }
-
-    if (a.name && b.name) {
-      return tonum(a.name) - tonum(b.name);
-    }
-
-    if (!a.name && !b.name) {
-      return tonum(a) - tonum(b);
-    }
-    if (a.name) {
-      return 1;
-    }
-
-    return -1;
-  });
-
-  return list;
-}
-
 
 function ImgList({ imgList }) {
   function renderList(list) {
@@ -164,6 +136,7 @@ import {
 
 function ComicPage({ history }) {
   const { id } = useParams();
+  const [toggleChapter, setToggleChapter] = useState(false);
   const { imgList, comic } = useRecoilValue(selector.comicDetail(id));
 
   const [chapter, setChapter] = useState(() => {
@@ -174,16 +147,23 @@ function ComicPage({ history }) {
     if (imgList[0].name) {
       return (defaultChapter[0] || imgList[0]);
     } else {
-      return ({ list: imgList});
+      return { list: imgList };
     }
   });
 
+  const onToggleChapter = useCallback(() => {
+    setToggleChapter(v => !v);
+  }, []);
+
   return (
-    <Container className={styles.container}>
-      <Header comic={comic} />
+    <div className={classNames(
+      styles.container,
+      toggleChapter ? styles.closechapter : ''
+    )}>
+      <Header comic={comic} onToggleChapter={onToggleChapter} />
       <ChapterList comicId={id} imgList={imgList} value={chapter} onChange={setChapter} />
       <ImgList imgList={chapter?.list || []} />
-    </Container>
+    </div>
   );
 }
 

@@ -33,31 +33,28 @@ function ElectronWebtoonAppBar({ onSearch }) {
   }, []);
 
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" noWrap>
-          ElectronWebtoon
-          <span className={styles.font10}>
-            @{version}
-          </span>
-        </Typography>
-        <div className={styles.search}>
-          <div className={styles.searchicon}>
-            <SearchIcon />
-          </div>
-          <form onSubmit={onSubmitSearch}>
-            <InputBase
-              inputRef={searchRef}
-              className={styles.searchinput}
-              placeholder="Search…"
-              inputProps={{ 'aria-label': 'search' }}
-            />
-          </form>
+    <div className={styles.appbar}>
+      <Typography variant="h6" noWrap>
+        ElectronWebtoon
+        <span className={styles.font10}>
+          @{version}
+        </span>
+      </Typography>
+      <div className={styles.search}>
+        <div className={styles.searchicon}>
+          <SearchIcon />
         </div>
-        <button onClick={onClickAdd}>添加</button>
-        <div  />
-      </Toolbar>
-    </AppBar>
+        <form onSubmit={onSubmitSearch}>
+          <input
+            ref={searchRef}
+            className={styles.searchinput}
+            placeholder="Search…"
+          />
+        </form>
+      </div>
+      <button className={styles.addbtn} onClick={onClickAdd}>+</button>
+      <div  />
+    </div>
   );
 }
 
