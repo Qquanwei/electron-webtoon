@@ -2,12 +2,12 @@ import { ipcRenderer } from 'electron';
 import { IPC } from '../shared';
 
 export default class ElectronIPC implements IPC {
-  getConfig() {
-    return ipcRenderer.invoke('getConfig');
+  takeDirectory() {
+    return ipcRenderer.invoke('/take-directory');
   }
 
-  takeDirectory() {
-    return ipcRenderer.invoke('selectDirectory');
+  addComicToLibrary(path: string) {
+    return ipcRenderer.invoke('/post/comic', path);
   }
 
   fetchComicList() {
@@ -15,25 +15,18 @@ export default class ElectronIPC implements IPC {
   }
 
   fetchComic(id: string) {
-    return ipcRenderer.invoke(`/comic/${id}`);
-  }
-
-  addComicToLibrary(path: string) {
-    return ipcRenderer.invoke('/post/comic', path);
+    return ipcRenderer.invoke(`/comic`, id);
   }
 
   fetchImgList(id: string) {
-    return ipcRenderer.invoke(`/comic/${id}/imglist`);
+    return ipcRenderer.invoke(`/comic/imglist`, id);
   }
 
   removeComic(id: string) {
-    return ipcRenderer.invoke(`/delete/comic/${id}`);
+    return ipcRenderer.invoke(`/delete/comic`, id);
   }
 
   saveComicTag(id: string, tag: string) {
-    return fetch(`/post/bookmark`, {
-      tag,
-      id,
-    });
+    return ipcRenderer.invoke('/put/bookmark', id, tag);
   }
 }

@@ -61,9 +61,8 @@ async function buildComicImgList(pathname: string) {
         list,
       });
     } else {
-      const ext = path.extname(fileOrDirName);
       const url = URL.pathToFileURL(path.resolve(pathname, fileOrDirName));
-      result.push(url);
+      result.push(url.href);
     }
   }
   return result;
@@ -169,5 +168,43 @@ export default class ComicService {
     return electron.dialog.showOpenDialog(this.mainWindow, {
       properties: ['openDirectory'],
     });
+  }
+
+  async removeComic(id) {
+    // 如果配置文件不存在，则创建一个新的
+    if (!fs.existsSync(this.configFileFullPath)) {
+      await fsPromisese.writeFile(
+        this.configFileFullPath,
+        JSON.stringify({
+          library: [],
+        })
+      );
+    }
+
+    const config = JSON.parse(
+      await fsPromisese.readFile(this.configFileFullPath)
+    );
+    const oldLibrary = config?.library || [];
+    const newLibrary = oldLibrary.filter((item) => {
+      return item.id !== id;
+    });
+    await fsPromisese.writeFile(
+      this.configFileFullPath,
+      JSON.stringify({
+        ...config,
+        library: newLibrary,
+      })
+    );
+    console.log('write config ', this.configFileFullPath);
+  }
+
+  async saveComicTag(id, name) {
+    const config = await this.getConfig();
+    const comics = config.library.filter((item) => {
+      return item.id === id;
+    });
+
+    comics[0].tag = name;
+    await this.saveConfig(config);
   }
 }

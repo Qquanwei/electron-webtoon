@@ -1,7 +1,7 @@
 /* eslint-disable */
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import classNames from 'classnames';
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useRecoilRefresher_UNSTABLE } from 'recoil';
 import {
   GridList,
   GridListTile,
@@ -25,6 +25,7 @@ import { Link } from 'react-router-dom';
 import ElectronWebtoonAppBar from './appbar';
 import plusSVG from './plus.svg';
 import styles from './index.css';
+import ipc from '../../ipc';
 import * as api from '../../api';
 
 // 展示收藏
@@ -33,20 +34,20 @@ function StarBar({ list }) {
     <div className={styles.starbar}>
       <h1>收藏列表</h1>
       <div className={styles.starlist}>
-      {
-        list.map((comic, index) => {
-          return (
-            <div key={index} className={styles.card}
+        {
+          list.map((comic, index) => {
+            return (
+              <div key={index} className={styles.card}
                 data-id={comic.id}
-            >
+              >
                 <Link to={`/comic/${comic.id}`} >
                   <img alt="" src={comic.cover} width="100%" />
                 </Link>
                 <div>{ comic.name } </div>
               </div>
-          );
-        })
-      }
+            );
+          })
+        }
       </div>
     </div>
   );
@@ -59,6 +60,7 @@ function IndexPage() {
   const [showMenu, setShowMenu] = useState(null);
   const [searchKey, setSearchKey] = useState('');
   const comicList = useRecoilValue(selector.comicList);
+  const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
 
   const onContextMenu = useCallback((e) => {
     e.preventDefault();
@@ -78,8 +80,8 @@ function IndexPage() {
   const onDeleteComic = useCallback(async () => {
     const element = showMenu;
     const { id } = element.dataset;
-    await api.removeComic(id);
-    window.localStorage.setItem(id, '');
+    await ipc.removeComic(id);
+    refreshComicList();
     setShowMenu(null);
   }, [showMenu]);
 

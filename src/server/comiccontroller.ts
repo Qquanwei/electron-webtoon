@@ -49,4 +49,18 @@ export default class ComicController {
   async takeDirectory(ctx) {
     ctx.body = await this.service.takeDirectory();
   }
+
+  async removeComic(ctx) {
+    const { id } = ctx.params;
+    await this.service.removeComic(id);
+    ctx.status = 200;
+    ctx.body = {};
+  }
+
+  async saveComicTag(ctx) {
+    const { tag, id } = ctx.request.body;
+    this.service.saveComicTag(id, tag);
+    ctx.status = 200;
+    ctx.body = {};
+  }
 }

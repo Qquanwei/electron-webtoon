@@ -13,9 +13,7 @@ export default class IPCOnline implements IPC {
   }
 
   async fetchComicList() {
-    return fetch(`/comic`, {
-      method: 'GET',
-    });
+    return fetch(`/comic`);
   }
 
   async fetchComic(id) {
@@ -24,5 +22,16 @@ export default class IPCOnline implements IPC {
 
   async fetchImgList(id) {
     return fetch(`/comic/${id}/imglist`);
+  }
+
+  async removeComic(id) {
+    return fetch.delete(`/comic/${id}`);
+  }
+
+  async saveComicTag(id, name) {
+    return fetch.put('/bookmark', {
+      id,
+      name,
+    });
   }
 }

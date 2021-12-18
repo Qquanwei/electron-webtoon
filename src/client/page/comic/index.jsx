@@ -6,6 +6,7 @@ import Typography from '@material-ui/core/Typography';
 import Breadcrumbs from '@material-ui/core/Breadcrumbs';
 import classNames from 'classnames';
 import { useRecoilValue } from 'recoil';
+import ipc from '../../ipc';
 import * as api from '../../api';
 import * as selector from '../../selector';
 
@@ -108,7 +109,7 @@ function ChapterList({ comicId, imgList, value, onChange }) {
   const onClick = useCallback(async (chapter) => {
     if (onChange) {
       onChange(chapter);
-      api.saveComicTag(comicId, chapter.name);
+      ipc.saveComicTag(comicId, chapter.name);
     }
   }, [onChange]);
 

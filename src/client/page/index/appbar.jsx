@@ -45,7 +45,7 @@ function ElectronWebtoonAppBar({ onSearch }) {
           <div className={styles.searchicon}>
             <SearchIcon />
           </div>
-          <form onSubmit={onSearch}>
+          <form onSubmit={onSubmitSearch}>
             <InputBase
               inputRef={searchRef}
               className={styles.searchinput}

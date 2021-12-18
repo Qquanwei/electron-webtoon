@@ -1,11 +1,30 @@
 import electron from 'electron';
+import ComicService from './comicsservice';
 
 export default function init(app, mainWindow) {
-  // 获取配置
-  electron.ipcMain.handle('getConfig', async () => {
-    /* eslint-disable-next-line */
-    return require('./config.json');
+  const service = new ComicService(mainWindow);
+
+  const { ipcMain } = electron;
+  ipcMain.handle('/comic', (event, id) => {
+    if (id) {
+      return service.getComic(id);
+    }
+    return service.getComicList();
   });
 
-  electron.ipcMain.handle('/comic', async () => {});
+  ipcMain.handle('/post/comic', (event, path) => {
+    return service.addComicToLibrary(path);
+  });
+
+  ipcMain.handle('/delete/comic', (event, id) => {
+    return service.removeComic(id);
+  });
+
+  ipcMain.handle('/put/bookmark', (event, id, tag) => {
+    return service.saveComicTag(id, tag);
+  });
+
+  ipcMain.handle('/comic/imglist', async (event, id) => {
+    return service.getComicImgList(id);
+  });
 }
