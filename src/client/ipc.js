@@ -1,3 +1,3 @@
-import IpcController from 'shared';
+import IpcController from '../shared-electron';
 
 export default new IpcController();
