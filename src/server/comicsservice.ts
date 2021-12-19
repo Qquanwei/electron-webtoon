@@ -86,9 +86,18 @@ export default class ComicService {
       this.configPath,
       this.configFilename
     );
+
+    try {
+      this.ensureConfigExists();
+    } catch (e) {
+      // 配置文件不存在，初始化
+      this.saveConfig({
+        library: [],
+      });
+    }
   }
 
-  private async ensureConfigExists() {
+  private ensureConfigExists() {
     const exists = fs.existsSync(this.configFileFullPath);
 
     if (exists) {
@@ -161,13 +170,13 @@ export default class ComicService {
   }
 
   async getComic(id) {
-    await this.ensureConfigExists();
+    this.ensureConfigExists();
     const config = await this.getConfig();
     return R.find(R.propEq('id', id), config.library);
   }
 
   async addComicToLibrary(comicpath: string) {
-    await this.ensureConfigExists();
+    this.ensureConfigExists();
     const config = await this.getConfig();
     const newLibrary = (config.library || []).concat(
       await this.buildNewComic(comicpath)
