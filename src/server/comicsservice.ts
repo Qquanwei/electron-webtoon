@@ -44,7 +44,7 @@ function flatten(tree) {
 }
 
 // deep 子文件夹个数
-async function buildComicImgList(pathname: string, deep = 1000) {
+async function buildComicImgList(pathname: string, deep = 1000, makeUrl) {
   const files = await fsPromisese.readdir(pathname);
 
   const legalFiles = files.filter((file) => {
@@ -57,27 +57,32 @@ async function buildComicImgList(pathname: string, deep = 1000) {
     if (isDirectory(path.resolve(pathname, fileOrDirName))) {
       // eslint-disable-next-line
       const list = await buildComicImgList(
-        path.resolve(pathname, fileOrDirName)
+        path.resolve(pathname, fileOrDirName),
+        deep,
+        makeUrl
       );
       result.push({
         name: fileOrDirName,
         list,
       });
     } else {
-      const url = URL.pathToFileURL(path.resolve(pathname, fileOrDirName));
-      result.push(url.href);
+      result.push(makeUrl(path.resolve(pathname, fileOrDirName)));
     }
   }
   return result;
 }
 
-async function getCoverUrl(comicPath) {
-  const list = flatten(await buildComicImgList(comicPath, 1));
-  return list[0] || list[1];
+async function getCoverUrl(comicPath, makeUrl) {
+  try {
+    const list = flatten(await buildComicImgList(comicPath, 2, makeUrl));
+    return list[0] || list[1];
+  } catch (e) {
+    return null;
+  }
 }
 
 export default class ComicService {
-  constructor(mainWindow) {
+  constructor(mainWindow, makeUrl) {
     this.mainWindow = mainWindow;
     this.basePath = app.getPath('userData');
     this.configPath = this.basePath;
@@ -86,6 +91,11 @@ export default class ComicService {
       this.configPath,
       this.configFilename
     );
+    this.makeUrl =
+      makeUrl ||
+      ((filename) => {
+        return URL.pathToFileURL(filename).href;
+      });
 
     try {
       this.ensureConfigExists();
@@ -127,7 +137,7 @@ export default class ComicService {
         library.map(async (comic) => {
           return {
             ...comic,
-            cover: await getCoverUrl(comic.path),
+            cover: await getCoverUrl(comic.path, this.makeUrl),
           };
         })
       );
@@ -153,7 +163,7 @@ export default class ComicService {
         throw error;
       } else {
         const comic = comics[0];
-        return await buildComicImgList(comic.path);
+        return await buildComicImgList(comic.path, 100, this.makeUrl);
       }
     }
   }
@@ -163,7 +173,7 @@ export default class ComicService {
     const ps = pathstr.split(path.sep);
     return {
       path: pathstr,
-      cover: await getCoverUrl(pathstr),
+      cover: await getCoverUrl(pathstr, this.makeUrl),
       name: ps[ps.length - 1],
       id: uuidv4(),
     };

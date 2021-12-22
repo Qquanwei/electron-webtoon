@@ -1,11 +1,2 @@
-import { ipcRenderer } from 'electron';
-
-export function takeDirectory() {
-  return ipcRenderer.invoke('selectDirectory');
-}
-
-export function getConfig() {
-  return ipcRenderer.invoke('getConfig');
-}
-
+// eslint-disable-next-line import/prefer-default-export
 export const unused = 1;

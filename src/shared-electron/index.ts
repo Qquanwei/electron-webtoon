@@ -1,6 +1,8 @@
 import { ipcRenderer } from 'electron';
 import { IPC } from '../shared';
 
+console.log('加载了我');
+
 export default class ElectronIPC implements IPC {
   takeDirectory() {
     return ipcRenderer.invoke('/take-directory');
@@ -11,7 +13,10 @@ export default class ElectronIPC implements IPC {
   }
 
   fetchComicList() {
-    return ipcRenderer.invoke('/comic');
+    console.log('调用了');
+    const a = ipcRenderer.invoke('/comic');
+    console.log(a);
+    return a;
   }
 
   fetchComic(id: string) {
@@ -28,5 +33,9 @@ export default class ElectronIPC implements IPC {
 
   saveComicTag(id: string, tag: string) {
     return ipcRenderer.invoke('/put/bookmark', id, tag);
+  }
+
+  startLocalServer() {
+    return ipcRenderer.invoke('/startlocalserver');
   }
 }

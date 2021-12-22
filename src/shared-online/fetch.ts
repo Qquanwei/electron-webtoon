@@ -1,7 +1,8 @@
 import config from '../server/config.json';
 
+const host = 'http://192.168.3.43';
 const myfetch = (url) => {
-  return fetch(`http://localhost:${config.localserverport}${url}`, {
+  return fetch(`${host}:${config.localserverport}${url}`, {
     headers: {
       'Content-Type': 'application/json',
     },
@@ -15,7 +16,7 @@ const myfetch = (url) => {
 };
 
 myfetch.post = (url, data) => {
-  return fetch(`http://localhost:${config.localserverport}${url}`, {
+  return fetch(`${host}:${config.localserverport}${url}`, {
     method: 'POST',
     body: JSON.stringify(data),
     headers: {
@@ -31,7 +32,7 @@ myfetch.post = (url, data) => {
 };
 
 myfetch.delete = (url) => {
-  return fetch(`http://localhost:${config.localserverport}${url}`, {
+  return fetch(`${host}:${config.localserverport}${url}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -46,7 +47,7 @@ myfetch.delete = (url) => {
 };
 
 myfetch.put = (url, data) => {
-  return fetch(`http://localhost:${config.localserverport}${url}`, {
+  return fetch(`${host}:${config.localserverport}${url}`, {
     method: 'PUT',
     body: JSON.stringify(data),
     headers: {

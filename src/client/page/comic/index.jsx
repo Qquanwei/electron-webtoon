@@ -8,7 +8,6 @@ import AppIcon from '@material-ui/icons/Apps';
 import classNames from 'classnames';
 import { useRecoilValue } from 'recoil';
 import ipc from '../../ipc';
-import * as api from '../../api';
 import * as selector from '../../selector';
 
 import styles from './index.css';
