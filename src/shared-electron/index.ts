@@ -1,8 +1,6 @@
 import { ipcRenderer } from 'electron';
 import { IPC } from '../shared';
 
-console.log('加载了我');
-
 export default class ElectronIPC implements IPC {
   takeDirectory() {
     return ipcRenderer.invoke('/take-directory');
@@ -37,5 +35,12 @@ export default class ElectronIPC implements IPC {
 
   startLocalServer() {
     return ipcRenderer.invoke('/startlocalserver');
+  }
+
+  addLog(type = 'info', txt) {
+    return ipcRenderer.invoke('/log', {
+      type,
+      txt,
+    });
   }
 }

@@ -7,12 +7,16 @@ function QrcodeComponent() {
   const imgRef = useRef();
 
   useEffect(async () => {
-    const server = await (await ipc).startLocalServer();
-    const qr = Qrcode(0, 'H');
-    qr.addData(`http://192.168.3.43:${server.port}`);
-    qr.make();
-    const imageurl = qr.createDataURL();
-    imgRef.current.src = imageurl;
+    try {
+      const server = await (await ipc).startLocalServer();
+      const qr = Qrcode(0, 'H');
+      qr.addData(`http://${server.address}:${server.port}`);
+      qr.make();
+      const imageurl = qr.createDataURL();
+      imgRef.current.src = imageurl;
+    } catch (e) {
+      (await ipc).addLog('error', e.message);
+    }
   }, []);
 
   return (

@@ -19,12 +19,12 @@ function responseIMG(ctx) {
   ctx.body = fs.createReadStream(url);
 }
 
-export default async function hostServer(mainWindow) {
+export default async function hostServer(mainWindow, address) {
   const app = new Koa();
   const router = new Router();
 
   function makeUrl(filename) {
-    return `http://192.168.3.43:${config.localserverport}/img?url=${encodeURIComponent(filename)}`;
+    return `http://${address}:${config.localserverport}/img?url=${encodeURIComponent(filename)}`;
   }
   const controller = new ComicController(mainWindow, makeUrl);
   router
@@ -37,18 +37,18 @@ export default async function hostServer(mainWindow) {
     .get('/take-directory', controller.takeDirectory.bind(controller))
     .get('/img', responseIMG)
 
-
   app.use(cors());
   app.use(bodyParser());
   app.use(router.routes());
   app.use(router.allowedMethods());
-  app.use(KoaStatic(path.resolve(__dirname, '../')));
+  // dev and prod mode index.html has difference path
+  if (process.env.NODE_ENV !== 'development') {
+    app.use(KoaStatic(path.resolve(__dirname, './')));
+  } else {
+    app.use(KoaStatic(path.resolve(__dirname, '../')));
+  }
 
   return http.createServer(
-    {
-      key: fs.readFileSync(path.resolve(__dirname, './ssl/key.pem')),
-      cert: fs.readFileSync(path.resolve(__dirname, './ssl/cert.pem'))
-    },
     app.callback()
   ).listen({
     host: '0.0.0.0',

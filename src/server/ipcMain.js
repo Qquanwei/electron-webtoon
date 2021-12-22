@@ -1,5 +1,6 @@
 import electron from 'electron';
 import os from 'os';
+import Log from 'electron-log';
 import ComicService from './comicsservice';
 import hostServer from './localserver';
 
@@ -36,11 +37,20 @@ export default function init(app, mainWindow) {
   });
 
   ipcMain.handle('/startlocalserver', async () => {
+    const address = '192.168.3.43';
     if (!server) {
-      server = await hostServer(mainWindow);
+      server = await hostServer(mainWindow, address);
     }
     return {
+      address,
       port: server.address().port,
     };
+  });
+  ipcMain.handle('/log', async ({ type, txt }) => {
+    if (Log[type]) {
+      Log[type](txt);
+    } else {
+      console.error('unknown log type:', type, txt);
+    }
   });
 }

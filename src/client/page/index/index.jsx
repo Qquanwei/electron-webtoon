@@ -78,7 +78,7 @@ function IndexPage() {
   const onDeleteComic = useCallback(async () => {
     const element = showMenu;
     const { id } = element.dataset;
-    await ipc.removeComic(id);
+    await (await ipc).removeComic(id);
     refreshComicList();
     setShowMenu(null);
   }, [showMenu]);
