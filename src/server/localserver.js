@@ -26,6 +26,7 @@ export default async function hostServer(mainWindow, address) {
   function makeUrl(filename) {
     return `http://${address}:${config.localserverport}/img?url=${encodeURIComponent(filename)}`;
   }
+
   const controller = new ComicController(mainWindow, makeUrl);
   router
     .put('/bookmark', controller.saveComicTag.bind(controller))
@@ -48,12 +49,12 @@ export default async function hostServer(mainWindow, address) {
     app.use(KoaStatic(path.resolve(__dirname, '../')));
   }
 
-  return http.createServer(
-    app.callback()
-  ).listen({
-    host: '0.0.0.0',
-    port: config.localserverport
-  }, () => {
-    console.log('本地服务已开启');
+  return new Promise((resolve) => {
+    const server = app.listen({
+      host: '0.0.0.0',
+      port: config.localserverport
+    }, () => {
+      resolve(server);
+    })
   });
 }

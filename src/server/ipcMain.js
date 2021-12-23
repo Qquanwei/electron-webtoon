@@ -1,6 +1,7 @@
 import electron from 'electron';
 import os from 'os';
 import Log from 'electron-log';
+import network from 'network';
 import ComicService from './comicsservice';
 import hostServer from './localserver';
 
@@ -37,7 +38,17 @@ export default function init(app, mainWindow) {
   });
 
   ipcMain.handle('/startlocalserver', async () => {
-    const address = '192.168.3.43';
+    // need validate
+    const address = await new Promise((resolve, reject) => {
+      network.get_private_ip(function (error, ip) {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(ip);
+        }
+      });
+    });
+
     if (!server) {
       server = await hostServer(mainWindow, address);
     }
@@ -46,6 +57,7 @@ export default function init(app, mainWindow) {
       port: server.address().port,
     };
   });
+
   ipcMain.handle('/log', async ({ type, txt }) => {
     if (Log[type]) {
       Log[type](txt);

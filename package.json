@@ -264,6 +264,7 @@
     "koa-router": "^10.0.0",
     "koa-static": "^5.0.0",
     "mime-types": "^2.1.31",
+    "network": "^0.6.0",
     "qrcode-generator": "^1.4.4",
     "ramda": "^0.27.1",
     "react": "^17.0.1",
