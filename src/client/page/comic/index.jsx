@@ -8,7 +8,6 @@ import AppIcon from '@material-ui/icons/Apps';
 import classNames from 'classnames';
 import { useRecoilValue } from 'recoil';
 import ipc from '../../ipc';
-import * as api from '../../api';
 import * as selector from '../../selector';
 
 import styles from './index.css';
@@ -48,26 +47,42 @@ function ImgList({ imgList }) {
   }
 
   const autoScrollRef = useRef(false);
+  const timerRef = useRef(0);
 
   const onMouseUp = useCallback(() => {
     autoScrollRef.current = false;
+    clearTimeout(timerRef.current);
   }, []);
 
-  const onMouseDown = useCallback(() => {
+  const onMouseDown = useCallback((event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    event.nativeEvent.preventDefault();
     function scroll() {
-      document.scrollingElement.scrollTop += 5;
+      document.scrollingElement.scrollTop += 2;
       if (autoScrollRef.current) {
         requestAnimationFrame(scroll);
       }
     }
-    autoScrollRef.current = true;
-    requestAnimationFrame(scroll);
+    timerRef.current = setTimeout(() => {
+      autoScrollRef.current = true;
+      requestAnimationFrame(scroll);
+    }, 200);
   }, []);
 
   useEffect(() => {
     document.scrollingElement.scrollTop = 0;
   }, [imgList]);
-  return <div className={styles.imglist} onMouseUp={onMouseUp} onMouseDown={onMouseDown}>{renderList(imgList)}</div>;
+  return (
+    <div
+      className={styles.imglist}
+      onTouchStart={onMouseDown}
+      onTouchEnd={onMouseUp}
+      onMouseUp={onMouseUp}
+      onMouseDown={onMouseDown}>
+      {renderList(imgList)}
+    </div>
+  );
 }
 
 import List from '@material-ui/core/List';

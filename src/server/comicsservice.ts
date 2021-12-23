@@ -8,6 +8,7 @@ import * as R from 'ramda';
 import path from 'path';
 import fs from 'fs';
 import fsPromisese from 'fs.promises';
+import Store from 'electron-store';
 
 function isDirectory(fullpath) {
   return fs.lstatSync(fullpath).isDirectory();
@@ -44,7 +45,7 @@ function flatten(tree) {
 }
 
 // deep 子文件夹个数
-async function buildComicImgList(pathname: string, deep = 1000) {
+async function buildComicImgList(pathname: string, deep = 1000, makeUrl) {
   const files = await fsPromisese.readdir(pathname);
 
   const legalFiles = files.filter((file) => {
@@ -57,104 +58,90 @@ async function buildComicImgList(pathname: string, deep = 1000) {
     if (isDirectory(path.resolve(pathname, fileOrDirName))) {
       // eslint-disable-next-line
       const list = await buildComicImgList(
-        path.resolve(pathname, fileOrDirName)
+        path.resolve(pathname, fileOrDirName),
+        deep,
+        makeUrl
       );
       result.push({
         name: fileOrDirName,
         list,
       });
     } else {
-      const url = URL.pathToFileURL(path.resolve(pathname, fileOrDirName));
-      result.push(url.href);
+      result.push(makeUrl(path.resolve(pathname, fileOrDirName)));
     }
   }
   return result;
 }
 
-async function getCoverUrl(comicPath) {
-  const list = flatten(await buildComicImgList(comicPath, 1));
-  return list[0] || list[1];
+async function getCoverUrl(comicPath, makeUrl) {
+  try {
+    const list = flatten(await buildComicImgList(comicPath, 2, makeUrl));
+    return list[0] || list[1];
+  } catch (e) {
+    return null;
+  }
 }
 
 export default class ComicService {
-  constructor(mainWindow) {
+  constructor(mainWindow, makeUrl) {
     this.mainWindow = mainWindow;
-    this.basePath = app.getPath('userData');
-    this.configPath = this.basePath;
-    this.configFilename = '.electron-webtton-comic.json';
-    this.configFileFullPath = path.resolve(
-      this.configPath,
-      this.configFilename
-    );
 
-    try {
-      this.ensureConfigExists();
-    } catch (e) {
-      // 配置文件不存在，初始化
-      this.saveConfig({
+    this.store = new Store({
+      default: {
         library: [],
+      },
+      clearInvalidConfig: true,
+    });
+    // old version config file
+    try {
+      const basePath = app.getPath('userData');
+      const configPath = basePath;
+      const configFilename = '.electron-webtton-comic.json';
+      const configFileFullPath = path.resolve(configPath, configFilename);
+
+      if (fs.existsSync(configFileFullPath)) {
+        // migrate
+        const { library } = JSON.parse(fs.readFileSync(configFileFullPath));
+        this.store.set('library', library);
+        fs.unlinkSync(configFileFullPath);
+      }
+    } catch (e) {
+      console.log('migrate old config file error:', e);
+    }
+
+    this.makeUrl =
+      makeUrl ||
+      ((filename) => {
+        return URL.pathToFileURL(filename).href;
       });
-    }
-  }
-
-  private ensureConfigExists() {
-    const exists = fs.existsSync(this.configFileFullPath);
-
-    if (exists) {
-      return;
-    }
-
-    throw new Error('配置文件不存在');
-  }
-
-  async getConfig() {
-    return JSON.parse(await fsPromisese.readFile(this.configFileFullPath));
-  }
-
-  async saveConfig(config: any) {
-    console.log('write config:', this.configFileFullPath);
-    await fsPromisese.writeFile(
-      this.configFileFullPath,
-      JSON.stringify(config)
-    );
   }
 
   async getComicList() {
-    if (fs.existsSync(this.configFileFullPath)) {
-      const str = await fsPromisese.readFile(this.configFileFullPath);
-      const { library } = JSON.parse(str);
-      return Promise.all(
-        library.map(async (comic) => {
-          return {
-            ...comic,
-            cover: await getCoverUrl(comic.path),
-          };
-        })
-      );
-    }
-    return [];
+    const library = this.store.get('library');
+    return Promise.all(
+      library.map(async (comic) => {
+        return {
+          ...comic,
+          cover: await getCoverUrl(comic.path, this.makeUrl),
+        };
+      })
+    );
   }
 
   async getComicImgList(id) {
     // 如果配置文件不存在，则创建一个新的
-    if (!fs.existsSync(this.configFileFullPath)) {
+    const library = this.store.get('library');
+    const comics = library.filter((comic) => {
+      return comic.id === id;
+    });
+
+    if (!comics.length === 0) {
       const error = new Error();
       error.code = 404;
       throw error;
     } else {
-      const config = await this.getConfig();
-      const comics = config.library.filter((comic) => {
-        return comic.id === id;
-      });
-
-      if (!comics.length === 0) {
-        const error = new Error();
-        error.code = 404;
-        throw error;
-      } else {
-        const comic = comics[0];
-        return await buildComicImgList(comic.path);
-      }
+      const comic = comics[0];
+      return await buildComicImgList(comic.path, 100, this.makeUrl);
     }
   }
 
@@ -163,28 +150,23 @@ export default class ComicService {
     const ps = pathstr.split(path.sep);
     return {
       path: pathstr,
-      cover: await getCoverUrl(pathstr),
+      cover: await getCoverUrl(pathstr, this.makeUrl),
       name: ps[ps.length - 1],
       id: uuidv4(),
     };
   }
 
   async getComic(id) {
-    this.ensureConfigExists();
-    const config = await this.getConfig();
-    return R.find(R.propEq('id', id), config.library);
+    const library = this.store.get('library');
+    return R.find(R.propEq('id', id), library);
   }
 
   async addComicToLibrary(comicpath: string) {
-    this.ensureConfigExists();
-    const config = await this.getConfig();
-    const newLibrary = (config.library || []).concat(
+    const library = this.store.get('library');
+    const newLibrary = (library || []).concat(
       await this.buildNewComic(comicpath)
     );
-    await this.saveConfig({
-      ...config,
-      library: newLibrary,
-    });
+    this.store.set('library', newLibrary);
   }
 
   // 打开文件选择对话框
@@ -195,40 +177,20 @@ export default class ComicService {
   }
 
   async removeComic(id) {
-    // 如果配置文件不存在，则创建一个新的
-    if (!fs.existsSync(this.configFileFullPath)) {
-      await fsPromisese.writeFile(
-        this.configFileFullPath,
-        JSON.stringify({
-          library: [],
-        })
-      );
-    }
-
-    const config = JSON.parse(
-      await fsPromisese.readFile(this.configFileFullPath)
-    );
-    const oldLibrary = config?.library || [];
+    const oldLibrary = this.store.get('library');
     const newLibrary = oldLibrary.filter((item) => {
       return item.id !== id;
     });
-    await fsPromisese.writeFile(
-      this.configFileFullPath,
-      JSON.stringify({
-        ...config,
-        library: newLibrary,
-      })
-    );
-    console.log('write config ', this.configFileFullPath);
+    this.store.set('library', newLibrary);
   }
 
   async saveComicTag(id, name) {
-    const config = await this.getConfig();
-    const comics = config.library.filter((item) => {
+    const library = this.store.get('library');
+    const comics = library.filter((item) => {
       return item.id === id;
     });
 
     comics[0].tag = name;
-    await this.saveConfig(config);
+    this.store.set('library', library);
   }
 }

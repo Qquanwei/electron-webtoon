@@ -1,8 +1,8 @@
 import ComicService from './comicsservice';
 
 export default class ComicController {
-  constructor(mainWindow) {
-    this.service = new ComicService(mainWindow);
+  constructor(mainWindow, makeUrl) {
+    this.service = new ComicService(mainWindow, makeUrl);
   }
 
   async getConfig(ctx, next) {

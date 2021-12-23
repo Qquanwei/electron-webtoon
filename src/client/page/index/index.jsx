@@ -55,7 +55,6 @@ function StarBar({ list }) {
 import * as  selector from '../../selector';
 
 function IndexPage() {
-  // const [comicList, setComicList] = useState([]);
   const [showMenu, setShowMenu] = useState(null);
   const [searchKey, setSearchKey] = useState('');
   const comicList = useRecoilValueMemo(selector.comicList);
@@ -79,7 +78,7 @@ function IndexPage() {
   const onDeleteComic = useCallback(async () => {
     const element = showMenu;
     const { id } = element.dataset;
-    await ipc.removeComic(id);
+    await (await ipc).removeComic(id);
     refreshComicList();
     setShowMenu(null);
   }, [showMenu]);

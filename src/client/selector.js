@@ -3,7 +3,9 @@ import ipc from './ipc';
 
 export const comicList = selector({
   key: 'comicList',
-  get: () => ipc.fetchComicList(),
+  get: async () => {
+    return (await ipc).fetchComicList();
+  },
 });
 
 function sortImgList(imgList) {
@@ -43,8 +45,8 @@ export const comicDetail = selectorFamily({
   key: 'comicDetailFamily',
   get: (id) => async () => {
     const [comic, imgList] = await Promise.all([
-      ipc.fetchComic(id),
-      ipc.fetchImgList(id),
+      (await ipc).fetchComic(id),
+      (await ipc).fetchImgList(id),
     ]);
 
     return {

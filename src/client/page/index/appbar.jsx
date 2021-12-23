@@ -6,15 +6,19 @@ import Typography from '@material-ui/core/Typography';
 import InputBase from '@material-ui/core/InputBase';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
+import ScreenLockPortraitIcon from '@material-ui/icons/ScreenLockPortrait';
+import Popup from 'reactjs-popup';
+import 'reactjs-popup/dist/index.css';
 
 import { useRecoilRefresher_UNSTABLE } from 'recoil';
-
+import Qrcode from './qrcode';
 import { version } from '../../../package.json';
 import * as selector from '../../selector';
 import ipc from '../../ipc';
 import styles from './index.css';
 
 function ElectronWebtoonAppBar({ onSearch }) {
+  const imgRef = useRef(null);
   const searchRef = useRef(null);
   const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
 
@@ -25,9 +29,9 @@ function ElectronWebtoonAppBar({ onSearch }) {
   }, []);
 
   const onClickAdd = useCallback(async () => {
-    const path = await ipc.takeDirectory();
+    const path = await (await ipc).takeDirectory();
     if (!path.canceled) {
-      await ipc.addComicToLibrary(path.filePaths[0]);
+      await (await ipc).addComicToLibrary(path.filePaths[0]);
       refreshComicList();
     }
   }, []);
@@ -52,6 +56,13 @@ function ElectronWebtoonAppBar({ onSearch }) {
           />
         </form>
       </div>
+      <Popup position="bottom center" trigger={
+        <button className={styles.mobilebtn}>
+          <ScreenLockPortraitIcon />
+        </button>
+      }>
+        <Qrcode />
+      </Popup>
       <button className={styles.addbtn} onClick={onClickAdd}>+</button>
       <div  />
     </div>

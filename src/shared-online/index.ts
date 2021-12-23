@@ -34,4 +34,8 @@ export default class IPCOnline implements IPC {
       name,
     });
   }
+
+  async addLog() {
+    // online log ignored
+  }
 }

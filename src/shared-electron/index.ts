@@ -11,7 +11,10 @@ export default class ElectronIPC implements IPC {
   }
 
   fetchComicList() {
-    return ipcRenderer.invoke('/comic');
+    console.log('调用了');
+    const a = ipcRenderer.invoke('/comic');
+    console.log(a);
+    return a;
   }
 
   fetchComic(id: string) {
@@ -28,5 +31,16 @@ export default class ElectronIPC implements IPC {
 
   saveComicTag(id: string, tag: string) {
     return ipcRenderer.invoke('/put/bookmark', id, tag);
+  }
+
+  startLocalServer() {
+    return ipcRenderer.invoke('/startlocalserver');
+  }
+
+  addLog(type = 'info', txt) {
+    return ipcRenderer.invoke('/log', {
+      type,
+      txt,
+    });
   }
 }
