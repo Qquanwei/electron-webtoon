@@ -42,7 +42,7 @@
 .toolbar {
   position: fixed;
   right: 0;
-  top: 20px;
+  bottom: 20px;
   padding: 0 20px;
   cursor: pointer;
   z-index: 1;
