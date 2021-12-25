@@ -42,7 +42,7 @@ h1 {
 .card {
   position: relative;
   width: 300px;
-  height: 200px;
+  height: 400px;
   margin-top: 20px;
   overflow: hidden;
   display: flex;
@@ -60,7 +60,10 @@ h1 {
 .card:hover .name {
   bottom: 50%;
   transition: translateY(50%);
-  color: #000;
+  color: #fff;
+}
+
+.card:hover a {
 }
 .card:hover img {
   filter: blur(10px);

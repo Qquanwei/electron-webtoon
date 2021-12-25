@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -28,8 +28,30 @@ function ElectronWebtoonAppBar({ onSearch }) {
     onSearch(searchRef.current.value);
   }, []);
 
-  const onClickAdd = useCallback(async () => {
+  useEffect(() => {
+    async function work() {
+      (await ipc).onCompressFile(({ filename, imgname }) => {
+        document.title = `处理 ${filename} ${imgname}`
+      });
+
+      (await ipc).onCompressDone(() => {
+        document.title = '处理完毕';
+        refreshComicList();
+        setTimeout(() => {
+          document.title = 'ElectronWebtoon';
+        }, 1000);
+      });
+    }
+    work();
+  }, [refreshComicList]);
+
+  const onClickAddFile = useCallback(async () => {
+    (await ipc).takeCompressAndAddToComic();
+  }, []);
+
+  const onClickAddFolder = useCallback(async () => {
     const path = await (await ipc).takeDirectory();
+
     if (!path.canceled) {
       await (await ipc).addComicToLibrary(path.filePaths[0]);
       refreshComicList();
@@ -63,7 +85,12 @@ function ElectronWebtoonAppBar({ onSearch }) {
       }>
         <Qrcode />
       </Popup>
-      <button className={styles.addbtn} onClick={onClickAdd}>+</button>
+      <Popup position="bottom right" trigger={
+        <button className={styles.addbtn}>+</button>
+      }>
+        <button onClick={onClickAddFolder}>from folder</button>
+        <button onClick={onClickAddFile}>from file</button>
+      </Popup>
       <div  />
     </div>
   );

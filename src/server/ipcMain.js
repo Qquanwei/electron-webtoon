@@ -58,6 +58,10 @@ export default function init(app, mainWindow) {
     };
   });
 
+  ipcMain.handle('/take-compress-and-add-to-comic', async () => {
+    await service.takeCompressAndAddToComic();
+  });
+
   ipcMain.handle('/log', async ({ type, txt }) => {
     if (Log[type]) {
       Log[type](txt);

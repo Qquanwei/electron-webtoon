@@ -2,8 +2,20 @@ import { ipcRenderer } from 'electron';
 import { IPC } from '../shared';
 
 export default class ElectronIPC implements IPC {
+  onCompressFile(callback) {
+    ipcRenderer.on('decompress', (_, data) => callback(data));
+  }
+
+  onCompressDone(callback) {
+    ipcRenderer.on('decompress-done', (_, data) => callback(data));
+  }
+
   takeDirectory() {
     return ipcRenderer.invoke('/take-directory');
+  }
+
+  takeCompressAndAddToComic() {
+    return ipcRenderer.invoke('/take-compress-and-add-to-comic');
   }
 
   addComicToLibrary(path: string) {
@@ -11,10 +23,7 @@ export default class ElectronIPC implements IPC {
   }
 
   fetchComicList() {
-    console.log('调用了');
-    const a = ipcRenderer.invoke('/comic');
-    console.log(a);
-    return a;
+    return ipcRenderer.invoke('/comic');
   }
 
   fetchComic(id: string) {

@@ -2,6 +2,10 @@ import IPC from '../shared';
 import fetch from './fetch';
 
 export default class IPCOnline implements IPC {
+  onCompressFile() {}
+
+  onCompressDone() {}
+
   async takeDirectory() {
     return fetch('/take-directory');
   }
