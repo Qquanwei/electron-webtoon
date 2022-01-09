@@ -51,20 +51,20 @@ h1 {
   transition: all 0.3s ease;
   flex-shrink: 0;
   flex-grow: 1;
+
+  display: flex;
+  flex-flow: column;
+}
+
+.card-content {
+  height: 380px;
+  overflow: hidden;
 }
 
 .card:hover {
   box-shadow: 0px 0px 11px 3px #000;
 }
 
-.card:hover .name {
-  bottom: 50%;
-  transition: translateY(50%);
-  color: #fff;
-}
-
-.card:hover a {
-}
 .card:hover img {
   filter: blur(10px);
 }
@@ -82,7 +82,7 @@ h1 {
   left: 0;
   right: 0;
   opacity: 1;
-  color: #333;
+  color: #fff;
   text-align: center;
   transition: all 0.3s ease;
 }
@@ -93,10 +93,6 @@ h1 {
   border: 1px solid #333;
   transition: opacity 0.3s ease;
   cursor: pointer;
-}
-
-.addcard:hover {
-  opacity: 1;
 }
 
 .support {

@@ -230,8 +230,9 @@ export default class ComicService {
     const comics = library.filter((item) => {
       return item.id === id;
     });
-
-    comics[0].tag = name;
+    if (comics.length) {
+      comics[0].tag = name;
+    }
     this.store.set('library', library);
   }
 }

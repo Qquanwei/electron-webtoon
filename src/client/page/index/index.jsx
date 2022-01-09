@@ -108,12 +108,14 @@ function IndexPage() {
               <div key={index} className={styles.card}
                 data-id={comic.id}
                 onContextMenu={onContextMenu}>
-                <Link to={`/comic/${comic.id}`} >
-                  <img alt="" src={comic.cover} width="100%" />
-                  <div className={styles.name }>
-                    { comic.name}
-                  </div>
-                </Link>
+                <div className={styles['card-content']}>
+                  <Link to={`/comic/${comic.id}`} >
+                    <img alt="" src={comic.cover} width="100%" />
+                  </Link>
+                </div>
+                <div className={styles.name }>
+                  { comic.name}
+                </div>
               </div>
             );
           })}

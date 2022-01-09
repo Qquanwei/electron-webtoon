@@ -6,7 +6,8 @@ import Typography from '@material-ui/core/Typography';
 import Breadcrumbs from '@material-ui/core/Breadcrumbs';
 import AppIcon from '@material-ui/icons/Apps';
 import classNames from 'classnames';
-import { useRecoilValue } from 'recoil';
+import { withLocalRecoilRoot } from '../../utils';
+import { useRecoilValue, useRecoilRefresher_UNSTABLE } from 'recoil';
 import ipc from '../../ipc';
 import * as selector from '../../selector';
 
@@ -96,7 +97,7 @@ function ChapterList({ comicId, imgList, value, onChange }) {
   const onClick = useCallback(async (chapter) => {
     if (onChange) {
       onChange(chapter);
-      ipc.saveComicTag(comicId, chapter.name);
+      (await ipc).saveComicTag(comicId, chapter.name);
     }
   }, [onChange]);
 
@@ -153,6 +154,11 @@ function ComicPage({ history }) {
   const { id } = useParams();
   const [toggleChapter, setToggleChapter] = useState(false);
   const { imgList, comic } = useRecoilValue(selector.comicDetail(id));
+  const refresh = useRecoilRefresher_UNSTABLE(selector.comicDetail(id));
+
+  useEffect(() => {
+    return refresh;
+  }, [refresh]);
 
   const [chapter, setChapter] = useState(() => {
     const defaultChapter = imgList.filter(item => {
@@ -182,4 +188,4 @@ function ComicPage({ history }) {
   );
 }
 
-export default ComicPage;
+export default withLocalRecoilRoot(ComicPage);
