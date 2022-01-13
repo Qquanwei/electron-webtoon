@@ -34,7 +34,7 @@ const supportCompressExts = [
   'zip',
   'lzma',
   'cab',
-  'tar.bz2'
+  'tar.bz2',
 ];
 
 function extNameLegal(file) {

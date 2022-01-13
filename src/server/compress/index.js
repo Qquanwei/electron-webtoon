@@ -12,9 +12,9 @@ export default async function decompress(file, outputPath, onEntry, onDone) {
       fs.mkdirSync(path.resolve(outputPath, outputDirname));
     }
 
-    _7z.unpack(file, path.resolve(outputPath, outputDirname), err => {
+    _7z.unpack(file, path.resolve(outputPath, outputDirname), (err) => {
       if (err) {
-        onEntry(`${compressFile}解压失败:${err.message}`);
+        onEntry(`${file}解压失败:${err.message}`);
         reject(err);
       } else {
         onDone({ pathname: path.resolve(outputPath, outputDirname) });
