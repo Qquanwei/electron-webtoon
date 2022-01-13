@@ -101,7 +101,7 @@ function IndexPage() {
 
 
         <div className={styles.gridlist}>
-          {comicList.filter(comic => {
+          {[...comicList].reverse().filter(comic => {
             return comic.name.indexOf(searchKey) !== -1
           }).map((comic, index) => {
             return (
@@ -109,7 +109,9 @@ function IndexPage() {
                 data-id={comic.id}
                 onContextMenu={onContextMenu}>
                 <Link to={`/comic/${comic.id}`} >
-                  <img alt="" src={comic.cover} width="100%" />
+                  <div className={styles['card-content']}>
+                    <img alt="" src={comic.cover} width="100%" />
+                  </div>
                   <div className={styles.name }>
                     { comic.name}
                   </div>

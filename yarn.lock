@@ -2,10 +2,22 @@
 # yarn lockfile v1
 
 
+"7zip-bin@^5.1.1":
+  version "5.1.1"
+  resolved "https://registry.npmmirror.com/7zip-bin/download/7zip-bin-5.1.1.tgz#9274ec7460652f9c632c59addf24efb1684ef876"
+  integrity sha1-knTsdGBlL5xjLFmt3yTvsWhO+HY=
+
 "7zip-bin@~5.0.3":
   version "5.0.3"
   resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-5.0.3.tgz#bc5b5532ecafd923a61f2fb097e3b108c0106a3f"
   integrity sha512-GLyWIFBbGvpKPGo55JyRZAo4lVbnBiD52cKlw/0Vt+wnmKvWJkpZvsjVoaIolyBXDeAQKSicRtqFNPem9w0WYA==
+
+"7zip-min@^1.4.1":
+  version "1.4.1"
+  resolved "https://registry.npmmirror.com/7zip-min/download/7zip-min-1.4.1.tgz#f3578c0e42bf4f2534378ec7dc09d56c56a3b02c"
+  integrity sha512-xiK95rSNr6cXB7UXVLJdrxtNrlXBqZrMhcKlq0S5Rsg6vVhh+9OSUyQIba8bSAGgHjpETlWXAYEuVfxYGEfCWA==
+  dependencies:
+    "7zip-bin" "^5.1.1"
 
 "@babel/code-frame@7.12.11":
   version "7.12.11"
@@ -6409,8 +6421,8 @@ iconv-lite@0.4.24, iconv-lite@^0.4.13, iconv-lite@^0.4.4:
 
 iconv-lite@^0.6.2:
   version "0.6.3"
-  resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.6.3.tgz#a52f80bf38da1952eb5c681790719871a1a72501"
-  integrity sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==
+  resolved "https://registry.npmmirror.com/iconv-lite/download/iconv-lite-0.6.3.tgz#a52f80bf38da1952eb5c681790719871a1a72501"
+  integrity sha1-pS+AvzjaGVLrXGgXkHGYcaGnJQE=
   dependencies:
     safer-buffer ">= 2.1.2 < 3.0.0"
 
@@ -11487,9 +11499,9 @@ tar@^4:
     yallist "^3.0.3"
 
 tar@^6.0.2, tar@^6.0.5:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/tar/-/tar-6.1.0.tgz#d1724e9bcc04b977b18d5c573b333a2207229a83"
-  integrity sha512-DUCttfhsnLCjwoDoFcI+B2iJgYa93vBnDUATYEeRx6sntCTdN01VnqsIuTlALXla/LWooNg0yEGeB+Y8WdFxGA==
+  version "6.1.11"
+  resolved "https://registry.npmmirror.com/tar/download/tar-6.1.11.tgz#6760a38f003afa1b2ffd0ffe9e9abbd0eab3d621"
+  integrity sha1-Z2CjjwA6+hsv/Q/+npq70Oqz1iE=
   dependencies:
     chownr "^2.0.0"
     fs-minipass "^2.0.0"

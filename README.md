@@ -4,6 +4,11 @@
 ![](/screenshots/two.png?raw=true)
 ![](/screenshots/underthehood.png?raw=true)
 
+## 支持漫画类型
+
+* 支持一级，二级文件夹形式漫画
+* 支持直接读取压缩包类型漫画, .tar, .tar.gz, .tar.bz2, .zip, .7z, .lzma, .cab
+
 ## 下载
 
 https://github.com/Qquanwei/electron-webtoon/releases
@@ -24,7 +29,6 @@ yarn run package
 ### 开发说明
 
 - 本软件可分为两种模 1. Electron 客户端模式 2. 在线模式。 在线模式适合转移手机端使用。
-- 在线模式时需要向 html 注入对应的配置信息，例如本机 IP，端口
 
 - base on https://electron-react-boilerplate.js.org
 - base on @material-ui/core

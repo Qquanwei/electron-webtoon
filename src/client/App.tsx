@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { RecoilRoot } from 'recoil';
+import { RecoilRoot, useRecoilTransactionObserver_UNSTABLE } from 'recoil';
 import { HashRouter as Router, Switch, Route } from 'react-router-dom';
 import Index from './page/index';
 import Comic from './page/comic';

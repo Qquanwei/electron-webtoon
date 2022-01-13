@@ -42,7 +42,7 @@ h1 {
 .card {
   position: relative;
   width: 300px;
-  height: 200px;
+  height: 400px;
   margin-top: 20px;
   overflow: hidden;
   display: flex;
@@ -51,17 +51,20 @@ h1 {
   transition: all 0.3s ease;
   flex-shrink: 0;
   flex-grow: 1;
+
+  display: flex;
+  flex-flow: column;
+}
+
+.card-content {
+  height: 380px;
+  overflow: hidden;
 }
 
 .card:hover {
   box-shadow: 0px 0px 11px 3px #000;
 }
 
-.card:hover .name {
-  bottom: 50%;
-  transition: translateY(50%);
-  color: #000;
-}
 .card:hover img {
   filter: blur(10px);
 }
@@ -79,7 +82,7 @@ h1 {
   left: 0;
   right: 0;
   opacity: 1;
-  color: #333;
+  color: #fff;
   text-align: center;
   transition: all 0.3s ease;
 }
@@ -90,10 +93,6 @@ h1 {
   border: 1px solid #333;
   transition: opacity 0.3s ease;
   cursor: pointer;
-}
-
-.addcard:hover {
-  opacity: 1;
 }
 
 .support {
@@ -132,7 +131,7 @@ h1 {
   cursor: pointer;
 }
 .addbtn {
-  margin-right: 20px;
+  margin-right: 50px;
   height: 30px;
   display: flex;
   align-items: center;
@@ -193,4 +192,18 @@ h1 {
 .qrcodearea img {
   max-width: 100%;
   max-height: 100%;
+}
+
+
+.createactionlist {
+  box-sizing: border-box;;
+  padding: 5px 20px;
+  background: linear-gradient(0deg, #0e2231, #010210);
+  box-shadow: 1px 1px 5px 1px #000;
+  width: 100px;
+}
+
+.createactionlist button {
+  cursor: pointer;
+  white-space: nowrap;
 }

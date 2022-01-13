@@ -1,6 +1,7 @@
-/* eslint-disable import/prefer-default-export */
-import { useRef } from 'react';
-import { useRecoilValueLoadable } from 'recoil';
+/* eslint-disable react/display-name */
+/* eslint-disable react/jsx-props-no-spreading */
+import React, { useRef, useEffect } from 'react';
+import { useRecoilValueLoadable, RecoilRoot } from 'recoil';
 
 export function useRecoilValueMemo(recoilState) {
   const cacheValueRef = useRef();
@@ -17,4 +18,14 @@ export function useRecoilValueMemo(recoilState) {
   }
 
   return cacheValueRef.current;
+}
+
+export function withLocalRecoilRoot(Component) {
+  return (...props) => {
+    return (
+      <RecoilRoot>
+        <Component {...props} />
+      </RecoilRoot>
+    );
+  };
 }

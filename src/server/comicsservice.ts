@@ -9,6 +9,7 @@ import path from 'path';
 import fs from 'fs';
 import fsPromisese from 'fs.promises';
 import Store from 'electron-store';
+import decompress from './compress';
 
 function isDirectory(fullpath) {
   return fs.lstatSync(fullpath).isDirectory();
@@ -24,6 +25,16 @@ const supportExts = [
   '.apng',
   '.avif',
   '.tiff',
+];
+
+const supportCompressExts = [
+  'tar',
+  'tar.gz',
+  '7z',
+  'zip',
+  'lzma',
+  'cab',
+  'tar.bz2',
 ];
 
 function extNameLegal(file) {
@@ -169,11 +180,43 @@ export default class ComicService {
     this.store.set('library', newLibrary);
   }
 
+  // add compress file meta info to config
+  async addComicToLibrary2(comicpath: string, compressFilePath: string) {
+    const library = this.store.get('library');
+    const newComic = await this.buildNewComic(comicpath);
+    newComic.compressFilePath = compressFilePath;
+    const newLibrary = (library || []).concat(newComic);
+    this.store.set('library', newLibrary);
+  }
+
   // 打开文件选择对话框
   async takeDirectory() {
     return electron.dialog.showOpenDialog(this.mainWindow, {
       properties: ['openDirectory'],
     });
+  }
+
+  async takeCompressAndAddToComic() {
+    const selectFile = await electron.dialog.showOpenDialog(this.mainWindow, {
+      properties: ['openFile', 'multiSelections'],
+      filters: [{ name: 'compress', extensions: supportCompressExts }],
+    });
+    const cachePath = app.getPath('cache');
+
+    const onEntry = (data) => {
+      this.mainWindow.webContents.send('decompress', data);
+    };
+
+    if (!selectFile.canceled) {
+      for (let i = 0; i < selectFile.filePaths.length; ++i) {
+        const currentFile = selectFile.filePaths[i];
+        decompress(currentFile, cachePath, onEntry, async (data) => {
+          const { pathname } = data;
+          await this.addComicToLibrary2(pathname, currentFile);
+          this.mainWindow.webContents.send('decompress-done', data);
+        });
+      }
+    }
   }
 
   async removeComic(id) {
@@ -189,8 +232,9 @@ export default class ComicService {
     const comics = library.filter((item) => {
       return item.id === id;
     });
-
-    comics[0].tag = name;
+    if (comics.length) {
+      comics[0].tag = name;
+    }
     this.store.set('library', library);
   }
 }
