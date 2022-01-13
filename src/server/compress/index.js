@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import _7z from '7zip-min';
+import _7z from './_7zmin';
 
 export default async function decompress(file, outputPath, onEntry, onDone) {
   return new Promise((resolve, reject) => {
