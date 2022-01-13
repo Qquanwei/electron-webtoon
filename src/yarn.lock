@@ -2,3 +2,14 @@
 # yarn lockfile v1
 
 
+"7zip-bin@^5.1.1":
+  version "5.1.1"
+  resolved "https://registry.npmmirror.com/7zip-bin/download/7zip-bin-5.1.1.tgz#9274ec7460652f9c632c59addf24efb1684ef876"
+  integrity sha1-knTsdGBlL5xjLFmt3yTvsWhO+HY=
+
+"7zip-min@^1.4.1":
+  version "1.4.1"
+  resolved "https://registry.npmmirror.com/7zip-min/download/7zip-min-1.4.1.tgz#f3578c0e42bf4f2534378ec7dc09d56c56a3b02c"
+  integrity sha512-xiK95rSNr6cXB7UXVLJdrxtNrlXBqZrMhcKlq0S5Rsg6vVhh+9OSUyQIba8bSAGgHjpETlWXAYEuVfxYGEfCWA==
+  dependencies:
+    "7zip-bin" "^5.1.1"
