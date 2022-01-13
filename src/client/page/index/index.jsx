@@ -101,21 +101,21 @@ function IndexPage() {
 
 
         <div className={styles.gridlist}>
-          {comicList.filter(comic => {
+          {[...comicList].reverse().filter(comic => {
             return comic.name.indexOf(searchKey) !== -1
           }).map((comic, index) => {
             return (
               <div key={index} className={styles.card}
                 data-id={comic.id}
                 onContextMenu={onContextMenu}>
-                <div className={styles['card-content']}>
-                  <Link to={`/comic/${comic.id}`} >
+                <Link to={`/comic/${comic.id}`} >
+                  <div className={styles['card-content']}>
                     <img alt="" src={comic.cover} width="100%" />
-                  </Link>
-                </div>
-                <div className={styles.name }>
-                  { comic.name}
-                </div>
+                  </div>
+                  <div className={styles.name }>
+                    { comic.name}
+                  </div>
+                </Link>
               </div>
             );
           })}

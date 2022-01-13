@@ -30,8 +30,8 @@ function ElectronWebtoonAppBar({ onSearch }) {
 
   useEffect(() => {
     async function work() {
-      (await ipc).onCompressFile(({ filename, imgname }) => {
-        document.title = `处理 ${filename} ${imgname}`
+      (await ipc).onCompressFile((msg) => {
+        document.title = `${msg}`
       });
 
       (await ipc).onCompressDone(() => {
@@ -85,11 +85,13 @@ function ElectronWebtoonAppBar({ onSearch }) {
       }>
         <Qrcode />
       </Popup>
-      <Popup position="bottom right" trigger={
+      <Popup position="bottom" trigger={
         <button className={styles.addbtn}>+</button>
       }>
-        <button onClick={onClickAddFolder}>from folder</button>
-        <button onClick={onClickAddFile}>from file</button>
+        <div className={styles.createactionlist}>
+          <button onClick={onClickAddFolder}>打开文件夹</button>
+          <button onClick={onClickAddFile}>打开压缩包</button>
+        </div>
       </Popup>
       <div  />
     </div>

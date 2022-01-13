@@ -1,67 +1,25 @@
 import path from 'path';
 import fs from 'fs';
-import tar from './tar';
+import _7z from '7zip-min';
 
 export default async function decompress(file, outputPath, onEntry, onDone) {
-  return new Promise((resolve) => {
-    if (file.endsWith('.tar')) {
-      const outputDirname = path.resolve(
-        outputPath,
-        path.basename(file).slice(0, -4)
-      );
+  return new Promise((resolve, reject) => {
+    const outputDirname = path.resolve(
+      outputPath,
+      path.basename(file).slice(0, -4)
+    );
+    if (!fs.existsSync(path.resolve(outputPath, outputDirname))) {
       fs.mkdirSync(path.resolve(outputPath, outputDirname));
-      tar({
-        compressFile: file,
-        outputPath: path.resolve(outputPath, outputDirname),
-        onEntry: (en) => {
-          if (onEntry) {
-            onEntry({
-              filename: file,
-              imgname: en.header.path,
-            });
-          }
-        },
-        onDone: (done) => {
-          if (onDone) {
-            onDone({
-              pathname: path.resolve(
-                outputPath,
-                path.basename(file).slice(0, -4)
-              ),
-              filename: file,
-            });
-          }
-        },
-      });
-    } else if (file.endsWith('.tar.gz')) {
-      const outputDirname = path.resolve(
-        outputPath,
-        path.basename(file).slice(0, -7)
-      );
-      fs.mkdirSync(path.resolve(outputPath, outputDirname));
-      tar({
-        compressFile: file,
-        outputPath: path.resolve(outputPath, outputDirname),
-        onEntry: (en) => {
-          if (onEntry) {
-            onEntry({
-              filename: file,
-              imgname: en.header.path,
-            });
-          }
-        },
-        onDone: (done) => {
-          if (onDone) {
-            onDone({
-              pathname: path.resolve(
-                outputPath,
-                path.basename(file).slice(0, -7)
-              ),
-              filename: file,
-            });
-          }
-        },
-      });
     }
+
+    _7z.unpack(file, path.resolve(outputPath, outputDirname), err => {
+      if (err) {
+        onEntry(`${compressFile}解压失败:${err.message}`);
+        reject(err);
+      } else {
+        onDone({ pathname: path.resolve(outputPath, outputDirname) });
+        resolve();
+      }
+    });
   });
 }

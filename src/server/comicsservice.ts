@@ -30,9 +30,11 @@ const supportExts = [
 const supportCompressExts = [
   'tar',
   'tar.gz',
-  // 'zip',
-  // 'rar',
-  // 'tar.bz2',
+  '7z',
+  'zip',
+  'lzma',
+  'cab',
+  'tar.bz2'
 ];
 
 function extNameLegal(file) {

@@ -133,6 +133,10 @@ function ChapterList({ comicId, imgList, value, onChange }) {
     });
   }
 
+  if (imgList.length === 0) {
+    return null;
+  }
+
   return (
     <div className={styles.chapter}>
       <List>
