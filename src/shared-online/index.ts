@@ -35,7 +35,7 @@ export default class IPCOnline implements IPC {
   async saveComicTag(id, name) {
     return fetch.put('/bookmark', {
       id,
-      name,
+      tag: name,
     });
   }
 
