@@ -46,11 +46,23 @@
   padding: 0 20px;
   cursor: pointer;
   z-index: 1;
+
+  display: flex;
+  flex-flow: column;
+  justify-content: flex-end;
 }
 
-.toggleicon {
+.toolbaricon {
   background: #333;
   color: #fff;
+}
+
+.toolbaricon.toolbarenabled {
+  color: orange;
+}
+
+.toolbaricon + .toolbaricon {
+  margin-top: 10px;
 }
 .link {
   color: #333;
@@ -95,4 +107,20 @@
 
 .chaptername.current span {
   color: dodgerblue;
+}
+
+.filter-4 {
+  filter: invert(1);
+}
+
+.filter-2 {
+  image-rendering: pixelated;
+}
+
+.filter-3 {
+  filter: sepia(1);
+}
+
+.filter-1 {
+  filter: brightness(0.5);
 }

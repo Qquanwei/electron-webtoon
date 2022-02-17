@@ -3388,7 +3388,7 @@ class-utils@^0.3.5:
     isobject "^3.0.0"
     static-extend "^0.1.1"
 
-classnames@^2.3.1:
+classnames@^2.2.6, classnames@^2.3.1:
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.3.1.tgz#dfcfa3891e306ec1dad105d0e88f4417b8535e8e"
   integrity sha512-OlQdbZ7gLfGarSqxesMesDa5uz7KFbID8Kpq/SxIoNGDqY8lSYs0D+hhtBXhcdB3rcbXArFr7vlHheLk1voeNA==
@@ -5690,6 +5690,14 @@ fragment-cache@^0.2.1:
   integrity sha1-QpD60n8T6Jvn8zeZxrxaCr//DRk=
   dependencies:
     map-cache "^0.2.2"
+
+frameless-titlebar@^2.1.4:
+  version "2.1.4"
+  resolved "https://registry.npmmirror.com/frameless-titlebar/download/frameless-titlebar-2.1.4.tgz#d769cbd1a0293e0bf65bcb68f5bf597e61f8974e"
+  integrity sha1-12nL0aApPgv2W8to9b9ZfmH4l04=
+  dependencies:
+    classnames "^2.2.6"
+    deepmerge "^4.2.2"
 
 fresh@0.5.2, fresh@~0.5.2:
   version "0.5.2"

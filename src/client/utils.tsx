@@ -29,3 +29,10 @@ export function withLocalRecoilRoot(Component) {
     );
   };
 }
+
+export function arrayDeep(array) {
+  if (Array.isArray(array)) {
+    return 1 + Math.max.apply(null, array.map(arrayDeep));
+  }
+  return 0;
+}

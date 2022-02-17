@@ -1,23 +1,59 @@
 /* eslint-disable */
 import React, { useCallback, useEffect, useState, Fragment, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useHistory } from 'react-router-dom';
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 import Breadcrumbs from '@material-ui/core/Breadcrumbs';
 import AppIcon from '@material-ui/icons/Apps';
+import HomeIcon from '@material-ui/icons/Home';
+import Filter1Icon from '@material-ui/icons/Filter1';
+import Filter2Icon from '@material-ui/icons/Filter2';
+import Filter3Icon from '@material-ui/icons/Filter3';
+import Filter4Icon from '@material-ui/icons/Filter4';
+import ArrowCircleDown from '@material-ui/icons/ArrowDownward';
 import classNames from 'classnames';
-import { withLocalRecoilRoot } from '../../utils';
+import { withLocalRecoilRoot, arrayDeep } from '../../utils';
 import { useRecoilValue, useRecoilRefresher_UNSTABLE } from 'recoil';
 import ipc from '../../ipc';
 import * as selector from '../../selector';
 
 import styles from './index.css';
 
-function Header({ comic, onToggleChapter }) {
+function Header({
+  filter,
+  comic,
+  autoScroll,
+  setAutoScroll,
+  onToggleChapter,
+  onClickFilter }) {
+  const history = useHistory();
+
+  const onClickHome = useCallback(() => {
+    history.push('/');
+  }, []);
+
   return (
     <div>
       <div className={styles.toolbar}>
-        <AppIcon className={styles.toggleicon} onClick={onToggleChapter} />
+        <Filter1Icon className={classNames(styles.toolbaricon, {
+          [styles.toolbarenabled]: filter === 1
+        })} onClick={() => onClickFilter(1)} />
+        <Filter2Icon className={classNames(styles.toolbaricon, {
+          [styles.toolbarenabled]: filter === 2
+        })} onClick={() => onClickFilter(2)} />
+        <Filter3Icon className={classNames(styles.toolbaricon, {
+          [styles.toolbarenabled]: filter === 3
+        })} onClick={() => onClickFilter(3)} />
+        <Filter4Icon className={classNames(styles.toolbaricon, {
+          [styles.toolbarenabled]: filter === 4
+        })} onClick={() => onClickFilter(4)} />
+        <ArrowCircleDown className={classNames(styles.toolbaricon, {
+          [styles.toolbarenabled]: autoScroll
+        })} onClick={() => setAutoScroll(v => !v)} />
+        <HomeIcon className={styles.toolbaricon} onClick={onClickHome} >Home</HomeIcon>
+        <AppIcon
+          title="目录"
+          className={styles.toolbaricon} onClick={onToggleChapter} >目录</AppIcon>
       </div>
       <div className={styles.navbar}>
         <Breadcrumbs aria-label="breadcrumb">
@@ -31,7 +67,7 @@ function Header({ comic, onToggleChapter }) {
   );
 }
 
-function ImgList({ imgList }) {
+function ImgList({ imgList, filter, autoScroll, setAutoScroll }) {
   function renderList(list) {
     return list.map((item, index) => {
       if (item.name) {
@@ -43,32 +79,42 @@ function ImgList({ imgList }) {
         );
       }
 
-      return <img key={index} src={item} />;
+      return <img key={index} src={item} className={styles[`filter-${filter}`]} />;
     });
   }
 
   const autoScrollRef = useRef(false);
-  const timerRef = useRef(0);
+
+  useEffect(() => {
+    if (autoScroll) {
+      autoScrollRef.current = true;
+      function scroll() {
+        document.scrollingElement.scrollTop += 4;
+        if (autoScrollRef.current) {
+          requestAnimationFrame(scroll);
+        }
+      }
+      autoScrollRef.current = true;
+      requestAnimationFrame(scroll);
+    } else {
+      autoScrollRef.current = false;
+    }
+
+    return () => {
+      autoScrollRef.current = false;
+    }
+  }, [autoScroll]);
+
+
 
   const onMouseUp = useCallback(() => {
-    autoScrollRef.current = false;
-    clearTimeout(timerRef.current);
+    setAutoScroll(false);
   }, []);
 
   const onMouseDown = useCallback((event) => {
     event.stopPropagation();
     event.preventDefault();
-    event.nativeEvent.preventDefault();
-    function scroll() {
-      document.scrollingElement.scrollTop += 2;
-      if (autoScrollRef.current) {
-        requestAnimationFrame(scroll);
-      }
-    }
-    timerRef.current = setTimeout(() => {
-      autoScrollRef.current = true;
-      requestAnimationFrame(scroll);
-    }, 200);
+    setAutoScroll(true);
   }, []);
 
   useEffect(() => {
@@ -156,13 +202,25 @@ import {
 
 function ComicPage({ history }) {
   const { id } = useParams();
-  const [toggleChapter, setToggleChapter] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(false);
+  const [filter, setFilter] = useState(0);
   const { imgList, comic } = useRecoilValue(selector.comicDetail(id));
   const refresh = useRecoilRefresher_UNSTABLE(selector.comicDetail(id));
+  const [toggleChapter, setToggleChapter] = useState(() => {
+    return arrayDeep(imgList) == 1;
+  });
 
   useEffect(() => {
     return refresh;
   }, [refresh]);
+
+  const onClickFilter = useCallback((index) => {
+    if (filter === index) {
+      setFilter(0);
+    } else {
+      setFilter(index);
+    }
+  }, [filter]);
 
   const [chapter, setChapter] = useState(() => {
     const defaultChapter = imgList.filter(item => {
@@ -185,9 +243,15 @@ function ComicPage({ history }) {
       styles.container,
       toggleChapter ? styles.closechapter : ''
     )}>
-      <Header comic={comic} onToggleChapter={onToggleChapter} />
+      <Header
+        autoScroll={autoScroll}
+        setAutoScroll={setAutoScroll}
+        filter={filter} comic={comic} onToggleChapter={onToggleChapter} onClickFilter={onClickFilter} />
       <ChapterList comicId={id} imgList={imgList} value={chapter} onChange={setChapter} />
-      <ImgList imgList={chapter?.list || []} />
+      <ImgList
+        autoScroll={autoScroll}
+        setAutoScroll={setAutoScroll}
+        filter={filter} imgList={chapter?.list || []} />
     </div>
   );
 }
