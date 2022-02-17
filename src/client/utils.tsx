@@ -34,5 +34,8 @@ export function arrayDeep(array) {
   if (Array.isArray(array)) {
     return 1 + Math.max.apply(null, array.map(arrayDeep));
   }
+  if (Array.isArray(array.list)) {
+    return 1 + Math.max.apply(null, array.list.map(arrayDeep));
+  }
   return 0;
 }

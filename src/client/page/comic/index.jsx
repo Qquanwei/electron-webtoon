@@ -1,10 +1,13 @@
 /* eslint-disable */
-import React, { useCallback, useEffect, useState, Fragment, useRef } from 'react';
+import React, {
+  useCallback, useEffect, useState,
+  useLayoutEffect, Fragment, useRef, useMemo } from 'react';
 import { useParams, Link, useHistory } from 'react-router-dom';
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 import Breadcrumbs from '@material-ui/core/Breadcrumbs';
 import AppIcon from '@material-ui/icons/Apps';
+import Button from '@material-ui/core/Button';
 import HomeIcon from '@material-ui/icons/Home';
 import Filter1Icon from '@material-ui/icons/Filter1';
 import Filter2Icon from '@material-ui/icons/Filter2';
@@ -67,7 +70,7 @@ function Header({
   );
 }
 
-function ImgList({ imgList, filter, autoScroll, setAutoScroll }) {
+function ImgList({ onNextPage, hasNextPage, imgList, filter, autoScroll, setAutoScroll }) {
   function renderList(list) {
     return list.map((item, index) => {
       if (item.name) {
@@ -84,6 +87,9 @@ function ImgList({ imgList, filter, autoScroll, setAutoScroll }) {
   }
 
   const autoScrollRef = useRef(false);
+  const nextPageBtnRef = useRef(null);
+  const [time, setTime] = useState(0);
+  const nextPageTimer = useRef(0);
 
   useEffect(() => {
     if (autoScroll) {
@@ -105,7 +111,46 @@ function ImgList({ imgList, filter, autoScroll, setAutoScroll }) {
     }
   }, [autoScroll]);
 
+  // intersectionobserver自动下一页
+  useLayoutEffect(() => {
+    if (nextPageBtnRef.current) {
+      let options = {
+        root: null,
+        threshold: 0.99
+      }
 
+      const observer = new IntersectionObserver((entities) => {
+        if (autoScrollRef.current) {
+          if (entities[0].intersectionRatio > 0.95 && nextPageTimer.current === 0) {
+            setTime(3);
+            nextPageTimer.current = setInterval(() => {
+              setTime(time => {
+                if (time === 1) {
+                  onNextPage();
+                  clearInterval(nextPageTimer.current);
+                  nextPageTimer.current = 0;
+                }
+                return time - 1;
+              });
+            }, 1000);
+          }
+          if (entities[0].intersectionRatio <= 0.95) {
+            clearInterval(nextPageTimer.current);
+            nextPageTimer.current = 0;
+          }
+        }
+      }, options);
+
+      observer.observe(nextPageBtnRef.current);
+
+      return () => {
+        clearInterval(nextPageTimer.current);
+        observer.unobserve(nextPageBtnRef.current);
+      }
+    }
+
+    return () => null;
+  }, [onNextPage]);
 
   const onMouseUp = useCallback(() => {
     setAutoScroll(false);
@@ -120,14 +165,20 @@ function ImgList({ imgList, filter, autoScroll, setAutoScroll }) {
   useEffect(() => {
     document.scrollingElement.scrollTop = 0;
   }, [imgList]);
+
   return (
     <div
-      className={styles.imglist}
-      onTouchStart={onMouseDown}
-      onTouchEnd={onMouseUp}
-      onMouseUp={onMouseUp}
-      onMouseDown={onMouseDown}>
-      {renderList(imgList)}
+    className={styles.imglist}
+    onTouchStart={onMouseDown}
+    onTouchEnd={onMouseUp}
+    onMouseUp={onMouseUp}
+    onMouseDown={onMouseDown}>
+    {renderList(imgList)}
+    {
+      hasNextPage ? (
+        <Button className={styles.nextpagebtn} ref={nextPageBtnRef}>下一页{time === 0 ? '' : time}</Button>
+      ) : null
+    }
     </div>
   );
 }
@@ -151,7 +202,7 @@ function ChapterList({ comicId, imgList, value, onChange }) {
   function renderList(list) {
     deep += 1;
 
-    if (list === null) {
+    if (!list) {
       return null;
     }
 
@@ -181,6 +232,16 @@ function ChapterList({ comicId, imgList, value, onChange }) {
 
   if (imgList.length === 0) {
     return null;
+  }
+
+  if (Array.isArray(imgList) && imgList.length === 1) {
+    return (
+      <div className={styles.chapter}>
+        {
+          renderList(imgList[0].list)
+        }
+      </div>
+    )
   }
 
   return (
@@ -223,20 +284,51 @@ function ComicPage({ history }) {
   }, [filter]);
 
   const [chapter, setChapter] = useState(() => {
-    const defaultChapter = imgList.filter(item => {
+    const defaultChapter = imgList[0]?.list?.filter(item => {
       return item.name === comic.tag;
     });
 
     if (imgList[0].name) {
-      return (defaultChapter[0] || imgList[0]);
+      return (defaultChapter[0] || imgList[0].list[0]);
     } else {
-      return { list: imgList };
+      return { list: imgList }
     }
   });
+
+  const hasNextPage = useMemo(() => {
+    let index = -1;
+    for (let i = 0; i < imgList[0]?.list?.length; ++i) {
+      if (imgList[0].list[i].name === chapter.name) {
+        index = i;
+        break;
+      }
+    }
+
+    return index < (imgList[0]?.list?.length - 1);
+  }, [chapter, imgList]);
 
   const onToggleChapter = useCallback(() => {
     setToggleChapter(v => !v);
   }, []);
+
+  const onNextPage = useCallback(() => {
+    setChapter(chapter => {
+      let index = -1;
+      for (let i = 0; i < imgList[0].list.length; ++i) {
+        if (imgList[0].list[i].name === chapter.name) {
+          index = i;
+          break;
+        }
+      }
+      const newChapter = imgList[0].list[index + 1];
+      ipc.then(i => {
+        i.saveComicTag(comic.id, newChapter.name);
+      });
+
+      return newChapter;
+
+    });
+  }, [imgList, comic]);
 
   return (
     <div className={classNames(
@@ -249,6 +341,8 @@ function ComicPage({ history }) {
         filter={filter} comic={comic} onToggleChapter={onToggleChapter} onClickFilter={onClickFilter} />
       <ChapterList comicId={id} imgList={imgList} value={chapter} onChange={setChapter} />
       <ImgList
+        hasNextPage={hasNextPage}
+        onNextPage={onNextPage}
         autoScroll={autoScroll}
         setAutoScroll={setAutoScroll}
         filter={filter} imgList={chapter?.list || []} />

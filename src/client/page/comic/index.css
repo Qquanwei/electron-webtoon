@@ -124,3 +124,9 @@
 .filter-1 {
   filter: brightness(0.5);
 }
+
+.nextpagebtn {
+  width: 50px;
+  margin: 0 auto;
+  text-align: center;
+}
