@@ -20,19 +20,6 @@
   height: 100%;
 }
 
-.container.closechapter .imglist {
-  width: 100% !important;
-  left: 0 !important;
-}
-
-.container.closechapter .navbar {
-  display: none;
-}
-
-.container.closechapter .chapter {
-  width: 0 !important;
-}
-
 .navbar {
   position: fixed;
   top: 20px;
@@ -68,9 +55,7 @@
   color: #333;
 }
 .imglist {
-  position: absolute;
-  left: 320px;
-  width: calc(100% - 320px);
+  width: 100%;
   box-sizing: border-box;
   font-size: 0;
   background: #fff;
@@ -127,6 +112,24 @@
 
 .nextpagebtn {
   width: 50px;
-  margin: 0 auto;
+  color: dodgerblue;
+  margin: 0 auto !important;
   text-align: center;
+}
+
+
+.chaptercomiccontent {
+  display: flex;
+  height: 100vh;
+}
+
+.chapterlistcontainer {
+  flex-basis: 320px;
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+.chapterimglistcontainer {
+  flex: 1;
+  position: relative;
 }
