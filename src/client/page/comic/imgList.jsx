@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useLayoutEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect, useCallback, Fragment } from 'react';
 import Button from '@material-ui/core/Button';
 import styles from './index.css';
 import useComicContext from './useComicContext';
@@ -79,12 +79,14 @@ function ImgList({ onNextPage, hasNextPage, imgList }) {
 
       return () => {
         clearInterval(nextPageTimer.current);
-        observer.unobserve(nextPageBtnRef.current);
+        if (nextPageBtnRef.current) {
+          observer.unobserve(nextPageBtnRef.current);
+        }
       }
     }
 
     return () => null;
-  }, [onNextPage]);
+  }, [onNextPage, imgList]);
 
   const onMouseUp = useCallback(() => {
     setAutoScroll(false);

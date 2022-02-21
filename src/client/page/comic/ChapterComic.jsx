@@ -76,7 +76,7 @@ function ChapterList({ imgList, value, onChange, toggleChapter }) {
       </div>
       <div className={styles.chapter}>
         {
-          renderList(imgList[0].list)
+          renderList(imgList)
         }
       </div>
     </div>
@@ -84,11 +84,11 @@ function ChapterList({ imgList, value, onChange, toggleChapter }) {
 }
 
 
-function ChapterComic({ chapterList}) {
+function ChapterComic({ chapterList }) {
   const [toggleChapter, setToggleChapter] = useState(false);
   const { comic } = useComicContext();
   const [chapter, setChapter] = useState(() => {
-    return chapterList[0].list.filter(v => {return v.name === comic.tag})[0] || chapterList[0].list[0];
+    return chapterList.filter(v => {return v.name === comic.tag})[0] || chapterList[0];
   });
 
   const onToggleChapter = useCallback(() => {
@@ -97,26 +97,26 @@ function ChapterComic({ chapterList}) {
 
   const hasNextPage = useMemo(() => {
     let index = -1;
-    for (let i = 0; i <chapterList[0].list.length; ++i) {
-      if (chapterList[0].list[i].name === chapter.name) {
+    for (let i = 0; i <chapterList.length; ++i) {
+      if (chapterList[i].name === chapter.name) {
         index = i;
         break;
       }
     }
 
-    return index < (chapterList[0].list.length - 1);
+    return index < (chapterList.length - 1);
   }, [chapter, chapterList]);
 
   const onNextPage = useCallback(() => {
     setChapter(chapter => {
       let index = -1;
-      for (let i = 0; i < chapterList[0].list.length; ++i) {
-        if (chapterList[0].list[i].name === chapter.name) {
+      for (let i = 0; i < chapterList.length; ++i) {
+        if (chapterList[i].name === chapter.name) {
           index = i;
           break;
         }
       }
-      const newChapter = chapterList[0].list[index + 1];
+      const newChapter = chapterList[index + 1];
       ipc.then(i => {
         i.saveComicTag(comic.id, newChapter.name);
       });
