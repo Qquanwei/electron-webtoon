@@ -16,6 +16,12 @@ function sortImgList(imgList) {
     return num;
   }
 
+  list.forEach((i) => {
+    if (i.list) {
+      i.list = sortImgList(i.list);
+    }
+  });
+
   list.sort((a, b) => {
     if (a.name) {
       a.list = sortImgList(a.list || []);

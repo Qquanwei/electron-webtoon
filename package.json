@@ -257,6 +257,7 @@
     "electron-log": "^4.4.3",
     "electron-store": "^8.0.1",
     "electron-updater": "^4.3.4",
+    "frameless-titlebar": "^2.1.4",
     "fs.promises": "^0.1.2",
     "history": "^5.0.0",
     "is-electron": "^2.2.1",

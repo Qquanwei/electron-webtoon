@@ -64,13 +64,13 @@ async function buildComicImgList(pathname: string, deep = 1000, makeUrl) {
   });
 
   const result = [];
-  for (let i = 0; i < legalFiles.length && deep--; i += 1) {
+  for (let i = 0; i < legalFiles.length && deep; i += 1) {
     const fileOrDirName = legalFiles[i];
     if (isDirectory(path.resolve(pathname, fileOrDirName))) {
       // eslint-disable-next-line
       const list = await buildComicImgList(
         path.resolve(pathname, fileOrDirName),
-        deep,
+        deep - 1,
         makeUrl
       );
       result.push({

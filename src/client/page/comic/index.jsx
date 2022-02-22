@@ -1,150 +1,20 @@
 /* eslint-disable */
-import React, { useCallback, useEffect, useState, Fragment, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, {
+  useCallback, useEffect, useState,
+  useLayoutEffect, Fragment, useRef, useMemo } from 'react';
+import { useParams, Link, useHistory } from 'react-router-dom';
 import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
-import Breadcrumbs from '@material-ui/core/Breadcrumbs';
-import AppIcon from '@material-ui/icons/Apps';
 import classNames from 'classnames';
-import { withLocalRecoilRoot } from '../../utils';
+import { withLocalRecoilRoot, arrayDeep } from '../../utils';
 import { useRecoilValue, useRecoilRefresher_UNSTABLE } from 'recoil';
+import SingleComic from './SingleComic';
+import ChapterComic from './ChapterComic';
+import useComicContext from './useComicContext';
+import { Provider }  from './useComicContext';
 import ipc from '../../ipc';
 import * as selector from '../../selector';
 
 import styles from './index.css';
-
-function Header({ comic, onToggleChapter }) {
-  return (
-    <div>
-      <div className={styles.toolbar}>
-        <AppIcon className={styles.toggleicon} onClick={onToggleChapter} />
-      </div>
-      <div className={styles.navbar}>
-        <Breadcrumbs aria-label="breadcrumb">
-          <Link to="/" className={styles.link}>
-            Home
-          </Link>
-          <Typography>{comic?.name}</Typography>
-        </Breadcrumbs>
-      </div>
-    </div>
-  );
-}
-
-function ImgList({ imgList }) {
-  function renderList(list) {
-    return list.map((item, index) => {
-      if (item.name) {
-        return (
-          <Fragment key={index}>
-            <div id={item.name}></div>
-            {renderList(item.list)}
-          </Fragment>
-        );
-      }
-
-      return <img key={index} src={item} />;
-    });
-  }
-
-  const autoScrollRef = useRef(false);
-  const timerRef = useRef(0);
-
-  const onMouseUp = useCallback(() => {
-    autoScrollRef.current = false;
-    clearTimeout(timerRef.current);
-  }, []);
-
-  const onMouseDown = useCallback((event) => {
-    event.stopPropagation();
-    event.preventDefault();
-    event.nativeEvent.preventDefault();
-    function scroll() {
-      document.scrollingElement.scrollTop += 2;
-      if (autoScrollRef.current) {
-        requestAnimationFrame(scroll);
-      }
-    }
-    timerRef.current = setTimeout(() => {
-      autoScrollRef.current = true;
-      requestAnimationFrame(scroll);
-    }, 200);
-  }, []);
-
-  useEffect(() => {
-    document.scrollingElement.scrollTop = 0;
-  }, [imgList]);
-  return (
-    <div
-      className={styles.imglist}
-      onTouchStart={onMouseDown}
-      onTouchEnd={onMouseUp}
-      onMouseUp={onMouseUp}
-      onMouseDown={onMouseDown}>
-      {renderList(imgList)}
-    </div>
-  );
-}
-
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import Divider from '@material-ui/core/Divider';
-import ImportContactsIcon from '@material-ui/icons/ImportContacts';
-
-function ChapterList({ comicId, imgList, value, onChange }) {
-  const onClick = useCallback(async (chapter) => {
-    if (onChange) {
-      onChange(chapter);
-      (await ipc).saveComicTag(comicId, chapter.name);
-    }
-  }, [onChange]);
-
-  let deep = 0;
-  function renderList(list) {
-    deep += 1;
-
-    if (list === null) {
-      return null;
-    }
-
-    return list.map((item, index) => {
-      if (item.name) {
-        return (
-          <ListItem key={index}>
-            <ListItemIcon>
-              <ImportContactsIcon />
-            </ListItemIcon>
-            <ListItemText className={classNames(styles.chaptername, { [styles.current]: value === item})}>
-              <div onClick={() => onClick(item)} title={item.name}>{ item.name }</div>
-            </ListItemText>
-            <Divider />
-            {
-              (item.list.length && deep < 2) ? (
-                <List>
-                  {renderList(item.list)}
-                </List>
-              ) : null
-            }
-          </ListItem>
-        );
-      }
-    });
-  }
-
-  if (imgList.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className={styles.chapter}>
-      <List>
-        { renderList(imgList) }
-      </List>
-    </div>
-  )
-}
 
 import {
   GridList,
@@ -154,40 +24,71 @@ import {
   MenuItem
 } from '@material-ui/core';
 
+// 一共有两种类型的漫画，一种是无章节，一种有章节，需要分开对待
 function ComicPage({ history }) {
   const { id } = useParams();
-  const [toggleChapter, setToggleChapter] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(false);
+  const [filter, setFilter] = useState(0);
   const { imgList, comic } = useRecoilValue(selector.comicDetail(id));
   const refresh = useRecoilRefresher_UNSTABLE(selector.comicDetail(id));
+
+  // 带有章节的漫画
+  const isChapterComic = useMemo(() => {
+    return !!imgList[0].name;
+  }, []);
 
   useEffect(() => {
     return refresh;
   }, [refresh]);
 
-  const [chapter, setChapter] = useState(() => {
-    const defaultChapter = imgList.filter(item => {
-      return item.name === comic.tag;
-    });
-
-    if (imgList[0].name) {
-      return (defaultChapter[0] || imgList[0]);
+  const onClickFilter = useCallback((index) => {
+    if (filter === index) {
+      setFilter(0);
     } else {
-      return { list: imgList };
+      setFilter(index);
     }
-  });
+  }, [filter]);
 
-  const onToggleChapter = useCallback(() => {
-    setToggleChapter(v => !v);
-  }, []);
+  const onNextPage = useCallback(() => {
+    setChapter(chapter => {
+      let index = -1;
+      for (let i = 0; i < imgList[0].list.length; ++i) {
+        if (imgList[0].list[i].name === chapter.name) {
+          index = i;
+          break;
+        }
+      }
+      const newChapter = imgList[0].list[index + 1];
+      ipc.then(i => {
+        i.saveComicTag(comic.id, newChapter.name);
+      });
+
+      return newChapter;
+
+    });
+  }, [imgList, comic]);
+
+  const contextValue = useMemo(() => {
+    return {
+      autoScroll,
+      setAutoScroll,
+      filter,
+      onClickFilter,
+      comic
+    };
+  }, [autoScroll, setAutoScroll, filter, onClickFilter, comic]);
 
   return (
-    <div className={classNames(
-      styles.container,
-      toggleChapter ? styles.closechapter : ''
-    )}>
-      <Header comic={comic} onToggleChapter={onToggleChapter} />
-      <ChapterList comicId={id} imgList={imgList} value={chapter} onChange={setChapter} />
-      <ImgList imgList={chapter?.list || []} />
+    <div className={styles.container}>
+      <Provider value={contextValue}>
+        {
+          isChapterComic ? (
+            <ChapterComic chapterList={imgList} />
+          ) : (
+            <SingleComic imgList={imgList} />
+          )
+        }
+      </Provider>
     </div>
   );
 }
