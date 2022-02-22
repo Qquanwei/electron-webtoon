@@ -16,7 +16,7 @@ function sortImgList(imgList) {
     return num;
   }
 
-  list.map(i => {
+  list.forEach((i) => {
     if (i.list) {
       i.list = sortImgList(i.list);
     }

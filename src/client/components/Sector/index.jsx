@@ -16,12 +16,10 @@ function Sector({ children, items }) {
     }
   }, [hover]);
 
-  return (
-    React.cloneElement(children, {
-      onMouseDown: onMouseDown,
-      onMouseUp: onMouseUp
-    })
-  );
+  return React.cloneElement(children, {
+    onMouseDown,
+    onMouseUp,
+  });
 }
 
 export default Sector;
