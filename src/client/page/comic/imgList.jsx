@@ -1,4 +1,12 @@
-import React, { useRef, useState, useEffect, useLayoutEffect, useCallback, Fragment } from 'react';
+/* eslint-disable */
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  Fragment,
+} from 'react';
 import Button from '@material-ui/core/Button';
 import styles from './index.css';
 import useComicContext from './useComicContext';
@@ -10,13 +18,20 @@ function ImgList({ onNextPage, hasNextPage, imgList }) {
       if (item.name) {
         return (
           <Fragment key={index}>
-            <div id={item.name}></div>
+            <div id={item.name} />
             {renderList(item.list)}
           </Fragment>
         );
       }
 
-      return <img loading="lazy" key={index} src={item} className={styles[`filter-${filter}`]} />;
+      return (
+        <img
+          loading="lazy"
+          key={index}
+          src={item}
+          className={styles[`filter-${filter}`]}
+        />
+      );
     });
   }
 
@@ -42,23 +57,26 @@ function ImgList({ onNextPage, hasNextPage, imgList }) {
 
     return () => {
       autoScrollRef.current = false;
-    }
+    };
   }, [autoScroll]);
 
   // intersectionobserver自动下一页
   useLayoutEffect(() => {
     if (nextPageBtnRef.current) {
-      let options = {
+      const options = {
         root: null,
-        threshold: 0.99
-      }
+        threshold: 0.99,
+      };
 
       const observer = new IntersectionObserver((entities) => {
         if (autoScrollRef.current) {
-          if (entities[0].intersectionRatio > 0.95 && nextPageTimer.current === 0) {
+          if (
+            entities[0].intersectionRatio > 0.95 &&
+            nextPageTimer.current === 0
+          ) {
             setTime(3);
             nextPageTimer.current = setInterval(() => {
-              setTime(time => {
+              setTime((time) => {
                 if (time === 1) {
                   onNextPage();
                   clearInterval(nextPageTimer.current);
@@ -82,7 +100,7 @@ function ImgList({ onNextPage, hasNextPage, imgList }) {
         if (nextPageBtnRef.current) {
           observer.unobserve(nextPageBtnRef.current);
         }
-      }
+      };
     }
 
     return () => null;
@@ -97,7 +115,6 @@ function ImgList({ onNextPage, hasNextPage, imgList }) {
     event.preventDefault();
     setAutoScroll(true);
   }, []);
-
 
   useEffect(() => {
     document.scrollingElement.scrollTop = 0;
@@ -115,13 +132,18 @@ function ImgList({ onNextPage, hasNextPage, imgList }) {
       onTouchStart={onMouseDown}
       onTouchEnd={onMouseUp}
       onMouseUp={onMouseUp}
-      onMouseDown={onMouseDown}>
+      onMouseDown={onMouseDown}
+    >
       {renderList(imgList)}
-      {
-        hasNextPage ? (
-          <Button onClick={onClickNextPage} className={styles.nextpagebtn} ref={nextPageBtnRef}>下一页{time === 0 ? '' : time}</Button>
-        ) : null
-      }
+      {hasNextPage ? (
+        <Button
+          onClick={onClickNextPage}
+          className={styles.nextpagebtn}
+          ref={nextPageBtnRef}
+        >
+          下一页{time === 0 ? '' : time}
+        </Button>
+      ) : null}
     </div>
   );
 }

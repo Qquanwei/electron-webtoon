@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useCallback } from 'react';
 import classNames from 'classnames';
 import Filter1Icon from '@material-ui/icons/Filter1';
@@ -10,9 +11,9 @@ import { useHistory } from 'react-router-dom';
 import useComicContext from './useComicContext';
 import styles from './index.css';
 
-
 function Control({ children }) {
-  const { filter, onClickFilter, autoScroll, setAutoScroll } = useComicContext();
+  const { filter, onClickFilter, autoScroll, setAutoScroll } =
+    useComicContext();
   const history = useHistory();
 
   const onClickHome = useCallback(() => {
@@ -21,27 +22,42 @@ function Control({ children }) {
 
   return (
     <div className={styles.toolbar}>
-      <Filter1Icon className={classNames(styles.toolbaricon, {
-        [styles.toolbarenabled]: filter === 1
-      })} onClick={() => onClickFilter(1)} />
-      <Filter2Icon className={classNames(styles.toolbaricon, {
-        [styles.toolbarenabled]: filter === 2
-      })} onClick={() => onClickFilter(2)} />
-      <Filter3Icon className={classNames(styles.toolbaricon, {
-        [styles.toolbarenabled]: filter === 3
-      })} onClick={() => onClickFilter(3)} />
-      <Filter4Icon className={classNames(styles.toolbaricon, {
-        [styles.toolbarenabled]: filter === 4
-      })} onClick={() => onClickFilter(4)} />
-      <ArrowCircleDown className={classNames(styles.toolbaricon, {
-        [styles.toolbarenabled]: autoScroll
-      })} onClick={() => setAutoScroll(v => !v)} />
-      <HomeIcon className={styles.toolbaricon} onClick={onClickHome} >Home</HomeIcon>
-      {
-        children
-      }
+      <Filter1Icon
+        className={classNames(styles.toolbaricon, {
+          [styles.toolbarenabled]: filter === 1,
+        })}
+        onClick={() => onClickFilter(1)}
+      />
+      <Filter2Icon
+        className={classNames(styles.toolbaricon, {
+          [styles.toolbarenabled]: filter === 2,
+        })}
+        onClick={() => onClickFilter(2)}
+      />
+      <Filter3Icon
+        className={classNames(styles.toolbaricon, {
+          [styles.toolbarenabled]: filter === 3,
+        })}
+        onClick={() => onClickFilter(3)}
+      />
+      <Filter4Icon
+        className={classNames(styles.toolbaricon, {
+          [styles.toolbarenabled]: filter === 4,
+        })}
+        onClick={() => onClickFilter(4)}
+      />
+      <ArrowCircleDown
+        className={classNames(styles.toolbaricon, {
+          [styles.toolbarenabled]: autoScroll,
+        })}
+        onClick={() => setAutoScroll((v) => !v)}
+      />
+      <HomeIcon className={styles.toolbaricon} onClick={onClickHome}>
+        Home
+      </HomeIcon>
+      {children}
     </div>
-  )
+  );
 }
 
 export default Control;
