@@ -106,16 +106,6 @@ function ImgList({ onNextPage, hasNextPage, imgList }) {
     return () => null;
   }, [onNextPage, imgList]);
 
-  const onMouseUp = useCallback(() => {
-    setAutoScroll(false);
-  }, []);
-
-  const onMouseDown = useCallback((event) => {
-    event.stopPropagation();
-    event.preventDefault();
-    setAutoScroll(true);
-  }, []);
-
   useEffect(() => {
     document.scrollingElement.scrollTop = 0;
   }, [imgList]);
@@ -128,12 +118,7 @@ function ImgList({ onNextPage, hasNextPage, imgList }) {
 
   return (
     <div
-      className={styles.imglist}
-      onTouchStart={onMouseDown}
-      onTouchEnd={onMouseUp}
-      onMouseUp={onMouseUp}
-      onMouseDown={onMouseDown}
-    >
+      className={styles.imglist} >
       {renderList(imgList)}
       {hasNextPage ? (
         <Button

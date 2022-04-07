@@ -219,7 +219,22 @@ export default class ComicService {
     }
   }
 
+  /*
+     删除一个漫画，如果是文件夹漫画，此时不会删除物理资源
+     如果打开的是压缩包类型漫画，删除时会自动删除磁盘上解压的目录. 漫画字段包含 compressFilePath 则说明这是一个压缩包类型的漫画
+   */
   async removeComic(id) {
+    const comic = await this.getComic(id);
+
+    if (comic.compressFilePath) {
+      try {
+        await fsPromisese.rmdir(comic.path, { recursive: true });
+        this.mainWindow.webContents.send('msg', '已清理临时目录');
+      } catch(e) {
+        // pass
+      }
+    }
+
     const oldLibrary = this.store.get('library');
     const newLibrary = oldLibrary.filter((item) => {
       return item.id !== id;

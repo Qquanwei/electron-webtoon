@@ -10,6 +10,10 @@ export default class ElectronIPC implements IPC {
     ipcRenderer.on('decompress-done', (_, data) => callback(data));
   }
 
+  onMsg(callback) {
+    ipcRenderer.on('msg', (_, msg) => callback(msg))
+  }
+
   takeDirectory() {
     return ipcRenderer.invoke('/take-directory');
   }

@@ -6,6 +6,8 @@ export default class IPCOnline implements IPC {
 
   onCompressDone() {}
 
+  onMsg() {}
+
   async takeDirectory() {
     return fetch('/take-directory');
   }

@@ -30,6 +30,13 @@ function ElectronWebtoonAppBar({ onSearch }) {
 
   useEffect(() => {
     async function work() {
+      (await ipc).onMsg((msg) => {
+        document.title = msg;
+        setTimeout(() => {
+          document.title = 'ElectronWebtoon';
+        }, 1000);
+      });
+
       (await ipc).onCompressFile((msg) => {
         document.title = `${msg}`
       });
