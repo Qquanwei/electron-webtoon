@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import classNames from 'classnames';
 import Filter1Icon from '@material-ui/icons/Filter1';
 import Filter2Icon from '@material-ui/icons/Filter2';
@@ -12,12 +12,20 @@ import useComicContext from './useComicContext';
 import styles from './index.css';
 
 function Control({ children }) {
-  const { filter, onClickFilter, autoScroll, setAutoScroll } =
+  const { comic, filter, onClickFilter, autoScroll, setAutoScroll } =
     useComicContext();
   const history = useHistory();
 
+  useEffect(() => {
+    const ori = document.title;
+    document.title = comic.name;
+    return () => {
+      document.title = ori;
+    }
+  }, [comic.name]);
+
   const onClickHome = useCallback(() => {
-    history.push('/');
+    history.goBack();
   }, []);
 
   return (
