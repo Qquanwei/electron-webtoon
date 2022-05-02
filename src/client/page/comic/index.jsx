@@ -49,25 +49,6 @@ function ComicPage({ history }) {
     }
   }, [filter]);
 
-  const onNextPage = useCallback(() => {
-    setChapter(chapter => {
-      let index = -1;
-      for (let i = 0; i < imgList[0].list.length; ++i) {
-        if (imgList[0].list[i].name === chapter.name) {
-          index = i;
-          break;
-        }
-      }
-      const newChapter = imgList[0].list[index + 1];
-      ipc.then(i => {
-        i.saveComicTag(comic.id, newChapter.name);
-      });
-
-      return newChapter;
-
-    });
-  }, [imgList, comic]);
-
   const contextValue = useMemo(() => {
     return {
       autoScroll,

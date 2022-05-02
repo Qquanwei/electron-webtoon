@@ -6,8 +6,10 @@ import Filter2Icon from '@material-ui/icons/Filter2';
 import Filter3Icon from '@material-ui/icons/Filter3';
 import Filter4Icon from '@material-ui/icons/Filter4';
 import ArrowCircleDown from '@material-ui/icons/ArrowDownward';
+import { useRecoilRefresher_UNSTABLE } from 'recoil';
 import HomeIcon from '@material-ui/icons/Home';
 import { useHistory } from 'react-router-dom';
+import * as  selector from '../../selector';
 import useComicContext from './useComicContext';
 import styles from './index.css';
 
@@ -15,6 +17,7 @@ function Control({ children }) {
   const { comic, filter, onClickFilter, autoScroll, setAutoScroll } =
     useComicContext();
   const history = useHistory();
+  const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
 
   useEffect(() => {
     const ori = document.title;

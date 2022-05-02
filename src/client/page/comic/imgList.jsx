@@ -5,14 +5,54 @@ import React, {
   useEffect,
   useLayoutEffect,
   useCallback,
+  useMemo,
   Fragment,
 } from 'react';
+import classNames from 'classnames';
 import Button from '@material-ui/core/Button';
 import styles from './index.css';
 import useComicContext from './useComicContext';
 
-function ImgList({ onNextPage, hasNextPage, imgList }) {
-  const { filter, autoScroll, setAutoScroll } = useComicContext();
+// onVisitPosition: 当对应图片露出时调用，用来记录看到的位置
+function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
+  const { filter, autoScroll, setAutoScroll, comic } = useComicContext();
+
+  const [isFirst, setIsFirst] = useState(true);
+
+  /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
+  const firstElePosition = useMemo(() => {
+    if (Number.isInteger(comic.position) && comic.position) {
+      return comic.position;
+    }
+    return -1;
+  }, []);
+
+  const onVisitPositionRef = useRef(null);
+  onVisitPositionRef.current = onVisitPosition;
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entities) => {
+      if (entities[0].intersectionRatio && onVisitPositionRef.current) {
+        onVisitPositionRef.current(Number(entities[0].target.dataset.index));
+      }
+    });
+
+    document.querySelectorAll('.comic-img').forEach(ele => {
+      observer.observe(ele);
+    });
+
+    return () => {
+      observer.disconnect();
+    }
+  }, []);
+
+  const onImgLoad = useCallback((e) => {
+    if (isFirst && Number(e.currentTarget.dataset.index) === firstElePosition) {
+      e.currentTarget.scrollIntoView();
+      setIsFirst(false);
+    }
+  }, [isFirst]);
+
   function renderList(list) {
     return list.map((item, index) => {
       if (item.name) {
@@ -29,7 +69,9 @@ function ImgList({ onNextPage, hasNextPage, imgList }) {
           loading="lazy"
           key={index}
           src={item}
-          className={styles[`filter-${filter}`]}
+          onLoad={onImgLoad}
+          data-index={index}
+          className={classNames('comic-img', styles[`filter-${filter}`])}
         />
       );
     });
