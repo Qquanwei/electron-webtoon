@@ -242,14 +242,26 @@ export default class ComicService {
     this.store.set('library', newLibrary);
   }
 
-  async saveComicTag(id, name) {
-    const library = this.store.get('library');
+  /* 更新阅读位置 name: 当前章节名, position: 当前章节的阅读位置 */
+  async saveComicTag(id, {tag, position}) {
+    let library = this.store.get('library');
     const comics = library.filter((item) => {
       return item.id === id;
     });
     if (comics.length) {
-      comics[0].tag = name;
+      comics[0].tag = tag;
+      comics[0].position = position;
+
+      library = library.map((item, index) => {
+        return {
+          ...item,
+          index: item.id === id ? 9999999 : index
+        }
+      }).sort((a, b) => {
+        return a.index - b.index;
+      });
     }
+
     this.store.set('library', library);
   }
 }

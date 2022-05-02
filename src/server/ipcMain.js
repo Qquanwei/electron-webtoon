@@ -25,8 +25,8 @@ export default function init(app, mainWindow) {
     return service.removeComic(id);
   });
 
-  ipcMain.handle('/put/bookmark', (event, id, tag) => {
-    return service.saveComicTag(id, tag);
+  ipcMain.handle('/put/bookmark', (event, id, tag, position) => {
+    return service.saveComicTag(id, {tag, position});
   });
 
   ipcMain.handle('/comic/imglist', async (event, id) => {

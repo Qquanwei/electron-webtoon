@@ -34,10 +34,11 @@ export default class IPCOnline implements IPC {
     return fetch.delete(`/comic/${id}`);
   }
 
-  async saveComicTag(id, name) {
+  async saveComicTag(id, tag, position) {
     return fetch.put('/bookmark', {
       id,
-      tag: name,
+      tag,
+      position
     });
   }
 

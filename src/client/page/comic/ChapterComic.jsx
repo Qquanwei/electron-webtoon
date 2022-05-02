@@ -25,7 +25,7 @@ function ChapterList({ imgList, value, onChange, toggleChapter }) {
     async (chapter) => {
       if (onChange) {
         onChange(chapter);
-        (await ipc).saveComicTag(comicId, chapter.name);
+        (await ipc).saveComicTag(comicId, chapter.name, 0);
       }
     },
     [onChange]
@@ -122,12 +122,16 @@ function ChapterComic({ chapterList }) {
       }
       const newChapter = chapterList[index + 1];
       ipc.then((i) => {
-        i.saveComicTag(comic.id, newChapter.name);
+        i.saveComicTag(comic.id, newChapter.name, 0);
       });
 
       return newChapter;
     });
   }, [chapterList, comic]);
+
+  const onVisitPositionChange = useCallback(async (position) => {
+    (await ipc).saveComicTag(comic.id, chapter.name, position);
+  }, [chapter, comic]);
 
   return (
     <>
@@ -140,6 +144,7 @@ function ChapterComic({ chapterList }) {
         />
         <div className={styles.chapterimglistcontainer}>
           <ImgList
+            onVisitPosition={onVisitPositionChange}
             imgList={chapter.list || []}
             hasNextPage={hasNextPage}
             onNextPage={onNextPage}
