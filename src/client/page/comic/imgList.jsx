@@ -55,15 +55,6 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
 
   function renderList(list) {
     return list.map((item, index) => {
-      if (item.name) {
-        return (
-          <Fragment key={index}>
-            <div id={item.name} />
-            {renderList(item.list)}
-          </Fragment>
-        );
-      }
-
       return (
         <img
           loading="lazy"
