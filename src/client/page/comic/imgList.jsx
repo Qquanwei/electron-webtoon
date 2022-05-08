@@ -16,8 +16,7 @@ import useComicContext from './useComicContext';
 // onVisitPosition: 当对应图片露出时调用，用来记录看到的位置
 function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
   const { filter, autoScroll, setAutoScroll, comic } = useComicContext();
-
-  const [isFirst, setIsFirst] = useState(true);
+  const isFirstRef = useRef(true);
 
   /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
   const firstElePosition = useMemo(() => {
@@ -47,11 +46,11 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
   }, []);
 
   const onImgLoad = useCallback((e) => {
-    if (isFirst && Number(e.currentTarget.dataset.index) === firstElePosition) {
+    if (isFirstRef.current && Number(e.currentTarget.dataset.index) === firstElePosition) {
       e.currentTarget.scrollIntoView();
-      setIsFirst(false);
+      isFirstRef.current = false;
     }
-  }, [isFirst]);
+  }, []);
 
   function renderList(list) {
     return list.map((item, index) => {

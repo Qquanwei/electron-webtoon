@@ -55,6 +55,9 @@ export const comicDetail = selectorFamily({
       (await ipc).fetchImgList(id),
     ]);
 
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    })
     return {
       comic,
       imgList: sortImgList(imgList),
