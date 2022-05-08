@@ -2,6 +2,7 @@
 
 ![](/screenshots/homepage.png?raw=true)
 ![](/screenshots/two.png?raw=true)
+![](/screenshots/three.png?raw=true)
 ![](/screenshots/underthehood.png?raw=true)
 
 ## 支持漫画类型
