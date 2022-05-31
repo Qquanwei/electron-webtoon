@@ -172,21 +172,39 @@ export default class ComicService {
     return R.find(R.propEq('id', id), library);
   }
 
-  async addComicToLibrary(comicpath: string) {
+
+  isExistsAndTouch(comicPath: string) {
     const library = this.store.get('library');
-    const newLibrary = (library || []).concat(
-      await this.buildNewComic(comicpath)
-    );
-    this.store.set('library', newLibrary);
+    const index = R.findIndex(R.propEq('path', comicPath), library);
+
+    if (index !== -1) {
+      const newLibrary = [...library];
+      newLibrary.splice(index, 1);
+      this.store.set('library', [...newLibrary, library[index]]);
+      return true;
+    }
+    return false;
+  }
+
+  async addComicToLibrary(comicpath: string) {
+    if (!this.isExistsAndTouch(comicpath)) {
+      const library = this.store.get('library');
+      const newLibrary = (library || []).concat(
+        await this.buildNewComic(comicpath)
+      );
+      this.store.set('library', newLibrary);
+    }
   }
 
   // add compress file meta info to config
   async addComicToLibrary2(comicpath: string, compressFilePath: string) {
-    const library = this.store.get('library');
-    const newComic = await this.buildNewComic(comicpath);
-    newComic.compressFilePath = compressFilePath;
-    const newLibrary = (library || []).concat(newComic);
-    this.store.set('library', newLibrary);
+    if (!this.isExistsAndTouch(comicpath)) {
+      const library = this.store.get('library');
+      const newComic = await this.buildNewComic(comicpath);
+      newComic.compressFilePath = compressFilePath;
+      const newLibrary = (library || []).concat(newComic);
+      this.store.set('library', newLibrary);
+    }
   }
 
   // 打开文件选择对话框
