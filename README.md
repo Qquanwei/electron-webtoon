@@ -1,9 +1,8 @@
 ## 软件截图
 
-![](/screenshots/homepage.png?raw=true)
-![](/screenshots/two.png?raw=true)
-![](/screenshots/three.png?raw=true)
-![](/screenshots/underthehood.png?raw=true)
+![首页截图](/screenshots/homepage.png?raw=true)
+![漫画截图1](/screenshots/two.jpeg?raw=true)
+![漫画截图2](/screenshots/three.png?raw=true)
 
 ## 支持漫画类型
 
