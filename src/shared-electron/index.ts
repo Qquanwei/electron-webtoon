@@ -11,7 +11,7 @@ export default class ElectronIPC implements IPC {
   }
 
   onMsg(callback) {
-    ipcRenderer.on('msg', (_, msg) => callback(msg))
+    ipcRenderer.on('msg', (_, msg) => callback(msg));
   }
 
   takeDirectory() {

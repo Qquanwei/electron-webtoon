@@ -59,7 +59,7 @@ export default class ComicController {
 
   async saveComicTag(ctx) {
     const { tag, position, id } = ctx.request.body;
-    this.service.saveComicTag(id, {tag, position});
+    this.service.saveComicTag(id, { tag, position });
     ctx.status = 200;
     ctx.body = {};
   }

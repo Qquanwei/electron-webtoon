@@ -10,7 +10,7 @@ export default function init(app, mainWindow) {
 
   const { ipcMain } = electron;
   let server = null;
-  ipcMain.handle('/comic', (event, id) => {
+  ipcMain.handle('/comic', (event, id?: string) => {
     if (id) {
       return service.getComic(id);
     }
@@ -26,7 +26,7 @@ export default function init(app, mainWindow) {
   });
 
   ipcMain.handle('/put/bookmark', (event, id, tag, position) => {
-    return service.saveComicTag(id, {tag, position});
+    return service.saveComicTag(id, { tag, position });
   });
 
   ipcMain.handle('/comic/imglist', async (event, id) => {

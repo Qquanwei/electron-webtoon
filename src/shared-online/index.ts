@@ -38,7 +38,7 @@ export default class IPCOnline implements IPC {
     return fetch.put('/bookmark', {
       id,
       tag,
-      position
+      position,
     });
   }
 

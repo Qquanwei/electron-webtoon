@@ -4,7 +4,7 @@ import React, { useRef, useEffect } from 'react';
 import { useRecoilValueLoadable, RecoilRoot } from 'recoil';
 
 export function useRecoilValueMemo(recoilState) {
-  const cacheValueRef = useRef();
+  const cacheValueRef = useRef(null);
   const { state, contents } = useRecoilValueLoadable(recoilState);
 
   if (state === 'error') {

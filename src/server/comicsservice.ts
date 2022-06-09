@@ -1,7 +1,7 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable no-param-reassign */
 import electron, { app } from 'electron';
-
+import imageSize from 'image-size';
 import URL from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import * as R from 'ramda';
@@ -84,7 +84,7 @@ async function buildComicImgList(pathname: string, deep = 1000, makeUrl) {
   return result;
 }
 
-async function getCoverUrl(comicPath, makeUrl) {
+async function getCoverUrl(comicPath: string, makeUrl) {
   try {
     const list = flatten(await buildComicImgList(comicPath, 2, makeUrl));
     return list[0] || list[1];
@@ -93,26 +93,54 @@ async function getCoverUrl(comicPath, makeUrl) {
   }
 }
 
+interface ILibraryComic {
+  // 只有新版本会有这个字段
+  coverFileName?: string;
+  // 压缩文件地址
+  compressFilePath?: string;
+  name: string;
+  path: string;
+  id: string;
+  width: number;
+  height: number;
+}
+
+interface IComic extends ILibraryComic {
+  cover: string;
+}
+
 export default class ComicService {
-  constructor(mainWindow, makeUrl) {
+  private store!: Store<{
+    library: Array<ILibraryComic>;
+  }>;
+
+  mainWindow: Electron.BrowserWindow;
+
+  makeUrl: (filename: string) => string;
+
+  constructor(
+    mainWindow: any,
+    makeUrl: ((filename: any) => string) | undefined
+  ) {
     this.mainWindow = mainWindow;
 
     this.store = new Store({
-      default: {
-        library: [],
+      defaults: {
+        library: [] as ILibraryComic[],
       },
-      clearInvalidConfig: true,
     });
     // old version config file
+    // 这里最终将会废弃
     try {
       const basePath = app.getPath('userData');
       const configPath = basePath;
       const configFilename = '.electron-webtton-comic.json';
       const configFileFullPath = path.resolve(configPath, configFilename);
-
       if (fs.existsSync(configFileFullPath)) {
         // migrate
-        const { library } = JSON.parse(fs.readFileSync(configFileFullPath));
+        const { library } = JSON.parse(
+          fs.readFileSync(configFileFullPath).toString()
+        );
         this.store.set('library', library);
         fs.unlinkSync(configFileFullPath);
       }
@@ -122,15 +150,21 @@ export default class ComicService {
 
     this.makeUrl =
       makeUrl ||
-      ((filename) => {
+      ((filename: string) => {
         return URL.pathToFileURL(filename).href;
       });
   }
 
-  async getComicList() {
+  async getComicList(): Promise<IComic[]> {
     const library = this.store.get('library');
     return Promise.all(
       library.map(async (comic) => {
+        if (comic.coverFileName) {
+          return {
+            ...comic,
+            cover: this.makeUrl(comic.coverFileName),
+          };
+        }
         return {
           ...comic,
           cover: await getCoverUrl(comic.path, this.makeUrl),
@@ -139,14 +173,14 @@ export default class ComicService {
     );
   }
 
-  async getComicImgList(id) {
+  async getComicImgList(id: string) {
     // 如果配置文件不存在，则创建一个新的
     const library = this.store.get('library');
     const comics = library.filter((comic) => {
       return comic.id === id;
     });
 
-    if (!comics.length === 0) {
+    if (comics.length === 0) {
       const error = new Error();
       error.code = 404;
       throw error;
@@ -157,21 +191,34 @@ export default class ComicService {
   }
 
   // 生成一个新的漫画书，包括id，预览图
-  async buildNewComic(pathstr: string) {
+  async buildNewComic(pathstr: string): Promise<ILibraryComic> {
     const ps = pathstr.split(path.sep);
-    return {
-      path: pathstr,
-      cover: await getCoverUrl(pathstr, this.makeUrl),
-      name: ps[ps.length - 1],
-      id: uuidv4(),
-    };
+    const coverUrl = await getCoverUrl(pathstr, (filename: string) => {
+      return filename;
+    });
+    return await new Promise((resolve, reject) => {
+      imageSize(coverUrl, (err: any, dimen: { width: any; height: any }) => {
+        if (err) {
+          console.log(coverUrl);
+          reject(err);
+          return;
+        }
+        resolve({
+          path: pathstr,
+          width: dimen.width,
+          height: dimen.height,
+          coverFileName: coverUrl,
+          name: ps[ps.length - 1],
+          id: uuidv4(),
+        });
+      });
+    });
   }
 
-  async getComic(id) {
+  async getComic(id: string): Promise<ILibraryComic> {
     const library = this.store.get('library');
     return R.find(R.propEq('id', id), library);
   }
-
 
   isExistsAndTouch(comicPath: string) {
     const library = this.store.get('library');
@@ -241,14 +288,14 @@ export default class ComicService {
      删除一个漫画，如果是文件夹漫画，此时不会删除物理资源
      如果打开的是压缩包类型漫画，删除时会自动删除磁盘上解压的目录. 漫画字段包含 compressFilePath 则说明这是一个压缩包类型的漫画
    */
-  async removeComic(id) {
+  async removeComic(id: string) {
     const comic = await this.getComic(id);
 
     if (comic.compressFilePath) {
       try {
         await fsPromisese.rmdir(comic.path, { recursive: true });
         this.mainWindow.webContents.send('msg', '已清理临时目录');
-      } catch(e) {
+      } catch (e) {
         // pass
       }
     }
@@ -261,7 +308,7 @@ export default class ComicService {
   }
 
   /* 更新阅读位置 name: 当前章节名, position: 当前章节的阅读位置 */
-  async saveComicTag(id, {tag, position}) {
+  async saveComicTag(id: string, { tag, position }) {
     let library = this.store.get('library');
     const comics = library.filter((item) => {
       return item.id === id;
@@ -270,14 +317,16 @@ export default class ComicService {
       comics[0].tag = tag;
       comics[0].position = position;
 
-      library = library.map((item, index) => {
-        return {
-          ...item,
-          index: item.id === id ? 9999999 : index
-        }
-      }).sort((a, b) => {
-        return a.index - b.index;
-      });
+      library = library
+        .map((item, index) => {
+          return {
+            ...item,
+            index: item.id === id ? 9999999 : index,
+          };
+        })
+        .sort((a, b) => {
+          return a.index - b.index;
+        });
     }
 
     this.store.set('library', library);

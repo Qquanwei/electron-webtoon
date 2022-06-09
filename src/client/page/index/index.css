@@ -1,7 +1,6 @@
 @media screen and (max-width: 600px) {
   .card {
     width: 200px !important;
-    height: 80px !important;
   }
 }
 
@@ -20,13 +19,6 @@ h1 {
   font-size: 24px;
   padding: 0 20px;
 }
-.gridlist {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  padding: 20px;
-  margin: -20px;
-}
 
 .full {
   box-sizing: border-box;
@@ -39,41 +31,51 @@ h1 {
   height: 50px;
 }
 
+.gridlist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 200px);
+  grid-auto-rows: 150px;
+  grid-auto-flow: row dense;
+  justify-content: center;
+}
+
 .card {
+  box-sizing: border-box;
+  border: 7px solid white;
   position: relative;
-  width: 300px;
-  height: 400px;
-  margin-top: 20px;
   overflow: hidden;
   display: flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
   flex-grow: 1;
-
-  display: flex;
   flex-flow: column;
 }
 
+.card img {
+  width: 100%;
+  max-height: 100%;
+}
+
 .card-content {
-  height: 380px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 130%;
+  height: 130%;
   overflow: hidden;
 }
 
 .card:hover {
-  box-shadow: 0px 0px 11px 3px #000;
+  overflow: visible;
 }
 
-.card:hover img {
-  filter: blur(10px);
-}
-
-.card a {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  align-items: center;
+.card:hover .card-content {
+  z-index: 2;
 }
 
 .name {
@@ -194,9 +196,8 @@ h1 {
   max-height: 100%;
 }
 
-
 .createactionlist {
-  box-sizing: border-box;;
+  box-sizing: border-box;
   padding: 5px 20px;
   background: linear-gradient(0deg, #0e2231, #010210);
   box-shadow: 1px 1px 5px 1px #000;

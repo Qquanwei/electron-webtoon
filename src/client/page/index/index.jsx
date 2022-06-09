@@ -21,7 +21,7 @@ import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
 
 
-import { Link } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import ElectronWebtoonAppBar from './appbar';
 import plusSVG from './plus.svg';
 import styles from './index.css';
@@ -54,11 +54,48 @@ function StarBar({ list }) {
 
 import * as  selector from '../../selector';
 
+// css 中一个格子为 200/150, 这里要根据图片尺寸选取合适的格子数量
+
+const GRID_WIDTH = 200;
+const GRID_HEIGHT = 150;
+
+const PAIRS = [
+  // w, h
+  [1, 1],
+  [2, 1],
+  [3, 1],
+  [1, 2],
+  [3, 2]
+];
+function getCardGridStyle(width, height) {
+  // ratio = m / n
+  const ratio = (width / height) * (GRID_HEIGHT / GRID_WIDTH);
+  // 找出最接近 ratio 的 pair
+  let minPairIndex = 0;
+  let minValue = Infinity;
+  for (let pairIndex = 0; pairIndex < PAIRS.length; ++pairIndex) {
+    const pair = PAIRS[pairIndex];
+    const pairRatio = pair[0] / pair[1];
+    if ( Math.abs(ratio - pairRatio) < minValue) {
+      minValue = Math.abs(ratio - pairRatio);
+      minPairIndex = pairIndex;
+    }
+  }
+  const pair = PAIRS[minPairIndex];
+  return {
+    gridRowStart: 'auto',
+    gridColumnStart: 'auto',
+    gridRowEnd: `span ${pair[1]}`,
+    gridColumnEnd: `span ${pair [0]}`
+  }
+}
+
 function IndexPage() {
   const [showMenu, setShowMenu] = useState(null);
   const [searchKey, setSearchKey] = useState('');
   const comicList = useRecoilValueMemo(selector.comicList);
   const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
+  const history = useHistory();
 
   const onContextMenu = useCallback((e) => {
     e.preventDefault();
@@ -83,12 +120,15 @@ function IndexPage() {
     setShowMenu(null);
   }, [showMenu]);
 
+  const onClickItem = useCallback((e) => {
+    history.push(`/comic/${e.currentTarget.dataset.id}`)
+  }, []);
+
   // <StarBar list={comicList} />
   return (
     <div className={styles.main}>
       <ElectronWebtoonAppBar onSearch={onSubmitSearch} />
-      <h1>漫画库</h1>
-      <Container className={styles.container}>
+      <h1>漫画库 { comicList.length }</h1>
         <Menu
           id="simple-menu"
           anchorEl={showMenu}
@@ -98,29 +138,30 @@ function IndexPage() {
         >
           <MenuItem onClick={onDeleteComic}>Delete</MenuItem>
         </Menu>
-
-
         <div className={styles.gridlist}>
           {[...comicList].reverse().filter(comic => {
             return comic.name.indexOf(searchKey) !== -1
           }).map((comic, index) => {
+            const width = comic.width || 1;
+            const height = comic.height || 1;
+            const cardStyle = getCardGridStyle(width, height);
             return (
-              <div key={index} className={styles.card}
+              <div key={index}
+                 className={classNames(styles.card) }
                 data-id={comic.id}
+                style={cardStyle}
+                onClick={onClickItem}
                 onContextMenu={onContextMenu}>
-                <Link to={`/comic/${comic.id}`} >
                   <div className={styles['card-content']}>
-                    <img alt="" src={comic.cover} width="100%" />
+                    <img src={comic.cover} />
                   </div>
                   <div className={styles.name }>
                     { comic.name}
                   </div>
-                </Link>
               </div>
             );
           })}
         </div>
-      </Container>
       <div className={styles.support}>
         贡献和支持
         <a
