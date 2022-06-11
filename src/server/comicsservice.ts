@@ -103,6 +103,8 @@ interface ILibraryComic {
   id: string;
   width: number;
   height: number;
+  tag: string;
+  position: string;
 }
 
 interface IComic extends ILibraryComic {
@@ -328,7 +330,6 @@ export default class ComicService {
           return a.index - b.index;
         });
     }
-
     this.store.set('library', library);
   }
 }

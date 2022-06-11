@@ -16,9 +16,6 @@ import useComicContext from './useComicContext';
 // onVisitPosition: 当对应图片露出时调用，用来记录看到的位置
 function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
   const { filter, autoScroll, setAutoScroll, comic } = useComicContext();
-
-  const [isFirst, setIsFirst] = useState(true);
-
   /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
   const firstElePosition = useMemo(() => {
     if (Number.isInteger(comic.position) && comic.position) {
@@ -27,28 +24,43 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
     return -1;
   }, []);
 
+  const [isFirst, setIsFirst] = useState(firstElePosition !== -1);
+
   const onVisitPositionRef = useRef(null);
   onVisitPositionRef.current = onVisitPosition;
 
   useEffect(() => {
-    const observer = new IntersectionObserver((entities) => {
-      if (entities[0].intersectionRatio && onVisitPositionRef.current) {
-        onVisitPositionRef.current(Number(entities[0].target.dataset.index));
-      }
-    });
+    // 当首次进入之后，才开始进行visiblechange展示
+    if (!isFirst) {
+      const observer = new IntersectionObserver((entities) => {
+        if (entities[0].intersectionRatio && onVisitPositionRef.current) {
+          const position = Number(entities[0].target.dataset.index);
+          if (position !== 0) {
+            onVisitPositionRef.current(position);
+          }
+        }
+      });
 
-    document.querySelectorAll('.comic-img').forEach(ele => {
-      observer.observe(ele);
-    });
+      document.querySelectorAll('.comic-img').forEach(ele => {
+        observer.observe(ele);
+      });
+
+      return () => {
+        observer.disconnect();
+      }
+    }
 
     return () => {
-      observer.disconnect();
     }
-  }, []);
+
+  }, [isFirst]);
 
   const onImgLoad = useCallback((e) => {
     if (isFirst && Number(e.currentTarget.dataset.index) === firstElePosition) {
-      e.currentTarget.scrollIntoView();
+      const target = e.currentTarget;
+      setTimeout(() => {
+        target.scrollIntoView();
+      }, 100);
       setIsFirst(false);
     }
   }, [isFirst]);
@@ -57,7 +69,6 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
     return list.map((item, index) => {
       return (
         <img
-          loading="lazy"
           key={index}
           src={item}
           onLoad={onImgLoad}
