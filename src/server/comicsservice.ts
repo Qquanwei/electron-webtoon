@@ -309,6 +309,14 @@ export default class ComicService {
     this.store.set('library', newLibrary);
   }
 
+  async get(key: string) {
+    return this.store.get(`client/${key}`);
+  }
+
+  async set(key: string, value: any) {
+    return this.store.set(`client/${key}`, value);
+  }
+
   /* 更新阅读位置 name: 当前章节名, position: 当前章节的阅读位置 */
   async saveComicTag(id: string, { tag, position }) {
     let library = this.store.get('library');

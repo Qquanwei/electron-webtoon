@@ -1,5 +1,4 @@
 import electron from 'electron';
-import os from 'os';
 import Log from 'electron-log';
 import network from 'network';
 import ComicService from './comicsservice';
@@ -15,6 +14,14 @@ export default function init(app, mainWindow) {
       return service.getComic(id);
     }
     return service.getComicList();
+  });
+
+  ipcMain.handle('/get', (event, key) => {
+    return service.get(key);
+  });
+
+  ipcMain.handle('/set', (event, key, value) => {
+    return service.set(key, value);
   });
 
   ipcMain.handle('/post/comic', (event, path) => {

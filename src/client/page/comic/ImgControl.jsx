@@ -28,7 +28,7 @@ function Control({ children }) {
   }, [comic.name]);
 
   const onClickHome = useCallback(() => {
-    history.goBack();
+    history.push('/');
   }, []);
 
   return (

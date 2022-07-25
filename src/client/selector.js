@@ -1,22 +1,21 @@
 import { selector, selectorFamily } from 'recoil';
 import { LOADING_COVERLIST_KEY } from '../config';
-import store from './store';
 import ipc from './ipc';
 
 /* eslint-disable @typescript-eslint/no-shadow */
-function buildCoverList(comicList) {
+async function buildCoverList(comicList) {
   const coverList = comicList.map((comic) => {
     return comic.cover;
   });
 
-  store.set(LOADING_COVERLIST_KEY, coverList);
+  (await ipc).set(LOADING_COVERLIST_KEY, coverList);
 }
 
 export const comicList = selector({
   key: 'comicList',
   get: async () => {
     const comicList = await (await ipc).fetchComicList();
-    buildCoverList(comicList);
+    await buildCoverList(comicList);
     return comicList;
   },
 });

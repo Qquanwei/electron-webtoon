@@ -8,6 +8,19 @@ export default class IPCOnline implements IPC {
 
   onMsg() {}
 
+  get(key: string) {
+    return fetch('/get', {
+      key,
+    });
+  }
+
+  set(key: string, value: any) {
+    return fetch('/set', {
+      key,
+      value,
+    });
+  }
+
   async takeDirectory() {
     return fetch('/take-directory');
   }

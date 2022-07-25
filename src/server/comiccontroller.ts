@@ -5,6 +5,16 @@ export default class ComicController {
     this.service = new ComicService(mainWindow, makeUrl);
   }
 
+  async get(ctx) {
+    const params = JSON.parse(ctx.request.body);
+    ctx.body = await this.service.get(params.key);
+  }
+
+  async set(ctx) {
+    const params = JSON.parse(ctx.request.body);
+    ctx.body = await this.service.set(params.key, params.value);
+  }
+
   async getConfig(ctx, next) {
     ctx.body = await this.service.getConfig();
   }

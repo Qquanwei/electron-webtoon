@@ -2,6 +2,14 @@ import { ipcRenderer } from 'electron';
 import { IPC } from '../shared';
 
 export default class ElectronIPC implements IPC {
+  get(key: string) {
+    return ipcRenderer.invoke('/get', key);
+  }
+
+  set(key: string, value: any) {
+    return ipcRenderer.invoke('/set', key, value);
+  }
+
   onCompressFile(callback) {
     ipcRenderer.on('decompress', (_, data) => callback(data));
   }
