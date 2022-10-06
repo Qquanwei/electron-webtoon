@@ -165,6 +165,7 @@ function IndexPage() {
       <div className={styles.support}>
         贡献和支持
         <a
+          className={styles.github}
           target="_blank"
           href="https://github.com/Qquanwei/electron-webtoon"
           rel="noreferrer"
