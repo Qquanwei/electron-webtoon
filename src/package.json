@@ -1,8 +1,8 @@
 {
   "name": "electron-webtoon",
   "productName": "electron-webtoon",
-  "version": "2.3.6",
-  "description": "Electron application boilerplate based on React, React Router, Webpack, React Hot Loader for rapid application development",
+  "version": "2.3.7",
+  "description": "ElectronWebtoon 漫画阅读器",
   "main": "./main.prod.js",
   "author": {
     "name": "Qquanwei",

@@ -1,5 +1,5 @@
-import IPC from '../shared';
-import fetch from './fetch';
+import IPC from "../shared";
+import fetch from "./fetch";
 
 export default class IPCOnline implements IPC {
   onCompressFile() {}
@@ -9,24 +9,24 @@ export default class IPCOnline implements IPC {
   onMsg() {}
 
   get(key: string) {
-    return fetch('/get', {
+    return fetch("/get", {
       key,
     });
   }
 
   set(key: string, value: any) {
-    return fetch('/set', {
+    return fetch("/set", {
       key,
       value,
     });
   }
 
   async takeDirectory() {
-    return fetch('/take-directory');
+    return fetch("/take-directory");
   }
 
   async addComicToLibrary(path) {
-    return fetch.post('/comic', {
+    return fetch.post("/comic", {
       path,
     });
   }
@@ -48,7 +48,7 @@ export default class IPCOnline implements IPC {
   }
 
   async saveComicTag(id, tag, position) {
-    return fetch.put('/bookmark', {
+    return fetch.put("/bookmark", {
       id,
       tag,
       position,

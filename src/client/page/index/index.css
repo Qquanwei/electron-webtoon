@@ -8,7 +8,6 @@
   box-sizing: border-box;
   height: 100vh;
   width: 100vw;
-  padding-top: 50px;
   overflow-y: auto;
   overflow-x: hidden;
   background: linear-gradient(0deg, #0e2231, #010210de);

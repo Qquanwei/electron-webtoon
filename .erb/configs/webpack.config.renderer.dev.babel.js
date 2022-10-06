@@ -87,6 +87,9 @@ export default merge(baseConfig, {
               sourceMap: true,
             },
           },
+          {
+            loader: 'postcss-loader'
+          }
         ],
       },
       {
@@ -104,7 +107,7 @@ export default merge(baseConfig, {
               sourceMap: true,
               importLoaders: 1,
             },
-          },
+          }
         ],
       },
       // WOFF Font

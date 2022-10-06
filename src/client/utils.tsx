@@ -1,24 +1,10 @@
 /* eslint-disable react/display-name */
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useRef, useEffect } from 'react';
-import { useRecoilValueLoadable, RecoilRoot } from 'recoil';
+import React from "react";
+import { RecoilRoot } from "recoil";
+import { useRecoilValueMemo } from "recoil-enhance";
 
-export function useRecoilValueMemo(recoilState) {
-  const cacheValueRef = useRef(null);
-  const { state, contents } = useRecoilValueLoadable(recoilState);
-
-  if (state === 'error') {
-    throw contents;
-  }
-  if (state === 'loading' && !cacheValueRef.current) {
-    throw contents;
-  }
-  if (state === 'hasValue') {
-    cacheValueRef.current = contents;
-  }
-
-  return cacheValueRef.current;
-}
+export { useRecoilValueMemo };
 
 export function withLocalRecoilRoot(Component) {
   return (...props) => {

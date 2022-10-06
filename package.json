@@ -1,5 +1,5 @@
 {
-  "name": "electron-react-boilerplate",
+  "name": "ElectronWebtoon",
   "productName": "ElectronWebtoon",
   "description": "Electron Webtoon 漫画阅读器",
   "scripts": {
@@ -13,20 +13,12 @@
     "start": "node -r @babel/register ./.erb/scripts/CheckPortInUse.js && yarn start:renderer",
     "start:main": "cross-env NODE_ENV=development electron -r ./.erb/scripts/BabelRegister ./src/main.dev.ts",
     "start:renderer": "cross-env NODE_ENV=development webpack serve --config ./.erb/configs/webpack.config.renderer.dev.babel.js",
-    "test": "echo ok"
+    "start:analyzer": "cross-env OPEN_ANALYZER=true NODE_ENV=production webpack --config ./.erb/configs/webpack.config.renderer.prod.babel.js ",
+    "test": "jest"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "cross-env NODE_ENV=development eslint --cache"
-    ],
-    "{*.json,.{babelrc,eslintrc,prettierrc}}": [
-      "prettier --ignore-path .eslintignore --parser json --write"
-    ],
-    "*.{css,scss}": [
-      "prettier --ignore-path .eslintignore --single-quote --write"
-    ],
-    "*.{html,md,yml}": [
-      "prettier --ignore-path .eslintignore --single-quote --write"
     ]
   },
   "build": {
@@ -186,6 +178,7 @@
     "@types/webpack-env": "^1.15.2",
     "@typescript-eslint/eslint-plugin": "^4.8.1",
     "@typescript-eslint/parser": "^4.8.1",
+    "autoprefixer": "^10.4.12",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^26.1.0",
     "babel-loader": "^8.2.2",
@@ -210,16 +203,14 @@
     "eslint": "^7.5.0",
     "eslint-config-airbnb": "^18.2.0",
     "eslint-config-airbnb-typescript": "^12.0.0",
-    "eslint-config-erb": "^2.0.0",
-    "eslint-config-prettier": "^6.11.0",
     "eslint-import-resolver-webpack": "^0.13.0",
     "eslint-plugin-compat": "^3.8.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jest": "^24.1.3",
     "eslint-plugin-jsx-a11y": "6.4.1",
-    "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.20.6",
+    "eslint-config-erb": "^2.0.0",
     "eslint-plugin-react-hooks": "^4.0.8",
     "file-loader": "^6.0.0",
     "husky": "^4.2.5",
@@ -228,11 +219,14 @@
     "lint-staged": "^10.2.11",
     "mini-css-extract-plugin": "^1.3.1",
     "opencollective-postinstall": "^2.0.3",
-    "prettier": "^2.0.5",
+    "postcss": "^8.4.17",
+    "postcss-import": "^15.0.0",
+    "postcss-loader": "^7.0.1",
     "react-refresh": "^0.9.0",
     "react-test-renderer": "^17.0.1",
     "rimraf": "^3.0.2",
     "style-loader": "^2.0.0",
+    "tailwindcss": "^3.1.8",
     "terser-webpack-plugin": "^5.0.3",
     "typescript": "^4.0.5",
     "url-loader": "^4.1.0",
@@ -264,13 +258,16 @@
     "lodash.shuffle": "^4.2.0",
     "mime-types": "^2.1.31",
     "network": "^0.6.0",
+    "nzh": "^1.0.8",
     "qrcode-generator": "^1.4.4",
     "ramda": "^0.27.1",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
+    "react-loading": "^2.0.3",
     "react-router-dom": "^5.2.0",
     "reactjs-popup": "^2.0.5",
     "recoil": "^0.5.2",
+    "recoil-enhance": "0.0.2",
     "regenerator-runtime": "^0.13.5",
     "source-map-support": "^0.5.19",
     "uuid": "^8.3.2"
@@ -284,21 +281,6 @@
     "url": "https://opencollective.com/electron-react-boilerplate-594"
   },
   "browserslist": [],
-  "prettier": {
-    "overrides": [
-      {
-        "files": [
-          ".prettierrc",
-          ".babelrc",
-          ".eslintrc"
-        ],
-        "options": {
-          "parser": "json"
-        }
-      }
-    ],
-    "singleQuote": true
-  },
   "renovate": {
     "extends": [
       "bliss"

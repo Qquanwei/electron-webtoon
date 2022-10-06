@@ -1,41 +1,41 @@
-import { ipcRenderer } from 'electron';
-import { IPC } from '../shared';
+import { ipcRenderer } from "electron";
+import { IPC } from "../shared";
 
 export default class ElectronIPC implements IPC {
   get(key: string) {
-    return ipcRenderer.invoke('/get', key);
+    return ipcRenderer.invoke("/get", key);
   }
 
   set(key: string, value: any) {
-    return ipcRenderer.invoke('/set', key, value);
+    return ipcRenderer.invoke("/set", key, value);
   }
 
   onCompressFile(callback) {
-    ipcRenderer.on('decompress', (_, data) => callback(data));
+    ipcRenderer.on("decompress", (_, data) => callback(data));
   }
 
   onCompressDone(callback) {
-    ipcRenderer.on('decompress-done', (_, data) => callback(data));
+    ipcRenderer.on("decompress-done", (_, data) => callback(data));
   }
 
   onMsg(callback) {
-    ipcRenderer.on('msg', (_, msg) => callback(msg));
+    ipcRenderer.on("msg", (_, msg) => callback(msg));
   }
 
   takeDirectory() {
-    return ipcRenderer.invoke('/take-directory');
+    return ipcRenderer.invoke("/take-directory");
   }
 
   takeCompressAndAddToComic() {
-    return ipcRenderer.invoke('/take-compress-and-add-to-comic');
+    return ipcRenderer.invoke("/take-compress-and-add-to-comic");
   }
 
   addComicToLibrary(path: string) {
-    return ipcRenderer.invoke('/post/comic', path);
+    return ipcRenderer.invoke("/post/comic", path);
   }
 
   fetchComicList() {
-    return ipcRenderer.invoke('/comic');
+    return ipcRenderer.invoke("/comic");
   }
 
   fetchComic(id: string) {
@@ -51,15 +51,15 @@ export default class ElectronIPC implements IPC {
   }
 
   saveComicTag(id: string, tag: string, position: number) {
-    return ipcRenderer.invoke('/put/bookmark', id, tag, position);
+    return ipcRenderer.invoke("/put/bookmark", id, tag, position);
   }
 
   startLocalServer() {
-    return ipcRenderer.invoke('/startlocalserver');
+    return ipcRenderer.invoke("/startlocalserver");
   }
 
-  addLog(type = 'info', txt) {
-    return ipcRenderer.invoke('/log', {
+  addLog(type = "info", txt) {
+    return ipcRenderer.invoke("/log", {
       type,
       txt,
     });

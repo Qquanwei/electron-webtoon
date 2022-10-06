@@ -1,4 +1,5 @@
-import ComicService from './comicsservice';
+import { Context } from "koa";
+import ComicService from "./comicsservice";
 
 export default class ComicController {
   constructor(mainWindow, makeUrl) {
@@ -29,18 +30,18 @@ export default class ComicController {
   }
 
   // params: id
-  async getComic(ctx) {
+  async getComic(ctx: Context) {
     const { id } = ctx.params;
     const comic = await this.service.getComic(id);
     if (comic === null) {
       ctx.status = 404;
-      ctx.body = 'comic not found';
+      ctx.body = "comic not found";
     } else {
       ctx.body = comic;
     }
   }
 
-  async addComicToLibrary(ctx) {
+  async addComicToLibrary(ctx: Context) {
     const { path } = ctx.request.body;
     await this.service.addComicToLibrary(path);
     ctx.status = 200;
