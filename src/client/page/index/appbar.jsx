@@ -1,5 +1,6 @@
 /* eslint-disable */
 import React, { useRef, useCallback, useEffect } from 'react';
+import classNames from 'classnames';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -86,16 +87,16 @@ function ElectronWebtoonAppBar({ onSearch }) {
         </form>
       </div>
       <Popup position="bottom center" trigger={
-        <button className={styles.mobilebtn}>
+        <button className={classNames(styles.mobilebtn, 'hidden')}>
           <ScreenLockPortraitIcon />
         </button>
       }>
         <Qrcode />
       </Popup>
       <Popup position="bottom" trigger={
-        <button className={styles.addbtn}>+</button>
+        <button className={classNames(styles.addbtn, 'ml-auto w-[24px]')}>+</button>
       }>
-        <div className={styles.createactionlist}>
+        <div className={classNames(styles.createactionlist, 'text-white flex flex-col items-center justify-center')}>
           <button onClick={onClickAddFolder}>打开文件夹</button>
           <button onClick={onClickAddFile}>打开压缩包</button>
         </div>

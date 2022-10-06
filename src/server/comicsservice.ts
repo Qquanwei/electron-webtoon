@@ -1,52 +1,53 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable no-param-reassign */
-import electron, { app } from 'electron';
-import imageSize from 'image-size';
-import URL from 'url';
-import { v4 as uuidv4 } from 'uuid';
-import * as R from 'ramda';
-import path from 'path';
-import fs from 'fs';
-import fsPromisese from 'fs.promises';
-import Store from 'electron-store';
-import decompress from './compress';
+import electron, { app } from "electron";
+import imageSize from "image-size";
+import URL from "url";
+import { v4 as uuidv4 } from "uuid";
+import * as R from "ramda";
+import path from "path";
+import fs from "fs";
+import fsPromisese from "fs.promises";
+import Store from "electron-store";
+import decompress from "./compress";
+import sortImgListByName from "./sortImgListByName";
 
-function isDirectory(fullpath) {
+function isDirectory(fullpath: string) {
   return fs.lstatSync(fullpath).isDirectory();
 }
 
 const supportExts = [
-  '.jpg',
-  '.jpeg',
-  '.png',
-  '.webp',
-  '.gif',
-  '.bmp',
-  '.apng',
-  '.avif',
-  '.tiff',
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".gif",
+  ".bmp",
+  ".apng",
+  ".avif",
+  ".tiff",
 ];
 
 const supportCompressExts = [
-  'tar',
-  'tar.gz',
-  '7z',
-  'zip',
-  'lzma',
-  'cab',
-  'tar.bz2',
+  "tar",
+  "tar.gz",
+  "7z",
+  "zip",
+  "lzma",
+  "cab",
+  "tar.bz2",
 ];
 
-function extNameLegal(file) {
+function extNameLegal(file: string) {
   const ext = path.extname(file);
   return supportExts.includes(ext);
 }
 
-function flatten(tree) {
-  let list = [];
+function flatten(tree: IComicImgList): string[] {
+  let list: string[] = [];
   // eslint-disable-next-line
   for (const t of tree) {
-    if (!t.name) {
+    if (typeof t === "string") {
       list.push(t);
     } else {
       list = list.concat(flatten(t.list));
@@ -56,16 +57,20 @@ function flatten(tree) {
 }
 
 // deep 子文件夹个数
-async function buildComicImgList(pathname: string, deep = 1000, makeUrl) {
+async function buildComicImgList(
+  pathname: string,
+  deep = 1000,
+  makeUrl: IMakeUrl
+): Promise<IComicImgList> {
   const files = await fsPromisese.readdir(pathname);
 
-  const legalFiles = files.filter((file) => {
+  const legalFiles = files.filter((file: string) => {
     return isDirectory(path.resolve(pathname, file)) || extNameLegal(file);
   });
 
-  const result = [];
+  const result: IComicImgList = [];
   for (let i = 0; i < legalFiles.length && deep; i += 1) {
-    const fileOrDirName = legalFiles[i];
+    const fileOrDirName: string = legalFiles[i];
     if (isDirectory(path.resolve(pathname, fileOrDirName))) {
       // eslint-disable-next-line
       const list = await buildComicImgList(
@@ -84,7 +89,7 @@ async function buildComicImgList(pathname: string, deep = 1000, makeUrl) {
   return result;
 }
 
-async function getCoverUrl(comicPath: string, makeUrl) {
+async function getCoverUrl(comicPath: string, makeUrl: IMakeUrl) {
   try {
     const list = flatten(await buildComicImgList(comicPath, 2, makeUrl));
     return list[0] || list[1];
@@ -134,20 +139,20 @@ export default class ComicService {
     // old version config file
     // 这里最终将会废弃
     try {
-      const basePath = app.getPath('userData');
+      const basePath = app.getPath("userData");
       const configPath = basePath;
-      const configFilename = '.electron-webtton-comic.json';
+      const configFilename = ".electron-webtton-comic.json";
       const configFileFullPath = path.resolve(configPath, configFilename);
       if (fs.existsSync(configFileFullPath)) {
         // migrate
         const { library } = JSON.parse(
           fs.readFileSync(configFileFullPath).toString()
         );
-        this.store.set('library', library);
+        this.store.set("library", library);
         fs.unlinkSync(configFileFullPath);
       }
     } catch (e) {
-      console.log('migrate old config file error:', e);
+      console.log("migrate old config file error:", e);
     }
 
     this.makeUrl =
@@ -158,9 +163,9 @@ export default class ComicService {
   }
 
   async getComicList(): Promise<IComic[]> {
-    const library = this.store.get('library');
+    const library = this.store.get("library");
     return Promise.all(
-      library.map(async (comic) => {
+      library.map(async (comic: ILibraryComic) => {
         if (comic.coverFileName) {
           return {
             ...comic,
@@ -177,8 +182,8 @@ export default class ComicService {
 
   async getComicImgList(id: string) {
     // 如果配置文件不存在，则创建一个新的
-    const library = this.store.get('library');
-    const comics = library.filter((comic) => {
+    const library = this.store.get("library");
+    const comics = library.filter((comic: ILibraryComic) => {
       return comic.id === id;
     });
 
@@ -186,10 +191,12 @@ export default class ComicService {
       const error = new Error();
       error.code = 404;
       throw error;
-    } else {
-      const comic = comics[0];
-      return await buildComicImgList(comic.path, 100, this.makeUrl);
     }
+
+    const comic = comics[0];
+    const img = await buildComicImgList(comic.path, 100, this.makeUrl);
+    const newimg = sortImgListByName(img);
+    return newimg;
   }
 
   // 生成一个新的漫画书，包括id，预览图
@@ -218,18 +225,18 @@ export default class ComicService {
   }
 
   async getComic(id: string): Promise<ILibraryComic> {
-    const library = this.store.get('library');
-    return R.find(R.propEq('id', id), library);
+    const library = this.store.get("library");
+    return R.find(R.propEq("id", id), library);
   }
 
   isExistsAndTouch(comicPath: string) {
-    const library = this.store.get('library');
-    const index = R.findIndex(R.propEq('path', comicPath), library);
+    const library = this.store.get("library");
+    const index = R.findIndex(R.propEq("path", comicPath), library);
 
     if (index !== -1) {
       const newLibrary = [...library];
       newLibrary.splice(index, 1);
-      this.store.set('library', [...newLibrary, library[index]]);
+      this.store.set("library", [...newLibrary, library[index]]);
       return true;
     }
     return false;
@@ -237,41 +244,41 @@ export default class ComicService {
 
   async addComicToLibrary(comicpath: string) {
     if (!this.isExistsAndTouch(comicpath)) {
-      const library = this.store.get('library');
+      const library = this.store.get("library");
       const newLibrary = (library || []).concat(
         await this.buildNewComic(comicpath)
       );
-      this.store.set('library', newLibrary);
+      this.store.set("library", newLibrary);
     }
   }
 
   // add compress file meta info to config
   async addComicToLibrary2(comicpath: string, compressFilePath: string) {
     if (!this.isExistsAndTouch(comicpath)) {
-      const library = this.store.get('library');
+      const library = this.store.get("library");
       const newComic = await this.buildNewComic(comicpath);
       newComic.compressFilePath = compressFilePath;
       const newLibrary = (library || []).concat(newComic);
-      this.store.set('library', newLibrary);
+      this.store.set("library", newLibrary);
     }
   }
 
   // 打开文件选择对话框
   async takeDirectory() {
     return electron.dialog.showOpenDialog(this.mainWindow, {
-      properties: ['openDirectory'],
+      properties: ["openDirectory"],
     });
   }
 
   async takeCompressAndAddToComic() {
     const selectFile = await electron.dialog.showOpenDialog(this.mainWindow, {
-      properties: ['openFile', 'multiSelections'],
-      filters: [{ name: 'compress', extensions: supportCompressExts }],
+      properties: ["openFile", "multiSelections"],
+      filters: [{ name: "compress", extensions: supportCompressExts }],
     });
-    const cachePath = app.getPath('cache');
+    const cachePath = app.getPath("cache");
 
     const onEntry = (data) => {
-      this.mainWindow.webContents.send('decompress', data);
+      this.mainWindow.webContents.send("decompress", data);
     };
 
     if (!selectFile.canceled) {
@@ -280,7 +287,7 @@ export default class ComicService {
         decompress(currentFile, cachePath, onEntry, async (data) => {
           const { pathname } = data;
           await this.addComicToLibrary2(pathname, currentFile);
-          this.mainWindow.webContents.send('decompress-done', data);
+          this.mainWindow.webContents.send("decompress-done", data);
         });
       }
     }
@@ -296,22 +303,30 @@ export default class ComicService {
     if (comic.compressFilePath) {
       try {
         await fsPromisese.rmdir(comic.path, { recursive: true });
-        this.mainWindow.webContents.send('msg', '已清理临时目录');
+        this.mainWindow.webContents.send("msg", "已清理临时目录");
       } catch (e) {
         // pass
       }
     }
 
-    const oldLibrary = this.store.get('library');
+    const oldLibrary = this.store.get("library");
     const newLibrary = oldLibrary.filter((item) => {
       return item.id !== id;
     });
-    this.store.set('library', newLibrary);
+    this.store.set("library", newLibrary);
+  }
+
+  async get(key: string) {
+    return this.store.get(`client/${key}`);
+  }
+
+  async set(key: string, value: any) {
+    return this.store.set(`client/${key}`, value);
   }
 
   /* 更新阅读位置 name: 当前章节名, position: 当前章节的阅读位置 */
   async saveComicTag(id: string, { tag, position }) {
-    let library = this.store.get('library');
+    let library = this.store.get("library");
     const comics = library.filter((item) => {
       return item.id === id;
     });
@@ -330,6 +345,6 @@ export default class ComicService {
           return a.index - b.index;
         });
     }
-    this.store.set('library', library);
+    this.store.set("library", library);
   }
 }

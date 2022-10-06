@@ -8,7 +8,6 @@
   box-sizing: border-box;
   height: 100vh;
   width: 100vw;
-  padding-top: 50px;
   overflow-y: auto;
   overflow-x: hidden;
   background: linear-gradient(0deg, #0e2231, #010210de);
@@ -84,7 +83,8 @@ h1 {
   left: 0;
   right: 0;
   opacity: 1;
-  color: #fff;
+  color: #0e2231;
+  font-weight: bold;
   text-align: center;
   transition: all 0.3s ease;
 }
@@ -207,4 +207,8 @@ h1 {
 .createactionlist button {
   cursor: pointer;
   white-space: nowrap;
+}
+
+.github {
+  color: #fff;
 }

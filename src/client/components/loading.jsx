@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
 import shuffle from 'lodash.shuffle';
-import store from '../store';
 import { LOADING_COVERLIST_KEY } from '../../config';
+import ipc from '../ipc';
 import styles from './loading.css';
 /* eslint-disable @typescript-eslint/no-shadow */
 // 自动从所有图片中选一张作为loading图。
@@ -12,10 +12,13 @@ function Loading() {
   const [coverList, setCoverList] = useState([]);
 
   useEffect(() => {
-    const coverList = store.get(LOADING_COVERLIST_KEY);
-    if (coverList) {
-      setCoverList(shuffle(coverList));
+    async function dowork() {
+      const coverList = (await ipc).get(LOADING_COVERLIST_KEY);
+      if (coverList) {
+        setCoverList(shuffle(coverList));
+      }
     }
+    dowork();
   }, []);
 
   if (coverList.length === 0) {

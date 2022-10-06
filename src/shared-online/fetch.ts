@@ -1,10 +1,10 @@
-import config from '../server/config.json';
+import config from "../server/config.json";
 
-const host = 'http://192.168.3.43';
+const host = "http://192.168.3.43";
 const myfetch = (url) => {
   return fetch(`${host}:${config.localserverport}${url}`, {
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   }).then((resp) => {
     if (resp.status !== 200) {
@@ -17,10 +17,10 @@ const myfetch = (url) => {
 
 myfetch.post = (url, data) => {
   return fetch(`${host}:${config.localserverport}${url}`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify(data),
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   }).then((resp) => {
     if (resp.status !== 200) {
@@ -33,9 +33,9 @@ myfetch.post = (url, data) => {
 
 myfetch.delete = (url) => {
   return fetch(`${host}:${config.localserverport}${url}`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   }).then((resp) => {
     if (resp.status !== 200) {
@@ -48,10 +48,10 @@ myfetch.delete = (url) => {
 
 myfetch.put = (url, data) => {
   return fetch(`${host}:${config.localserverport}${url}`, {
-    method: 'PUT',
+    method: "PUT",
     body: JSON.stringify(data),
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   }).then((resp) => {
     if (resp.status !== 200) {

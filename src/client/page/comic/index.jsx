@@ -1,12 +1,13 @@
 /* eslint-disable */
 import React, {
-  useCallback, useEffect, useState,
+  useCallback, useEffect, useState, Suspense,
   useLayoutEffect, Fragment, useRef, useMemo } from 'react';
 import { useParams, Link, useHistory } from 'react-router-dom';
 import Container from '@material-ui/core/Container';
 import classNames from 'classnames';
 import { withLocalRecoilRoot, arrayDeep } from '../../utils';
 import { useRecoilValue, useRecoilRefresher_UNSTABLE } from 'recoil';
+import withSuspense from '../../components/withSuspense';
 import SingleComic from './SingleComic';
 import ChapterComic from './ChapterComic';
 import useComicContext from './useComicContext';
@@ -74,4 +75,4 @@ function ComicPage({ history }) {
   );
 }
 
-export default withLocalRecoilRoot(ComicPage);
+export default ComicPage;

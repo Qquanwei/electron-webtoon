@@ -12,7 +12,7 @@
 
 ## 下载
 
-https://github.com/Qquanwei/electron-webtoon/releases
+[release](https://github.com/Qquanwei/electron-webtoon/releases)
 
 ## 开发
 

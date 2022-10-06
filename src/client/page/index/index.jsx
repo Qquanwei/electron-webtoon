@@ -19,6 +19,7 @@ import AccountCircle from '@material-ui/icons/AccountCircle';
 import MailIcon from '@material-ui/icons/Mail';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
+import '../../App.global.css';
 
 
 import { useHistory } from 'react-router-dom';
@@ -27,6 +28,7 @@ import plusSVG from './plus.svg';
 import styles from './index.css';
 import ipc from '../../ipc';
 import { useRecoilValueMemo } from '../../utils';
+
 // 展示收藏
 function StarBar({ list }) {
   return (
@@ -126,7 +128,7 @@ function IndexPage() {
 
   // <StarBar list={comicList} />
   return (
-    <div className={styles.main}>
+    <div className={classNames(styles.main, 'pt-[70px]')}>
       <ElectronWebtoonAppBar onSearch={onSubmitSearch} />
       <h1>漫画库 { comicList.length }</h1>
         <Menu
@@ -165,6 +167,7 @@ function IndexPage() {
       <div className={styles.support}>
         贡献和支持
         <a
+          className={styles.github}
           target="_blank"
           href="https://github.com/Qquanwei/electron-webtoon"
           rel="noreferrer"

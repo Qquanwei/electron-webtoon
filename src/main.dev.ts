@@ -11,7 +11,6 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
-import Store from 'electron-store';
 import { app, BrowserWindow, shell } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
@@ -24,7 +23,6 @@ export default class AppUpdater {
     log.transports.file.level = 'info';
     autoUpdater.logger = log;
     autoUpdater.checkForUpdatesAndNotify();
-    Store.initRenderer();
   }
 }
 
@@ -73,7 +71,7 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 800,
+    width: 1018,
     height: 800,
     icon: getAssetPath('icon.png'),
     webPreferences: {
