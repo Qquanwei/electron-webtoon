@@ -31,5 +31,11 @@ yarn run package
 
 - 本软件可分为两种模 1. Electron 客户端模式 2. 在线模式。 在线模式适合转移手机端使用。
 
-- base on https://electron-react-boilerplate.js.org
-- base on @material-ui/core
+主要依赖
+
+- @material-ui/core
+- tailwindcss
+- recoil
+- react
+- react-router
+- electron-react-boilerplate
