@@ -1,3 +1,4 @@
+/* eslint-disable */
 import sortImgListByName from "../sortImgListByName";
 
 describe("sort", () => {
@@ -95,5 +96,29 @@ describe("sort", () => {
       expect(newImgList[3]).toEqual("01/002第二章001.webp");
       expect(newImgList[4]).toEqual("01/002第二章002.webp");
     });
+  });
+
+  // https://github.com/Qquanwei/electron-webtoon/issues/15
+  describe('处理有无效数字干扰的情况', () => {
+    const imgList = [{
+      name: '001 开始',
+      list: []
+    }, {
+      name: '010第4章',
+      list: []
+    }, {
+      name: '101第2章',
+      list: []
+    }, {
+      name: '000第3章',
+      list: []
+    }];
+
+    const newImgList = sortImgListByName([...imgList]);
+
+    expect(newImgList[0].name).toEqual('001 开始');
+    expect(newImgList[1].name).toEqual('101第2章');
+    expect(newImgList[2].name).toEqual('000第3章');
+    expect(newImgList[3].name).toEqual('010第4章');
   });
 });

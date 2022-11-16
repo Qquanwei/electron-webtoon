@@ -1,8 +1,17 @@
-import path from "path";
-import nzh from "nzh";
+import path from 'path';
+import nzh from 'nzh';
 
 function tonum(name: string) {
-  const num = Number(decodeURIComponent(name).replace(/[^\d]/g, ""));
+  const dName = decodeURIComponent(name);
+  const num = Number(dName.replace(/[^\d]/g, ''));
+
+  // 处理 第1章, 第2章 这种情况
+  // 这种情况忽略其他数字，只取中间的数字作为排序依据
+  const result = dName.match(/第\d+章/);
+  if (result && result.length) {
+    return Number(result[0].slice(1, -1));
+  }
+
   if (Number.isInteger(num)) {
     return num;
   }
@@ -13,6 +22,7 @@ function tonum(name: string) {
 // 将中文转成数字，适合中文目录的情况
 function converNameToNumber(name) {
   const dName = decodeURIComponent(name);
+
   if (/最终/.test(dName)) {
     return Infinity;
   }
@@ -27,7 +37,7 @@ export default function sortImgListByName(
   imglist: IComicImgList
 ): IComicImgList {
   return imglist.sort((a, b) => {
-    if (typeof a === "string" && typeof b === "string") {
+    if (typeof a === 'string' && typeof b === 'string') {
       return tonum(path.basename(a)) - tonum(path.basename(b));
     }
 
