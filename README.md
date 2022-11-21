@@ -1,3 +1,5 @@
+一个webtoon漫画阅读软件(阅读器), Webtoon Viewer, 条漫阅读器
+
 ## 软件截图
 
 ![首页截图](/screenshots/homepage.png?raw=true)
