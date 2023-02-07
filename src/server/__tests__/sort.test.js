@@ -121,4 +121,47 @@ describe("sort", () => {
     expect(newImgList[2].name).toEqual('000第3章');
     expect(newImgList[3].name).toEqual('010第4章');
   });
+
+  //https://github.com/Qquanwei/electron-webtoon/issues/17
+  describe('处理番外，外传的特殊情况', () => {
+    const imgList = [{
+      name: '001 开始',
+      list: []
+    },  {
+      name: '外传 01',
+      list: []
+    }, {
+      name: '外传03',
+      list: []
+    }, {
+      name: '番外 0004',
+      list: []
+    }, {
+      name: '番外 000第3章',
+      list: []
+    }, {
+      name: '010第4章',
+      list: []
+    }, {
+      name: '101第2章',
+      list: []
+    }, {
+      name: '000第3章',
+      list: []
+    }];
+
+    const newImgList = sortImgListByName([...imgList]);
+
+    const chapterList = newImgList.map(p => p.name);
+    expect(chapterList).toEqual([
+      '001 开始',
+      '101第2章',
+      '000第3章',
+      '010第4章',
+      '番外 000第3章',
+      '番外 0004',
+      '外传 01',
+      '外传03'
+    ]);
+  });
 });

@@ -5,6 +5,15 @@ function tonum(name: string) {
   const dName = decodeURIComponent(name);
   const num = Number(dName.replace(/[^\d]/g, ''));
 
+  // 处理 番外，外传 这种情况
+  // 番外权重 *100, 外传权重 *10000
+  if (/番外/.test(name)) {
+    return 100 * tonum(name.replace('番外', ''));
+  }
+  if (/(外传|外傳)/.test(name)) {
+    return 10000 * tonum(name.replace(/(外传|外傳)/g, ''));
+  }
+
   // 处理 第1章, 第2章 这种情况
   // 这种情况忽略其他数字，只取中间的数字作为排序依据
   const result = dName.match(/第\d+章/);
