@@ -69,6 +69,8 @@ async function buildComicImgList(
   });
 
   const result: IComicImgList = [];
+  // 如果该目录是既有图片又有目录，则，将这些图片放在一个单独的目录中
+  let singlePics: IComicImgList = [];
   for (let i = 0; i < legalFiles.length && deep; i += 1) {
     const fileOrDirName: string = legalFiles[i];
     if (isDirectory(path.resolve(pathname, fileOrDirName))) {
@@ -83,9 +85,20 @@ async function buildComicImgList(
         list,
       });
     } else {
-      result.push(makeUrl(path.resolve(pathname, fileOrDirName)));
+      singlePics.push(makeUrl(path.resolve(pathname, fileOrDirName)));
     }
   }
+  if (result.length === 0) {
+    return singlePics;
+  }
+
+  if (singlePics.length) {
+    return [{
+      name: '无目录-1',
+      list: singlePics
+    }].concat(result as any);
+  }
+
   return result;
 }
 

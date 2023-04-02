@@ -16,7 +16,7 @@ function tonum(name: string) {
 
   // 处理 第1章, 第2章 这种情况
   // 这种情况忽略其他数字，只取中间的数字作为排序依据
-  const result = dName.match(/第\d+章/);
+  const result = dName.match(/第\d+(章|话|話)/);
   if (result && result.length) {
     return Number(result[0].slice(1, -1));
   }
@@ -29,12 +29,18 @@ function tonum(name: string) {
 }
 
 // 将中文转成数字，适合中文目录的情况
-function converNameToNumber(name) {
+function converNameToNumber(name: string) {
   const dName = decodeURIComponent(name);
 
-  if (/最终/.test(dName)) {
+  if (/最(终|終)/.test(dName)) {
     return Infinity;
   }
+
+  // 如果有数字，则不处理
+  if (/\d/.test(name)) {
+    return null;
+  }
+
   // 如果是类似 第一章 这种名字，则使用中文简体来转换。目前仅支持中文简体转换
   return nzh.cn.decodeS(dName);
 }
