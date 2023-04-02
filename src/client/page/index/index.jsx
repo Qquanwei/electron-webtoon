@@ -23,12 +23,12 @@ import '../../App.global.css';
 
 
 import { useHistory } from 'react-router-dom';
+import { useRecoilState } from 'recoil';
 import ElectronWebtoonAppBar from './appbar';
 import plusSVG from './plus.svg';
 import styles from './index.css';
 import ipc from '../../ipc';
 import { useRecoilValueMemo } from '../../utils';
-
 // 展示收藏
 function StarBar({ list }) {
   return (
@@ -98,6 +98,7 @@ function IndexPage() {
   const comicList = useRecoilValueMemo(selector.comicList);
   const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
   const history = useHistory();
+  const [_, setNextOpenComicInfo] = useRecoilState(selector.nextOpenComicInfo);
 
   const onContextMenu = useCallback((e) => {
     e.preventDefault();
@@ -123,14 +124,17 @@ function IndexPage() {
   }, [showMenu]);
 
   const onClickItem = useCallback((e) => {
+    setNextOpenComicInfo({
+      cover: e.currentTarget.dataset.cover,
+    });
     history.push(`/comic/${e.currentTarget.dataset.id}`)
   }, []);
 
   // <StarBar list={comicList} />
   return (
-    <div className={classNames(styles.main, 'pt-[70px]')}>
+    <div className='pt-[70px] text-black bg-[#eee]'>
       <ElectronWebtoonAppBar onSearch={onSubmitSearch} />
-      <h1>漫画库 { comicList.length }</h1>
+      <h1 className='mb-2 text-gray-400'>漫画库 { comicList.length }</h1>
         <Menu
           id="simple-menu"
           anchorEl={showMenu}
@@ -149,25 +153,26 @@ function IndexPage() {
             const cardStyle = getCardGridStyle(width, height);
             return (
               <div key={index}
-                 className={classNames(styles.card) }
+                className={classNames(styles.card, 'transition-all duration-750 hover:border-2 border-sky-300 ') }
                 data-id={comic.id}
+                data-cover={comic.cover}
                 style={cardStyle}
                 onClick={onClickItem}
                 onContextMenu={onContextMenu}>
                   <div className={styles['card-content']}>
                     <img src={comic.cover} />
                   </div>
-                  <div className={styles.name }>
+                  <div className='bg-black/50 text-white absolute left-0 right-0 bottom-0'>
                     { comic.name}
                   </div>
               </div>
             );
           })}
         </div>
-      <div className={styles.support}>
+      <div className='text-center pb-[20px] text-black'>
         贡献和支持
         <a
-          className={styles.github}
+          className='ml-2 text-blue-300'
           target="_blank"
           href="https://github.com/Qquanwei/electron-webtoon"
           rel="noreferrer"

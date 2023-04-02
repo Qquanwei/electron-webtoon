@@ -6,6 +6,7 @@ import Filter2Icon from '@material-ui/icons/Filter2';
 import Filter3Icon from '@material-ui/icons/Filter3';
 import Filter4Icon from '@material-ui/icons/Filter4';
 import ArrowCircleDown from '@material-ui/icons/ArrowDownward';
+import AddAPhotoIcon from '@material-ui/icons/AddAPhoto';
 import { useRecoilRefresher_UNSTABLE } from 'recoil';
 import HomeIcon from '@material-ui/icons/Home';
 import { useHistory } from 'react-router-dom';
@@ -29,6 +30,10 @@ function Control({ children }) {
 
   const onClickHome = useCallback(() => {
     history.push('/');
+  }, []);
+
+  const onClickAdd = useCallback(() => {
+
   }, []);
 
   return (
@@ -57,6 +62,9 @@ function Control({ children }) {
         })}
         onClick={() => onClickFilter(4)}
       />
+      <div title="收藏" className={classNames(styles.toolbaricon, 'hidden')} onClick={onClickAdd}>
+        <AddAPhotoIcon></AddAPhotoIcon>
+      </div>
       <ArrowCircleDown
         className={classNames(styles.toolbaricon, {
           [styles.toolbarenabled]: autoScroll,

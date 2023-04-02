@@ -1,4 +1,4 @@
-import { selector, selectorFamily } from "recoil";
+import { selector, selectorFamily, atom } from "recoil";
 import { LOADING_COVERLIST_KEY } from "../config";
 import ipc from "./ipc";
 
@@ -27,10 +27,14 @@ export const comicDetail = selectorFamily({
       (await ipc).fetchComic(id),
       (await ipc).fetchImgList(id),
     ]);
-
     return {
       comic,
       imgList,
     };
   },
+});
+
+export const nextOpenComicInfo = atom({
+  key: 'next open comic info',
+  default: null
 });

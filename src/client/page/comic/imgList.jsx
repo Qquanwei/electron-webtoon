@@ -9,6 +9,7 @@ import React, {
   Fragment,
 } from 'react';
 import classNames from 'classnames';
+import StartUpPage from '../../startPage';
 import Button from '@material-ui/core/Button';
 import styles from './index.css';
 import useComicContext from './useComicContext';
@@ -60,8 +61,10 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
       const target = e.currentTarget;
       setTimeout(() => {
         target.scrollIntoView();
+      }, 50);
+      setTimeout(() => {
+        setIsFirst(false);
       }, 100);
-      setIsFirst(false);
     }
   }, [isFirst]);
 
@@ -163,6 +166,7 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
   return (
     <div
       className={styles.imglist} >
+      <StartUpPage className={classNames('z-10', { '!hidden': !isFirst})}></StartUpPage>
       {renderList(imgList)}
       {hasNextPage ? (
         <Button
