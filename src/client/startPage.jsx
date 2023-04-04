@@ -7,13 +7,6 @@ import { useRecoilValue  } from "recoil";
 function StartUpPage({ className }) {
   const nextOpenComicInfo = useRecoilValue(selector.nextOpenComicInfo);
 
-  useEffect(() => {
-    return () => {
-    };
-  }, []);
-
-  console.log(nextOpenComicInfo)
-
   return (
     <div className={classNames(className, "fixed bg-gray-300 top-0 bottom-0 left-0 right-0 flex items-center justify-center")}>
     {
