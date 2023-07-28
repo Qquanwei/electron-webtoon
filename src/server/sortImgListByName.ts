@@ -1,9 +1,17 @@
 import path from 'path';
 import nzh from 'nzh';
 
+function isNaN(a) {
+  return a !== a;
+}
+
 function tonum(name: string) {
   const dName = decodeURIComponent(name);
-  const num = Number(dName.replace(/[^\d]/g, ''));
+  const num = Number(
+    dName.replace(/[^\d.]/g, '')
+      .replace(/^\./g, '')
+      .replace(/\.$/g, '')
+  );
 
   // 处理 番外，外传 这种情况
   // 番外权重 *1000, 外传权重 *100000
@@ -21,7 +29,7 @@ function tonum(name: string) {
     return Number(result[0].slice(1, -1));
   }
 
-  if (Number.isInteger(num)) {
+  if (!isNaN(num)) {
     return num;
   }
 

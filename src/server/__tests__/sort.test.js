@@ -96,6 +96,27 @@ describe("sort", () => {
       expect(newImgList[3]).toEqual("01/002第二章001.webp");
       expect(newImgList[4]).toEqual("01/002第二章002.webp");
     });
+
+    it("处理章节数字有小数点的情况", () => {
+      const imgList = [
+        "01/002第二章001.webp",
+        "01/002第二章002.webp",
+        "01/002第二章002.5.webp",
+        "01/002第二章003.webp",
+        "01/001第一章000.webp",
+        "01/001第一章001.webp",
+        "01/001第一章002.webp",
+      ];
+
+      const newImgList = sortImgListByName([...imgList]);
+      expect(newImgList[0]).toEqual("01/001第一章000.webp");
+      expect(newImgList[1]).toEqual("01/001第一章001.webp");
+      expect(newImgList[2]).toEqual("01/001第一章002.webp");
+      expect(newImgList[3]).toEqual("01/002第二章001.webp");
+      expect(newImgList[4]).toEqual("01/002第二章002.webp");
+      expect(newImgList[5]).toEqual("01/002第二章002.5.webp");
+      expect(newImgList[6]).toEqual("01/002第二章003.webp");
+    });
   });
 
   // https://github.com/Qquanwei/electron-webtoon/issues/15
