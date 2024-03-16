@@ -1,4 +1,3 @@
-/* eslint-disable */
 import React, {
   useRef,
   useState,
@@ -6,17 +5,16 @@ import React, {
   useLayoutEffect,
   useCallback,
   useMemo,
-  Fragment,
-} from 'react';
-import classNames from 'classnames';
-import StartUpPage from '../../startPage';
-import Button from '@material-ui/core/Button';
-import styles from './index.css';
-import useComicContext from './useComicContext';
+} from "react";
+import classNames from "classnames";
+import StartUpPage from "../../startPage";
+import Button from "@material-ui/core/Button";
+import styles from "./index.css";
+import useComicContext from "./useComicContext";
 
 // onVisitPosition: 当对应图片露出时调用，用来记录看到的位置
-function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
-  const { filter, autoScroll, setAutoScroll, comic } = useComicContext();
+function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition }) {
+  const { filter, autoScroll, comic } = useComicContext();
   /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
   const firstElePosition = useMemo(() => {
     if (Number.isInteger(comic.position) && comic.position) {
@@ -42,31 +40,35 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
         }
       });
 
-      document.querySelectorAll('.comic-img').forEach(ele => {
+      document.querySelectorAll(".comic-img").forEach((ele) => {
         observer.observe(ele);
       });
 
       return () => {
         observer.disconnect();
+      };
+    }
+
+    return () => {};
+  }, [isFirst]);
+
+  const onImgLoad = useCallback(
+    (e) => {
+      if (
+        isFirst &&
+        Number(e.currentTarget.dataset.index) === firstElePosition
+      ) {
+        const target = e.currentTarget;
+        setTimeout(() => {
+          target.scrollIntoView();
+        }, 50);
+        setTimeout(() => {
+          setIsFirst(false);
+        }, 100);
       }
-    }
-
-    return () => {
-    }
-
-  }, [isFirst]);
-
-  const onImgLoad = useCallback((e) => {
-    if (isFirst && Number(e.currentTarget.dataset.index) === firstElePosition) {
-      const target = e.currentTarget;
-      setTimeout(() => {
-        target.scrollIntoView();
-      }, 50);
-      setTimeout(() => {
-        setIsFirst(false);
-      }, 100);
-    }
-  }, [isFirst]);
+    },
+    [isFirst]
+  );
 
   function renderList(list) {
     return list.map((item, index) => {
@@ -76,7 +78,10 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
           src={item}
           onLoad={onImgLoad}
           data-index={index}
-          className={classNames('comic-img', styles[`filter-${filter}`])}
+          className={classNames(
+            "comic-img border-box border border-black",
+            styles[`filter-${filter}`]
+          )}
         />
       );
     });
@@ -164,9 +169,10 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
   }, []);
 
   return (
-    <div
-      className={styles.imglist} >
-      <StartUpPage className={classNames('z-10', { '!hidden': !isFirst})}></StartUpPage>
+    <div className={styles.imglist}>
+      <StartUpPage
+        className={classNames("z-10", { "!hidden": !isFirst })}
+      ></StartUpPage>
       {renderList(imgList)}
       {hasNextPage ? (
         <Button
@@ -174,7 +180,7 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition}) {
           className={styles.nextpagebtn}
           ref={nextPageBtnRef}
         >
-          下一页{time === 0 ? '' : time}
+          下一页{time === 0 ? "" : time}
         </Button>
       ) : null}
     </div>
