@@ -15,7 +15,6 @@ import AppIcon from '@material-ui/icons/Apps';
 import ImgControl from './ImgControl';
 import ImgList from './imgList';
 import useComicContext from './useComicContext';
-import styles from './index.css';
 import ipc from '../../ipc';
 
 function ChapterList({ imgList, value, onChange, toggleChapter }) {
@@ -47,8 +46,8 @@ function ChapterList({ imgList, value, onChange, toggleChapter }) {
               <ImportContactsIcon />
             </ListItemIcon>
             <ListItemText
-              className={classNames(styles.chaptername, {
-                [styles.current]: value === item,
+              className={classNames("cursor-pointer", {
+                ["text-sky-500"]: value === item,
               })}
             >
               <div onClick={() => onClick(item)} title={item.name}>
@@ -70,16 +69,16 @@ function ChapterList({ imgList, value, onChange, toggleChapter }) {
   }
 
   return (
-    <div className={styles.chapterlistcontainer}>
-      <div className={styles.navbar}>
+    <div className={"basis-[320px] shrink-0 grow-0"}>
+      <div className={"fixed top-0 left-0 z-10 bg-gray-300/10 py-[20px] px-[20px]"}>
         <Breadcrumbs aria-label="breadcrumb">
-          <Link to="/" className={styles.link}>
+          <Link to="/" className={"text-[#333]"}>
             Home
           </Link>
           <Typography>{comic?.name}</Typography>
         </Breadcrumbs>
       </div>
-      <div className={styles.chapter}>{renderList(imgList)}</div>
+      <div className={"fixed border-box left-0 top-[50px] w-[300px] h-[calc(100%-100px)] overflow-auto"}>{renderList(imgList)}</div>
     </div>
   );
 }
@@ -135,14 +134,14 @@ function ChapterComic({ chapterList }) {
 
   return (
     <>
-      <div className={styles.chaptercomiccontent}>
+      <div className={"flex grow relative"}>
         <ChapterList
           toggleChapter={toggleChapter}
           imgList={chapterList}
           value={chapter}
           onChange={setChapter}
         />
-        <div className={styles.chapterimglistcontainer}>
+        <div className={"grow relative"}>
           <ImgList
             onVisitPosition={onVisitPositionChange}
             imgList={chapter.list || []}
@@ -154,7 +153,7 @@ function ChapterComic({ chapterList }) {
       <ImgControl>
         <AppIcon
           title="目录"
-          className={styles.toolbaricon}
+          className={"bg-[#333] text-white mt-[10px]"}
           onClick={onToggleChapter}
         >
           目录

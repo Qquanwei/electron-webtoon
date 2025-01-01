@@ -3,13 +3,13 @@
 
 
 "7zip-bin@^5.1.1":
-  "integrity" "sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A=="
-  "resolved" "https://registry.npmmirror.com/7zip-bin/-/7zip-bin-5.2.0.tgz"
-  "version" "5.2.0"
+  version "5.2.0"
+  resolved "https://registry.npmjs.org/7zip-bin/-/7zip-bin-5.2.0.tgz"
+  integrity sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A==
 
 "7zip-min@^1.4.1":
-  "integrity" "sha512-xiK95rSNr6cXB7UXVLJdrxtNrlXBqZrMhcKlq0S5Rsg6vVhh+9OSUyQIba8bSAGgHjpETlWXAYEuVfxYGEfCWA=="
-  "resolved" "https://registry.npmmirror.com/7zip-min/-/7zip-min-1.4.1.tgz"
-  "version" "1.4.1"
+  version "1.4.1"
+  resolved "https://registry.npmjs.org/7zip-min/-/7zip-min-1.4.1.tgz"
+  integrity sha512-xiK95rSNr6cXB7UXVLJdrxtNrlXBqZrMhcKlq0S5Rsg6vVhh+9OSUyQIba8bSAGgHjpETlWXAYEuVfxYGEfCWA==
   dependencies:
     "7zip-bin" "^5.1.1"

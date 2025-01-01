@@ -8,12 +8,23 @@ import React, {
 } from "react";
 import classNames from "classnames";
 import StartUpPage from "../../startPage";
-import Button from "@material-ui/core/Button";
-import styles from "./index.css";
 import useComicContext from "./useComicContext";
 
+interface ImgListProps {
+  onNextPage: () => void;
+  hasNextPage: boolean;
+  imgList: string[];
+  onVisitPosition: () => void;
+  horizon: boolean;
+}
 // onVisitPosition: 当对应图片露出时调用，用来记录看到的位置
-function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition }) {
+const ImgList: React.FC<ImgListProps> = ({
+  onNextPage,
+  hasNextPage,
+  imgList,
+  onVisitPosition,
+  horizon,
+}) => {
   const { filter, autoScroll, comic } = useComicContext();
   /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
   const firstElePosition = useMemo(() => {
@@ -25,7 +36,7 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition }) {
 
   const [isFirst, setIsFirst] = useState(firstElePosition !== -1);
 
-  const onVisitPositionRef = useRef(null);
+  const onVisitPositionRef = useRef<typeof onVisitPosition | null>(null);
   onVisitPositionRef.current = onVisitPosition;
 
   useEffect(() => {
@@ -67,7 +78,7 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition }) {
         }, 100);
       }
     },
-    [isFirst]
+    [isFirst],
   );
 
   function renderList(list) {
@@ -79,8 +90,13 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition }) {
           onLoad={onImgLoad}
           data-index={index}
           className={classNames(
-            "comic-img border-box border border-black",
-            styles[`filter-${filter}`]
+            "comic-img border-box border border-black mx-auto",
+            {
+              "filter invert": filter === 4,
+              "filter backdrop-sepia-1": filter === 3,
+              'filter brightness-50': filter === 1,
+              'image-pixelated': filter === 2
+            }
           )}
         />
       );
@@ -159,7 +175,9 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition }) {
   }, [onNextPage, imgList]);
 
   useEffect(() => {
-    document.scrollingElement.scrollTop = 0;
+    if (document.scrollingElement) {
+      document.scrollingElement.scrollTop = 0;
+    }
   }, [imgList]);
 
   const onClickNextPage = useCallback((e) => {
@@ -169,22 +187,27 @@ function ImgList({ onNextPage, hasNextPage, imgList, onVisitPosition }) {
   }, []);
 
   return (
-    <div className={styles.imglist}>
+    <div
+      className={classNames("w-full select-none text-0", {
+        "flex flex-col justify-center": !horizon,
+        flex: horizon,
+      })}
+    >
       <StartUpPage
         className={classNames("z-10", { "!hidden": !isFirst })}
       ></StartUpPage>
       {renderList(imgList)}
       {hasNextPage ? (
-        <Button
+        <div
           onClick={onClickNextPage}
-          className={styles.nextpagebtn}
+          className="cursor-pointer transition transition-all hover:font-bold hover:text-sky-500 py-[20px] w-[50px] text-sky-300 mx-auto text-center"
           ref={nextPageBtnRef}
         >
           下一页{time === 0 ? "" : time}
-        </Button>
+        </div>
       ) : null}
     </div>
   );
-}
+};
 
 export default ImgList;

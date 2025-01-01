@@ -14,8 +14,6 @@ import { Provider }  from './useComicContext';
 import ipc from '../../ipc';
 import * as selector from '../../selector';
 
-import styles from './index.css';
-
 import {
   GridList,
   GridListTile,
@@ -60,7 +58,7 @@ function ComicPage({ history }) {
   }, [autoScroll, setAutoScroll, filter, onClickFilter, comic]);
 
   return (
-    <div className={styles.container}>
+    <div className="w-full border-box">
       <Provider value={contextValue}>
         {
           isChapterComic ? (

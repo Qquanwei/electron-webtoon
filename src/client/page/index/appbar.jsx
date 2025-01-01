@@ -8,7 +8,6 @@ import {
   MenuItem,
   Button,
   Snackbar,
-  SnackbarContent,
 } from "@material-ui/core";
 
 import { useRecoilRefresher_UNSTABLE } from "recoil";

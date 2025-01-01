@@ -14,7 +14,6 @@ import { Tooltip } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
 import * as  selector from '../../selector';
 import useComicContext from './useComicContext';
-import styles from './index.css';
 
 function Control({ children }) {
   const { comic, filter, onClickFilter, autoScroll, setAutoScroll } =
@@ -39,27 +38,27 @@ function Control({ children }) {
   }, []);
 
   return (
-    <div className={styles.toolbar}>
+    <div className="fixed right-0 bottom-[20px] flex flex-col justify-end cursor-pointer px-[20px]">
       <Tooltip title="滤镜1" placement='top'>
         <Filter1Icon
-          className={classNames(styles.toolbaricon, {
-            [styles.toolbarenabled]: filter === 1,
+          className={classNames("bg-[#333] text-white", {
+            ["text-orange-300"]: filter === 1,
           })}
           onClick={() => onClickFilter(1)}
         /></Tooltip>
 
       <Tooltip title="滤镜2" placement='top'>
         <Filter2Icon
-          className={classNames(styles.toolbaricon, {
-            [styles.toolbarenabled]: filter === 2,
+          className={classNames("bg-[#333] text-white mt-[10px]", {
+            ["text-orange-300"]: filter === 2,
           })}
           onClick={() => onClickFilter(2)}
         />
       </Tooltip>
       <Tooltip title="滤镜3" placement='top'>
         <Filter3Icon
-          className={classNames(styles.toolbaricon, {
-            [styles.toolbarenabled]: filter === 3,
+          className={classNames("bg-[#333] text-white mt-[10px]", {
+            ["text-orange-300"]: filter === 3,
           })}
           onClick={() => onClickFilter(3)}
         />
@@ -67,26 +66,26 @@ function Control({ children }) {
 
       <Tooltip title="滤镜4" placement='top'>
         <Filter4Icon
-          className={classNames(styles.toolbaricon, {
-            [styles.toolbarenabled]: filter === 4,
+          className={classNames("bg-[#333] text-white mt-[10px]", {
+            ["text-orange-300"]: filter === 4,
           })}
           onClick={() => onClickFilter(4)}
         />
       </Tooltip>
-      <div title="收藏" className={classNames(styles.toolbaricon, 'hidden')} onClick={onClickAdd}>
+      <div title="收藏" className={classNames(["text-orange-300"], 'hidden')} onClick={onClickAdd}>
         <AddAPhotoIcon></AddAPhotoIcon>
       </div>
       <Tooltip title="自动滚动" placement='top'>
         <ArrowCircleDown
-          className={classNames(styles.toolbaricon, {
-            [styles.toolbarenabled]: autoScroll,
+          className={classNames("bg-[#333] text-white mt-[10px]", {
+            ["text-orange-300"]: autoScroll,
           })}
           onClick={() => setAutoScroll((v) => !v)}
         />
       </Tooltip>
 
       <Tooltip title="回到主页" placement='top'>
-        <HomeIcon className={styles.toolbaricon} onClick={onClickHome}>
+        <HomeIcon className={"bg-[#333] text-white mt-[10px]"} onClick={onClickHome}>
           Home
         </HomeIcon>
       </Tooltip>
