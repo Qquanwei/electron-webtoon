@@ -1,6 +1,7 @@
 /* eslint global-require: off, import/no-extraneous-dependencies: off */
 
 const developmentEnvironments = ["development", "test"];
+console.log("load babel config")
 
 const developmentPlugins = [require("@babel/plugin-transform-runtime")];
 
@@ -12,7 +13,6 @@ const productionPlugins = [
   require("@babel/plugin-transform-react-inline-elements"),
   require("babel-plugin-transform-react-remove-prop-types"),
 ];
-
 module.exports = (api) => {
   // See docs about api at https://babeljs.io/docs/en/config-files#apicache
 

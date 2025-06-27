@@ -55,8 +55,11 @@ const createWindow = async () => {
     width: 1256,
     height: 1000,
     icon: getAssetPath('icon.png'),
+
+
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: false
     },
   });
   mainWindow.setMenuBarVisibility(false);
