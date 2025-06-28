@@ -55,6 +55,9 @@ export default merge(baseConfig, {
 
   resolve: {
     alias: {
+      '@shared': path.resolve(__dirname, "../../src/shared"),
+      "@components": path.resolve(__dirname, "../../src/client/components"),
+      "@client": path.resolve(__dirname, "../../src/client"),
       'shared': path.resolve(__dirname, '../../src/shared-electron')
     }
   },

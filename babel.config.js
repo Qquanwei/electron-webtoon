@@ -1,7 +1,6 @@
 /* eslint global-require: off, import/no-extraneous-dependencies: off */
 
 const developmentEnvironments = ["development", "test"];
-console.log("load babel config")
 
 const developmentPlugins = [require("@babel/plugin-transform-runtime")];
 
@@ -30,6 +29,9 @@ module.exports = (api) => {
     ],
     plugins: [
       // Stage 1
+      ["@babel/plugin-transform-react-jsx", {
+        runtime: "automatic"
+      }],
       require("@babel/plugin-proposal-export-default-from"),
       require("@babel/plugin-proposal-logical-assignment-operators"),
       [require("@babel/plugin-proposal-optional-chaining"), { loose: false }],

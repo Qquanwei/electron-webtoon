@@ -9,12 +9,13 @@ import React, {
 import classNames from "classnames";
 import StartUpPage from "../../startPage";
 import useComicContext from "./useComicContext";
+import { EmptyFunction, UnaryFunction } from "@shared/type";
 
 interface ImgListProps {
-  onNextPage: () => void;
+  onNextPage: EmptyFunction;
   hasNextPage: boolean;
   imgList: string[];
-  onVisitPosition: () => void;
+  onVisitPosition: UnaryFunction<number>;
   horizon: boolean;
 }
 // onVisitPosition: 当对应图片露出时调用，用来记录看到的位置
@@ -44,7 +45,9 @@ const ImgList: React.FC<ImgListProps> = ({
     if (!isFirst) {
       const observer = new IntersectionObserver((entities) => {
         if (entities[0].intersectionRatio && onVisitPositionRef.current) {
-          const position = Number(entities[0].target.dataset.index);
+          const position = Number(
+            (entities[0].target as HTMLImageElement)?.dataset?.index,
+          );
           if (position !== 0) {
             onVisitPositionRef.current(position);
           }
@@ -70,18 +73,20 @@ const ImgList: React.FC<ImgListProps> = ({
         Number(e.currentTarget.dataset.index) === firstElePosition
       ) {
         const target = e.currentTarget;
+        document.scrollingElement?.classList.add("scroll-smooth");
         setTimeout(() => {
           target.scrollIntoView();
         }, 50);
         setTimeout(() => {
           setIsFirst(false);
+          document.scrollingElement?.classList.remove("scroll-smooth");
         }, 100);
       }
     },
     [isFirst],
   );
 
-  function renderList(list) {
+  function renderList(list: string[]) {
     return list.map((item, index) => {
       return (
         <img
@@ -94,9 +99,9 @@ const ImgList: React.FC<ImgListProps> = ({
             {
               "filter invert": filter === 4,
               "filter backdrop-sepia-1": filter === 3,
-              'filter brightness-50': filter === 1,
-              'image-pixelated': filter === 2
-            }
+              "filter brightness-50": filter === 1,
+              "image-pixelated": filter === 2,
+            },
           )}
         />
       );
@@ -106,13 +111,16 @@ const ImgList: React.FC<ImgListProps> = ({
   const autoScrollRef = useRef(false);
   const nextPageBtnRef = useRef(null);
   const [time, setTime] = useState(0);
-  const nextPageTimer = useRef(0);
+  const nextPageTimer = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
     if (autoScroll) {
       autoScrollRef.current = true;
       function scroll() {
-        document.scrollingElement.scrollTop += 4;
+        if (document.scrollingElement) {
+          document.scrollingElement.scrollTop += 4;
+        }
+
         if (autoScrollRef.current) {
           requestAnimationFrame(scroll);
         }
@@ -138,25 +146,26 @@ const ImgList: React.FC<ImgListProps> = ({
 
       const observer = new IntersectionObserver((entities) => {
         if (autoScrollRef.current) {
-          if (
-            entities[0].intersectionRatio > 0.95 &&
-            nextPageTimer.current === 0
-          ) {
+          if (entities[0].intersectionRatio > 0.95 && !nextPageTimer.current) {
             setTime(3);
             nextPageTimer.current = setInterval(() => {
               setTime((time) => {
                 if (time === 1) {
                   onNextPage();
-                  clearInterval(nextPageTimer.current);
-                  nextPageTimer.current = 0;
+                  if (nextPageTimer.current) {
+                    clearInterval(nextPageTimer.current);
+                    nextPageTimer.current = undefined;
+                  }
                 }
                 return time - 1;
               });
             }, 1000);
           }
           if (entities[0].intersectionRatio <= 0.95) {
-            clearInterval(nextPageTimer.current);
-            nextPageTimer.current = 0;
+            if (nextPageTimer.current) {
+              clearInterval(nextPageTimer.current);
+              nextPageTimer.current = undefined;
+            }
           }
         }
       }, options);
@@ -164,7 +173,9 @@ const ImgList: React.FC<ImgListProps> = ({
       observer.observe(nextPageBtnRef.current);
 
       return () => {
-        clearInterval(nextPageTimer.current);
+        if (nextPageTimer.current) {
+          clearInterval(nextPageTimer.current);
+        }
         if (nextPageBtnRef.current) {
           observer.unobserve(nextPageBtnRef.current);
         }
@@ -174,11 +185,15 @@ const ImgList: React.FC<ImgListProps> = ({
     return () => null;
   }, [onNextPage, imgList]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (document.scrollingElement) {
       document.scrollingElement.scrollTop = 0;
     }
-  }, [imgList]);
+    document.scrollingElement?.classList.add("overflow-x-hidden");
+    return () => {
+      document.scrollingElement?.classList.remove("overflow-x-hidden");
+    };
+  }, []);
 
   const onClickNextPage = useCallback((e) => {
     e.preventDefault();

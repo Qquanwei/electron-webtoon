@@ -1,4 +1,4 @@
-import IPC from "../shared";
+import { IPC } from "../shared/type";
 import fetch from "./fetch";
 
 export default class IPCOnline implements IPC {
@@ -57,5 +57,9 @@ export default class IPCOnline implements IPC {
 
   async addLog() {
     // online log ignored
+  }
+
+  takeCompressAndAddToComic() {
+    // not implement
   }
 }

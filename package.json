@@ -180,6 +180,7 @@
     "yarn-deduplicate": "^3.1.0"
   },
   "dependencies": {
+    "@babel/plugin-transform-react-jsx": "^7.27.1",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.0",
     "@koa/cors": "^3.1.0",
@@ -212,9 +213,10 @@
     "react-loading": "^2.0.3",
     "react-router-dom": "^5.2.0",
     "recoil": "^0.5.2",
-    "recoil-enhance": "0.0.2",
+    "recoil-enhance": "^0.0.3",
     "regenerator-runtime": "^0.13.5",
     "source-map-support": "^0.5.19",
+    "tiny-event-manager": "^2.0.1",
     "uuid": "^8.3.2"
   },
   "renovate": {

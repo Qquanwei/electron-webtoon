@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2018",
-    "module": "CommonJS",
+    "module": "nodenext",
     "lib": ["dom", "esnext"],
     "declaration": true,
     "declarationMap": true,
     "noEmit": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "strict": true,
     "pretty": true,
     "sourceMap": true,
@@ -16,11 +16,16 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     /* Module Resolution Options */
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "allowJs": true
+    "allowJs": true,
+    "paths": {
+      "@shared/*": ["./src/shared/*"],
+      "@components/*": ["./src/client/components/*"],
+      "@client/*": ["./src/client/*"]
+    }
   },
   "exclude": [
     "test",
