@@ -24,7 +24,8 @@
     "paths": {
       "@shared/*": ["./src/shared/*"],
       "@components/*": ["./src/client/components/*"],
-      "@client/*": ["./src/client/*"]
+      "@client/*": ["./src/client/*"],
+      "@imgs/*": ["./src/client/imgs/*"]
     }
   },
   "exclude": [

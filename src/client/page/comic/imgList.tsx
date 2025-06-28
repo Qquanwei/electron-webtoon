@@ -10,6 +10,7 @@ import classNames from "classnames";
 import StartUpPage from "../../startPage";
 import useComicContext from "./useComicContext";
 import { EmptyFunction, UnaryFunction } from "@shared/type";
+import { createEventListener } from "tiny-event-manager";
 
 interface ImgListProps {
   onNextPage?: EmptyFunction;
@@ -19,7 +20,7 @@ interface ImgListProps {
   horizon?: boolean;
 }
 // onVisitPosition: 当对应图片露出时调用，用来记录看到的位置
-const ImgList: React.FC<ImgListProps> = ({
+const VerticalImgList: React.FC<ImgListProps> = ({
   onNextPage,
   hasNextPage,
   imgList,
@@ -231,4 +232,48 @@ const ImgList: React.FC<ImgListProps> = ({
   );
 };
 
+const HorizonImgList: React.FC<ImgListProps> = ({ imgList }) => {
+  useEffect(() => {
+    document.body.classList.add("overflow-y-hidden");
+    if (document.scrollingElement) {
+      const subscription = createEventListener(
+        document.scrollingElement,
+        "wheel",
+        (event: WheelEvent) => {
+          if (event.deltaMode === WheelEvent.DOM_DELTA_PIXEL) {
+            // 像素滚动
+            window.scrollBy({
+              top: 0,
+              left: event.deltaY,
+            });
+          }
+        },
+      );
+      return () => {
+        subscription.unsubscribe();
+        document.body.classList.remove("overflow-y-hidden");
+      };
+    }
+  }, []);
+  return (
+    <div className="flex flex-row">
+      {imgList.map((src) => {
+        return (
+          <img
+            src={src}
+            className="max-w-full h-[100vh] flex-shrink-0 ml-4 border my-auto"
+          ></img>
+        );
+      })}
+    </div>
+  );
+};
+
+const ImgList = (props: ImgListProps) => {
+  const { comic } = useComicContext();
+  if (comic?.pageMode === "horizon") {
+    return <HorizonImgList {...props}></HorizonImgList>;
+  }
+  return <VerticalImgList {...props}></VerticalImgList>;
+};
 export default ImgList;

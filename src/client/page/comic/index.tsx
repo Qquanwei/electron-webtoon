@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { useRecoilValue, useRecoilRefresher_UNSTABLE } from "recoil";
 import SingleComic from "./SingleComic";
 import ChapterComic from "./ChapterComic";
-import { Provider } from "./useComicContext";
+import { IComicContext, Provider } from "./useComicContext";
 import * as selector from "../../selector";
 import {
   IImgListForMultipleChapter,
@@ -42,13 +42,14 @@ function ComicPage() {
     [filter],
   );
 
-  const contextValue = useMemo(() => {
+  const contextValue = useMemo<IComicContext>(() => {
     return {
       autoScroll,
       setAutoScroll,
       filter,
       onClickFilter,
       comic,
+      refreshCurrentComic: refresh,
     };
   }, [autoScroll, setAutoScroll, filter, onClickFilter, comic]);
 

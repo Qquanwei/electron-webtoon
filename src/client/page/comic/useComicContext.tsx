@@ -1,12 +1,13 @@
-import { IComic, UnaryFunction } from "@shared/type";
+import { EmptyFunction, IComic, UnaryFunction } from "@shared/type";
 import React, { useContext } from "react";
 
-interface IComicContext {
+export interface IComicContext {
   autoScroll: boolean;
   filter?: number;
   comic?: IComic;
   onClickFilter: UnaryFunction<number>;
   setAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
+  refreshCurrentComic: EmptyFunction;
 }
 
 const context = React.createContext<IComicContext>(undefined!);

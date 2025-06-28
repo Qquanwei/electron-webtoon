@@ -50,8 +50,13 @@ export default class ElectronIPC implements IPC {
     return ipcRenderer.invoke(`/delete/comic`, id);
   }
 
-  saveComicTag(id: string, tag: string, position: number) {
+  saveComicTag(id: string, tag: string, position: number | string) {
     return ipcRenderer.invoke("/put/bookmark", id, tag, position);
+  }
+
+  setComicProperty(id: string, property: string, value: string) {
+    console.log("调用了", "/put/comic/property", value);
+    return ipcRenderer.invoke("/put/comic/property", id, property, value);
   }
 
   startLocalServer() {

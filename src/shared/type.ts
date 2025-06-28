@@ -65,6 +65,8 @@ export interface IPC {
     position: string | number,
   ) => unknown;
 
+  setComicProperty: (id: string, property: string, value: string) => unknown;
+
   /**
    * 收藏绝景
    */
@@ -79,6 +81,10 @@ export interface IComic {
   width: number;
   height: number;
   position: string | number;
+  /**
+   * 横竖屏翻页模式
+   */
+  pageMode?: "horizon" | "vertical";
 }
 
 export interface IChapter {

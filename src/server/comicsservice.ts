@@ -60,7 +60,7 @@ function flatten(tree: IComicImgList): string[] {
 async function buildComicImgList(
   pathname: string,
   deep = 1000,
-  makeUrl: IMakeUrl
+  makeUrl: IMakeUrl,
 ): Promise<IComicImgList> {
   const files = await fsPromisese.readdir(pathname);
 
@@ -78,7 +78,7 @@ async function buildComicImgList(
       const list = await buildComicImgList(
         path.resolve(pathname, fileOrDirName),
         deep - 1,
-        makeUrl
+        makeUrl,
       );
       result.push({
         name: fileOrDirName,
@@ -93,10 +93,12 @@ async function buildComicImgList(
   }
 
   if (singlePics.length) {
-    return [{
-      name: '无目录-1',
-      list: singlePics
-    }].concat(result as any);
+    return [
+      {
+        name: "无目录-1",
+        list: singlePics,
+      },
+    ].concat(result as any);
   }
 
   return result;
@@ -140,7 +142,7 @@ export default class ComicService {
 
   constructor(
     mainWindow: any,
-    makeUrl: ((filename: any) => string) | undefined
+    makeUrl?: ((filename: any) => string) | undefined,
   ) {
     this.mainWindow = mainWindow;
 
@@ -159,7 +161,7 @@ export default class ComicService {
       if (fs.existsSync(configFileFullPath)) {
         // migrate
         const { library } = JSON.parse(
-          fs.readFileSync(configFileFullPath).toString()
+          fs.readFileSync(configFileFullPath).toString(),
         );
         this.store.set("library", library);
         fs.unlinkSync(configFileFullPath);
@@ -189,7 +191,7 @@ export default class ComicService {
           ...comic,
           cover: await getCoverUrl(comic.path, this.makeUrl),
         };
-      })
+      }),
     );
   }
 
@@ -259,7 +261,7 @@ export default class ComicService {
     if (!this.isExistsAndTouch(comicpath)) {
       const library = this.store.get("library");
       const newLibrary = (library || []).concat(
-        await this.buildNewComic(comicpath)
+        await this.buildNewComic(comicpath),
       );
       this.store.set("library", newLibrary);
     }
@@ -346,6 +348,33 @@ export default class ComicService {
     if (comics.length) {
       comics[0].tag = tag;
       comics[0].position = position;
+
+      library = library
+        .map((item, index) => {
+          return {
+            ...item,
+            index: item.id === id ? 9999999 : index,
+          };
+        })
+        .sort((a, b) => {
+          return a.index - b.index;
+        });
+    }
+    this.store.set("library", library);
+  }
+
+  /**
+   * 设置漫画书属性
+   * @param id
+   * @param property
+   */
+  async setComicProperty(id: string, property: string, value: string) {
+    let library = this.store.get("library");
+    const comics = library.filter((item) => {
+      return item.id === id;
+    });
+    if (comics.length) {
+      (comics[0] as any)[property] = value;
 
       library = library
         .map((item, index) => {

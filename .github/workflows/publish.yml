@@ -20,12 +20,12 @@ jobs:
       - name: Install Node, NPM and Yarn
         uses: actions/setup-node@v1
         with:
-          node-version: 16
-          
+          node-version: 18.17
+
       - name: Install Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -54,4 +54,4 @@ jobs:
           # This is used for uploading release assets to github
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN}}
         run: |
-          yarn postinstall && yarn build && yarn electron-builder --publish always --win 
+          yarn postinstall && yarn build && yarn electron-builder --publish always --win

@@ -11,10 +11,18 @@ import HomeIcon from "@material-ui/icons/Home";
 import { Tooltip } from "@material-ui/core";
 import { useHistory } from "react-router-dom";
 import useComicContext from "./useComicContext";
+import Icon from "@components/Icon";
+import { getIPC } from "@client/ipc";
 
 const Control: React.FC<{}> = ({ children }) => {
-  const { comic, filter, onClickFilter, autoScroll, setAutoScroll } =
-    useComicContext();
+  const {
+    comic,
+    filter,
+    onClickFilter,
+    autoScroll,
+    setAutoScroll,
+    refreshCurrentComic,
+  } = useComicContext();
   const history = useHistory();
 
   useEffect(() => {
@@ -32,6 +40,22 @@ const Control: React.FC<{}> = ({ children }) => {
   }, []);
 
   const onClickAdd = useCallback(() => {}, []);
+
+  const onClickHorizonMode = useCallback(async () => {
+    const ipc = await getIPC();
+    if (comic?.id) {
+      await ipc.setComicProperty(comic.id, "pageMode", "horizon");
+      refreshCurrentComic();
+    }
+  }, []);
+
+  const onClickVerticalMode = useCallback(async () => {
+    const ipc = await getIPC();
+    if (comic?.id) {
+      await ipc.setComicProperty(comic.id, "pageMode", "vertical");
+      refreshCurrentComic();
+    }
+  }, []);
 
   return (
     <div className="fixed right-0 bottom-[20px] flex flex-col justify-end cursor-pointer px-[20px]">
@@ -69,6 +93,27 @@ const Control: React.FC<{}> = ({ children }) => {
           onClick={() => onClickFilter(4)}
         />
       </Tooltip>
+
+      <Icon
+        name="comic"
+        tooltip="日漫横屏翻页模式"
+        className={classNames("text-white mt-[10px] w-[24px] h-[24px]", {
+          ["bg-sky-300"]: comic?.pageMode === "horizon",
+          ["bg-[#333]"]: comic?.pageMode !== "horizon",
+        })}
+        onClick={onClickHorizonMode}
+      ></Icon>
+
+      <Icon
+        name="phone"
+        tooltip="韩漫上下翻页模式"
+        className={classNames("text-white mt-[10px] w-[24px] h-[24px]", {
+          ["bg-sky-300"]: comic?.pageMode === "vertical",
+          ["bg-[#333]"]: comic?.pageMode !== "vertical",
+        })}
+        onClick={onClickVerticalMode}
+      ></Icon>
+
       <div
         title="收藏"
         className={classNames(["text-orange-300"], "hidden")}
