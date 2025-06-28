@@ -57,7 +57,13 @@ export interface IPC {
 
   fetchComic: UnaryFunction<string, Promise<IComic>>;
 
-  fetchImgList: UnaryFunction<string, Promise<string[]>>;
+  fetchImgList: UnaryFunction<string, Promise<IImgList>>;
+
+  saveComicTag: (
+    id: string,
+    name: string,
+    position: string | number,
+  ) => unknown;
 
   /**
    * 收藏绝景
@@ -67,8 +73,19 @@ export interface IPC {
 
 export interface IComic {
   id: string;
+  tag: string;
   cover: string;
   name: string;
   width: number;
   height: number;
+  position: string | number;
 }
+
+export interface IChapter {
+  name: string;
+  list: IImgListForSingleChapter | IImgListForMultipleChapter;
+}
+export type IImgListForSingleChapter = string[];
+export type IImgListForMultipleChapter = IChapter[];
+
+export type IImgList = IImgListForMultipleChapter | IImgListForSingleChapter;

@@ -12,11 +12,11 @@ import useComicContext from "./useComicContext";
 import { EmptyFunction, UnaryFunction } from "@shared/type";
 
 interface ImgListProps {
-  onNextPage: EmptyFunction;
-  hasNextPage: boolean;
+  onNextPage?: EmptyFunction;
+  hasNextPage?: boolean;
   imgList: string[];
-  onVisitPosition: UnaryFunction<number>;
-  horizon: boolean;
+  onVisitPosition?: UnaryFunction<number>;
+  horizon?: boolean;
 }
 // onVisitPosition: 当对应图片露出时调用，用来记录看到的位置
 const ImgList: React.FC<ImgListProps> = ({
@@ -24,16 +24,18 @@ const ImgList: React.FC<ImgListProps> = ({
   hasNextPage,
   imgList,
   onVisitPosition,
-  horizon,
+  horizon = false,
 }) => {
   const { filter, autoScroll, comic } = useComicContext();
   /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
   const firstElePosition = useMemo(() => {
-    if (Number.isInteger(comic.position) && comic.position) {
-      return comic.position;
+    if (comic) {
+      if (Number.isInteger(comic.position) && comic.position) {
+        return comic.position;
+      }
     }
     return -1;
-  }, []);
+  }, [comic]);
 
   const [isFirst, setIsFirst] = useState(firstElePosition !== -1);
 
@@ -151,7 +153,9 @@ const ImgList: React.FC<ImgListProps> = ({
             nextPageTimer.current = setInterval(() => {
               setTime((time) => {
                 if (time === 1) {
-                  onNextPage();
+                  if (onNextPage) {
+                    onNextPage();
+                  }
                   if (nextPageTimer.current) {
                     clearInterval(nextPageTimer.current);
                     nextPageTimer.current = undefined;
@@ -198,7 +202,9 @@ const ImgList: React.FC<ImgListProps> = ({
   const onClickNextPage = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
-    onNextPage();
+    if (onNextPage) {
+      onNextPage();
+    }
   }, []);
 
   return (
