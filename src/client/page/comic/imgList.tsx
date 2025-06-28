@@ -19,6 +19,106 @@ interface ImgListProps {
   onVisitPosition?: UnaryFunction<number>;
   horizon?: boolean;
 }
+
+function useFirstElePosition() {
+  const { comic } = useComicContext();
+  /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
+  const firstElePosition = useMemo(() => {
+    if (comic) {
+      if (Number.isInteger(comic.position) && comic.position) {
+        return Number(comic.position);
+      }
+    }
+    return -1;
+  }, [comic]);
+  return firstElePosition;
+}
+
+/**
+ * 1. 监听dom元素为 类名：comic-tag
+ * 该元素必须有data-index 属性，表示当前位置
+ * @param onVisiblePosition
+ */
+function useWatchComicPositionChange(
+  enable?: boolean,
+  onVisiblePosition?: UnaryFunction<number>,
+) {
+  const onVisitPositionRef = useRef(onVisiblePosition);
+
+  useEffect(() => {
+    if (!onVisiblePosition) {
+      return () => {};
+    }
+
+    if (!enable) {
+      return () => {};
+    }
+
+    const observer = new IntersectionObserver((entities) => {
+      if (entities[0].intersectionRatio && onVisitPositionRef.current) {
+        const img = entities[0].target as HTMLImageElement;
+        const position = Number(img?.dataset?.index);
+        img.src = img.src;
+        if (position > 0) {
+          onVisitPositionRef.current(position);
+        }
+      }
+    });
+
+    document.querySelectorAll(".comic-img").forEach((ele) => {
+      observer.observe(ele);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [enable]);
+}
+
+function useImgLoadAutoScrollIntoView(
+  imgList: string[],
+  firstElePosition: number,
+  container?: Element,
+  /**
+   * 加载成功回调
+   */
+  firstElementOnLoad?: EmptyFunction,
+) {
+  const containerRef = useRef(container);
+  const firstElementOnLoadRef = useRef(firstElementOnLoad);
+  containerRef.current = container;
+
+  useEffect(() => {
+    if (firstElePosition < 0 || firstElePosition > imgList.length) {
+      if (firstElementOnLoadRef.current) {
+        firstElementOnLoadRef.current();
+      }
+    }
+  }, []);
+
+  const onLoad = useCallback((e) => {
+    if (Number(e.currentTarget.dataset.index) === firstElePosition) {
+      const target = e.currentTarget;
+      if (containerRef.current) {
+        console.log("添加类名");
+        containerRef.current.classList.add("scroll-smooth");
+      }
+      if (firstElementOnLoadRef.current) {
+        firstElementOnLoadRef.current();
+      }
+      setTimeout(() => {
+        console.log("开始滚动");
+        target.scrollIntoView();
+      }, 50);
+      setTimeout(() => {
+        if (containerRef.current) {
+          containerRef.current.classList.remove("scroll-smooth");
+        }
+      }, 100);
+    }
+  }, []);
+  return { onLoad };
+}
 // onVisitPosition: 当对应图片露出时调用，用来记录看到的位置
 const VerticalImgList: React.FC<ImgListProps> = ({
   onNextPage,
@@ -27,66 +127,26 @@ const VerticalImgList: React.FC<ImgListProps> = ({
   onVisitPosition,
   horizon = false,
 }) => {
-  const { filter, autoScroll, comic } = useComicContext();
+  const { filter, autoScroll } = useComicContext();
   /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
-  const firstElePosition = useMemo(() => {
-    if (comic) {
-      if (Number.isInteger(comic.position) && comic.position) {
-        return comic.position;
-      }
-    }
-    return -1;
-  }, [comic]);
+  const firstElePosition = useFirstElePosition();
 
-  const [isFirst, setIsFirst] = useState(firstElePosition !== -1);
+  const [loading, setLoading] = useState(true);
+  const [scrollingDone, setScrollingDone] = useState(false);
 
   const onVisitPositionRef = useRef<typeof onVisitPosition | null>(null);
   onVisitPositionRef.current = onVisitPosition;
-
-  useEffect(() => {
-    // 当首次进入之后，才开始进行visiblechange展示
-    if (!isFirst) {
-      const observer = new IntersectionObserver((entities) => {
-        if (entities[0].intersectionRatio && onVisitPositionRef.current) {
-          const position = Number(
-            (entities[0].target as HTMLImageElement)?.dataset?.index,
-          );
-          if (position !== 0) {
-            onVisitPositionRef.current(position);
-          }
-        }
-      });
-
-      document.querySelectorAll(".comic-img").forEach((ele) => {
-        observer.observe(ele);
-      });
-
-      return () => {
-        observer.disconnect();
-      };
-    }
-
-    return () => {};
-  }, [isFirst]);
-
-  const onImgLoad = useCallback(
-    (e) => {
-      if (
-        isFirst &&
-        Number(e.currentTarget.dataset.index) === firstElePosition
-      ) {
-        const target = e.currentTarget;
-        document.scrollingElement?.classList.add("scroll-smooth");
-        setTimeout(() => {
-          target.scrollIntoView();
-        }, 50);
-        setTimeout(() => {
-          setIsFirst(false);
-          document.scrollingElement?.classList.remove("scroll-smooth");
-        }, 100);
-      }
+  useWatchComicPositionChange(!loading && scrollingDone, onVisitPosition);
+  const { onLoad: onImgLoad } = useImgLoadAutoScrollIntoView(
+    imgList,
+    firstElePosition,
+    document.scrollingElement!,
+    () => {
+      setLoading(false);
+      setTimeout(() => {
+        setScrollingDone(true);
+      }, 500);
     },
-    [isFirst],
   );
 
   function renderList(list: string[]) {
@@ -216,7 +276,7 @@ const VerticalImgList: React.FC<ImgListProps> = ({
       })}
     >
       <StartUpPage
-        className={classNames("z-10", { "!hidden": !isFirst })}
+        className={classNames("z-10", { "!hidden": !loading })}
       ></StartUpPage>
       {renderList(imgList)}
       {hasNextPage ? (
@@ -232,7 +292,28 @@ const VerticalImgList: React.FC<ImgListProps> = ({
   );
 };
 
-const HorizonImgList: React.FC<ImgListProps> = ({ imgList }) => {
+const HorizonImgList: React.FC<ImgListProps> = ({
+  imgList,
+  onVisitPosition,
+}) => {
+  /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
+  const firstElePosition = useFirstElePosition();
+  const [loading, setLoading] = useState(true);
+  const [scrollingDone, setScrollingDone] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  useWatchComicPositionChange(!loading && scrollingDone, onVisitPosition);
+  const { onLoad: onImgLoad } = useImgLoadAutoScrollIntoView(
+    imgList,
+    firstElePosition,
+    containerRef.current!,
+    () => {
+      setLoading(false);
+      setTimeout(() => {
+        setScrollingDone(true);
+      }, 500);
+    },
+  );
+
   useEffect(() => {
     document.body.classList.add("overflow-y-hidden");
     if (document.scrollingElement) {
@@ -240,11 +321,14 @@ const HorizonImgList: React.FC<ImgListProps> = ({ imgList }) => {
         document.scrollingElement,
         "wheel",
         (event: WheelEvent) => {
-          if (event.deltaMode === WheelEvent.DOM_DELTA_PIXEL) {
+          if (
+            event.deltaMode === WheelEvent.DOM_DELTA_PIXEL &&
+            containerRef.current
+          ) {
             // 像素滚动
-            window.scrollBy({
+            containerRef.current.scrollBy({
               top: 0,
-              left: event.deltaY,
+              left: -event.deltaY,
             });
           }
         },
@@ -254,15 +338,35 @@ const HorizonImgList: React.FC<ImgListProps> = ({ imgList }) => {
         document.body.classList.remove("overflow-y-hidden");
       };
     }
+    return () => {};
   }, []);
+
+  const reverseImgList = useMemo(() => {
+    return [...imgList].reverse();
+  }, [imgList]);
+
   return (
-    <div className="flex flex-row">
-      {imgList.map((src) => {
+    <div
+      ref={containerRef}
+      className="flex flex-row bg-white w-[100vw] h-[100vh] border-box overflow-x-scroll overflow-y-hidden"
+    >
+      <StartUpPage
+        className={classNames("z-10", { "!hidden": !loading })}
+      ></StartUpPage>
+      {reverseImgList.map((src, index) => {
         return (
-          <img
-            src={src}
-            className="max-w-full h-[100vh] flex-shrink-0 ml-4 border my-auto"
-          ></img>
+          <div
+            key={index}
+            className="flex-shrink-0 px-2 bg-gray-500 h-[100vh] bg-gray-100 ml-4 border border-box flex items-center"
+          >
+            <img
+              onLoad={onImgLoad}
+              src={src}
+              loading="eager"
+              data-index={reverseImgList.length - 1 - index}
+              className="comic-img bg-gray-100 max-w-full max-h-full my-auto"
+            ></img>
+          </div>
         );
       })}
     </div>

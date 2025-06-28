@@ -83,6 +83,12 @@ const Popup: React.FC<PopupProps> = ({
       }
     };
   }, [visible]);
+
+  useEffect(() => {
+    return () => {
+      document.body.removeChild(div);
+    };
+  }, []);
   return (
     <div ref={ref} className={className || ""} style={style}>
       {children}
