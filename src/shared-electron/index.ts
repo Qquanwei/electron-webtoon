@@ -1,5 +1,5 @@
 import { ipcRenderer } from "electron";
-import { IPC } from "../shared";
+import { IPC, UnaryFunction } from "../shared/type";
 
 export default class ElectronIPC implements IPC {
   get(key: string) {
@@ -10,15 +10,15 @@ export default class ElectronIPC implements IPC {
     return ipcRenderer.invoke("/set", key, value);
   }
 
-  onCompressFile(callback) {
+  onCompressFile(callback: UnaryFunction<string, void>) {
     ipcRenderer.on("decompress", (_, data) => callback(data));
   }
 
-  onCompressDone(callback) {
+  onCompressDone(callback: UnaryFunction<string, void>) {
     ipcRenderer.on("decompress-done", (_, data) => callback(data));
   }
 
-  onMsg(callback) {
+  onMsg(callback: UnaryFunction<string, void>) {
     ipcRenderer.on("msg", (_, msg) => callback(msg));
   }
 
@@ -43,22 +43,27 @@ export default class ElectronIPC implements IPC {
   }
 
   fetchImgList(id: string) {
-    return ipcRenderer.invoke(`/comic/imglist`, id);
+    return ipcRenderer.invoke(`/comic/imglist`, id) as Promise<string[]>;
   }
 
   removeComic(id: string) {
     return ipcRenderer.invoke(`/delete/comic`, id);
   }
 
-  saveComicTag(id: string, tag: string, position: number) {
+  saveComicTag(id: string, tag: string, position: number | string) {
     return ipcRenderer.invoke("/put/bookmark", id, tag, position);
+  }
+
+  setComicProperty(id: string, property: string, value: string) {
+    console.log("调用了", "/put/comic/property", value);
+    return ipcRenderer.invoke("/put/comic/property", id, property, value);
   }
 
   startLocalServer() {
     return ipcRenderer.invoke("/startlocalserver");
   }
 
-  addLog(type = "info", txt) {
+  addLog(type = "info", txt: string) {
     return ipcRenderer.invoke("/log", {
       type,
       txt,

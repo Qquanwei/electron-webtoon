@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import classNames from 'classnames';
-import shuffle from 'lodash.shuffle';
-import { LOADING_COVERLIST_KEY } from '../../config';
-import ipc from '../ipc';
-import styles from './loading.css';
+import React, { useEffect, useState } from "react";
+import classNames from "classnames";
+import shuffle from "lodash.shuffle";
+import { LOADING_COVERLIST_KEY } from "../../config";
+import styles from "./loading.css";
+import { getIPC } from "@client/ipc";
 /* eslint-disable @typescript-eslint/no-shadow */
 // 自动从所有图片中选一张作为loading图。
 // 首次打开APP时没有图片则展示默认的文字，当第一次启动过后，就可以拿到封面。
@@ -13,7 +13,8 @@ function Loading() {
 
   useEffect(() => {
     async function dowork() {
-      const coverList = (await ipc).get(LOADING_COVERLIST_KEY);
+      const ipc = await getIPC();
+      const coverList = await ipc.get(LOADING_COVERLIST_KEY);
       if (coverList) {
         setCoverList(shuffle(coverList));
       }
@@ -28,7 +29,7 @@ function Loading() {
   return (
     <div className={styles.loading}>
       <img src={coverList[0]} alt="" />
-      <div className={classNames(styles.text, 'f-fcc')}>now loading....</div>
+      <div className={classNames(styles.text, "f-fcc")}>now loading....</div>
     </div>
   );
 }

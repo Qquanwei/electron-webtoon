@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import Loading from "react-loading";
 import classNames from "classnames";
 import * as selector from "./selector";

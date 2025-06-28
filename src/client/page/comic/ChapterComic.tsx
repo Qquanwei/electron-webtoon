@@ -1,38 +1,50 @@
 /* eslint-disable */
-import React, { useCallback, useMemo, Fragment, useState } from 'react';
-import PropTypes from 'prop-types';
-import Typography from '@material-ui/core/Typography';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ImportContactsIcon from '@material-ui/icons/ImportContacts';
-import ListItemText from '@material-ui/core/ListItemText';
-import Breadcrumbs from '@material-ui/core/Breadcrumbs';
-import classNames from 'classnames';
-import { Link } from 'react-router-dom';
-import Divider from '@material-ui/core/Divider';
-import List from '@material-ui/core/List';
-import AppIcon from '@material-ui/icons/Apps';
-import ImgControl from './ImgControl';
-import ImgList from './imgList';
-import useComicContext from './useComicContext';
-import styles from './index.css';
-import ipc from '../../ipc';
+import React, { useCallback, useMemo, useState } from "react";
+import Typography from "@material-ui/core/Typography";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ImportContactsIcon from "@material-ui/icons/ImportContacts";
+import ListItemText from "@material-ui/core/ListItemText";
+import Breadcrumbs from "@material-ui/core/Breadcrumbs";
+import classNames from "classnames";
+import { Link } from "react-router-dom";
+import Divider from "@material-ui/core/Divider";
+import List from "@material-ui/core/List";
+import AppIcon from "@material-ui/icons/Apps";
+import ImgControl from "./ImgControl";
+import ImgList from "./imgList";
+import useComicContext from "./useComicContext";
+import {
+  IChapter,
+  IImgListForMultipleChapter,
+  IImgListForSingleChapter,
+  UnaryFunction,
+} from "@shared/type";
+import { getIPC } from "@client/ipc";
 
-function ChapterList({ imgList, value, onChange, toggleChapter }) {
+const ChapterList: React.FC<{
+  imgList: IImgListForMultipleChapter;
+  toggleChapter: boolean;
+  value: IChapter;
+  onChange: UnaryFunction<IChapter>;
+}> = ({ imgList, value, onChange, toggleChapter }) => {
   const { comic } = useComicContext();
-  const comicId = comic.id;
+  const comicId = comic?.id;
   const onClick = useCallback(
     async (chapter) => {
       if (onChange) {
         onChange(chapter);
-        (await ipc).saveComicTag(comicId, chapter.name, 0);
+        const ipc = await getIPC();
+        if (comicId) {
+          ipc.saveComicTag(comicId, chapter.name, 0);
+        }
       }
     },
-    [onChange]
+    [onChange],
   );
 
   let deep = 0;
-  function renderList(list) {
+  function renderList(list: IImgListForMultipleChapter) {
     deep += 1;
 
     if (!list) {
@@ -47,8 +59,8 @@ function ChapterList({ imgList, value, onChange, toggleChapter }) {
               <ImportContactsIcon />
             </ListItemIcon>
             <ListItemText
-              className={classNames(styles.chaptername, {
-                [styles.current]: value === item,
+              className={classNames("cursor-pointer", {
+                ["text-sky-500"]: value === item,
               })}
             >
               <div onClick={() => onClick(item)} title={item.name}>
@@ -57,7 +69,7 @@ function ChapterList({ imgList, value, onChange, toggleChapter }) {
             </ListItemText>
             <Divider />
             {item.list.length && deep < 2 ? (
-              <List>{renderList(item.list)}</List>
+              <List>{renderList(item.list as IImgListForMultipleChapter)}</List>
             ) : null}
           </ListItem>
         );
@@ -70,27 +82,37 @@ function ChapterList({ imgList, value, onChange, toggleChapter }) {
   }
 
   return (
-    <div className={styles.chapterlistcontainer}>
-      <div className={styles.navbar}>
+    <div className={"basis-[320px] shrink-0 grow-0"}>
+      <div
+        className={"fixed top-0 left-0 z-10 bg-gray-300/10 py-[20px] px-[20px]"}
+      >
         <Breadcrumbs aria-label="breadcrumb">
-          <Link to="/" className={styles.link}>
+          <Link to="/" className={"text-[#333]"}>
             Home
           </Link>
           <Typography>{comic?.name}</Typography>
         </Breadcrumbs>
       </div>
-      <div className={styles.chapter}>{renderList(imgList)}</div>
+      <div
+        className={
+          "fixed border-box left-0 top-[50px] w-[300px] h-[calc(100%-100px)] overflow-auto"
+        }
+      >
+        {renderList(imgList)}
+      </div>
     </div>
   );
-}
+};
 
-function ChapterComic({ chapterList }) {
+const ChapterComic: React.FC<{ chapterList: IImgListForMultipleChapter }> = ({
+  chapterList,
+}) => {
   const [toggleChapter, setToggleChapter] = useState(false);
   const { comic } = useComicContext();
   const [chapter, setChapter] = useState(() => {
     return (
       chapterList.filter((v) => {
-        return v.name === comic.tag;
+        return v.name === comic?.tag;
       })[0] || chapterList[0]
     );
   });
@@ -121,31 +143,36 @@ function ChapterComic({ chapterList }) {
         }
       }
       const newChapter = chapterList[index + 1];
-      ipc.then((i) => {
-        i.saveComicTag(comic.id, newChapter.name, 0);
+
+      getIPC().then((ipc) => {
+        ipc.saveComicTag(comic?.id || "", newChapter.name, 0);
       });
 
       return newChapter;
     });
   }, [chapterList, comic]);
 
-  const onVisitPositionChange = useCallback(async (position) => {
-    (await ipc).saveComicTag(comic.id, chapter.name, position);
-  }, [chapter, comic]);
+  const onVisitPositionChange = useCallback(
+    async (position) => {
+      const ipc = await getIPC();
+      ipc.saveComicTag(comic?.id || "", chapter.name, position);
+    },
+    [chapter, comic],
+  );
 
   return (
     <>
-      <div className={styles.chaptercomiccontent}>
+      <div className={"flex grow relative"}>
         <ChapterList
           toggleChapter={toggleChapter}
           imgList={chapterList}
           value={chapter}
           onChange={setChapter}
         />
-        <div className={styles.chapterimglistcontainer}>
+        <div className={"grow relative"}>
           <ImgList
             onVisitPosition={onVisitPositionChange}
-            imgList={chapter.list || []}
+            imgList={(chapter.list || []) as IImgListForSingleChapter}
             hasNextPage={hasNextPage}
             onNextPage={onNextPage}
           />
@@ -153,8 +180,7 @@ function ChapterComic({ chapterList }) {
       </div>
       <ImgControl>
         <AppIcon
-          title="目录"
-          className={styles.toolbaricon}
+          className={"bg-[#333] text-white mt-[10px]"}
           onClick={onToggleChapter}
         >
           目录
@@ -162,16 +188,6 @@ function ChapterComic({ chapterList }) {
       </ImgControl>
     </>
   );
-}
-
-const ComicType = PropTypes.shape({
-  name: PropTypes.string,
-  imgList: PropTypes.arrayOf(PropTypes.string),
-});
-
-ChapterComic.propTypes = {
-  chapter: ComicType,
-  chapterList: PropTypes.arrayOf(ComicType),
 };
 
 export default ChapterComic;

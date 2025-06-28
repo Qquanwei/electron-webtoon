@@ -1,4 +1,4 @@
-一个webtoon漫画阅读软件(阅读器), Webtoon Viewer, 条漫阅读器
+一个webtoon漫画阅读软件(阅读器) for windows, Webtoon Viewer, 条漫阅读器
 
 ## 软件截图
 

@@ -4,7 +4,7 @@ import network from "network";
 import ComicService from "./comicsservice";
 import hostServer from "./localserver";
 
-export default function init(app, mainWindow) {
+export default function init(_app, mainWindow: Electron.BrowserWindow) {
   const service = new ComicService(mainWindow);
 
   const { ipcMain } = electron;
@@ -44,6 +44,13 @@ export default function init(app, mainWindow) {
     return service.takeDirectory();
   });
 
+  ipcMain.handle(
+    "/put/comic/property",
+    (event, id: string, property: string, value: string) => {
+      return service.setComicProperty(id, property, value);
+    },
+  );
+
   ipcMain.handle("/startlocalserver", async () => {
     // need validate
     const address = await new Promise((resolve, reject) => {
@@ -61,7 +68,7 @@ export default function init(app, mainWindow) {
     }
     return {
       address,
-      port: server.address().port,
+      port: server?.address?.().port,
     };
   });
 

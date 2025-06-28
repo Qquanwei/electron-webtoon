@@ -12,7 +12,6 @@ const productionPlugins = [
   require("@babel/plugin-transform-react-inline-elements"),
   require("babel-plugin-transform-react-remove-prop-types"),
 ];
-
 module.exports = (api) => {
   // See docs about api at https://babeljs.io/docs/en/config-files#apicache
 
@@ -30,6 +29,9 @@ module.exports = (api) => {
     ],
     plugins: [
       // Stage 1
+      ["@babel/plugin-transform-react-jsx", {
+        runtime: "automatic"
+      }],
       require("@babel/plugin-proposal-export-default-from"),
       require("@babel/plugin-proposal-logical-assignment-operators"),
       [require("@babel/plugin-proposal-optional-chaining"), { loose: false }],
