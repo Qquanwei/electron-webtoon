@@ -91,6 +91,10 @@ function IndexPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    document.scrollingElement?.classList.add("overflow-x-hidden");
+    return () => {
+      document.scrollingElement?.classList.remove("overflow-x-hidden");
+    };
   }, []);
 
   // <StarBar list={comicList} />
