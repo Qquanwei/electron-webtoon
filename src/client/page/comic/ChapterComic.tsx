@@ -162,14 +162,14 @@ const ChapterComic: React.FC<{ chapterList: IImgListForMultipleChapter }> = ({
 
   return (
     <>
-      <div className="flex grow relative">
+      <div className="flex relative">
         <ChapterList
           toggleChapter={toggleChapter}
           imgList={chapterList}
           value={chapter}
           onChange={setChapter}
         />
-        <div className="grow relative flex">
+        <div className="grow relative flex w-[calc(100%-320px)]">
           <ImgList
             tag={chapter.name}
             onVisitPosition={onVisitPositionChange}

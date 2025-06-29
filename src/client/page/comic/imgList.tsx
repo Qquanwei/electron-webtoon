@@ -94,9 +94,11 @@ function useImgLoadAutoScrollIntoView(
   const containerRef = useRef(container);
   const firstElementOnLoadRef = useRef(firstElementOnLoad);
   containerRef.current = container;
+  const firstElePositionRef = useRef<number>(firstElePosition);
+  firstElePositionRef.current = firstElePosition;
 
   useEffect(() => {
-    if (firstElePosition < 0 || firstElePosition > imgList.length) {
+    if (firstElePosition < 0 || firstElePositionRef.current > imgList.length) {
       if (firstElementOnLoadRef.current) {
         firstElementOnLoadRef.current();
       }
@@ -104,7 +106,7 @@ function useImgLoadAutoScrollIntoView(
   }, []);
 
   const onLoad = useCallback((e) => {
-    if (Number(e.currentTarget.dataset.index) === firstElePosition) {
+    if (Number(e.currentTarget.dataset.index) === firstElePositionRef.current) {
       const target = e.currentTarget;
       if (containerRef.current) {
         containerRef.current.classList.add("scroll-smooth");
@@ -310,6 +312,7 @@ const HorizonImgList: React.FC<ImgListProps> = ({
   const [scrollingDone, setScrollingDone] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   useWatchComicPositionChange(!loading && scrollingDone, onVisitPosition);
+
   const { onLoad: onImgLoad } = useImgLoadAutoScrollIntoView(
     imgList,
     firstElePosition,
