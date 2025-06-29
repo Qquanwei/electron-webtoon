@@ -41,3 +41,9 @@ yarn run package
 - react
 - react-router
 - electron-react-boilerplate
+
+## 赞助我
+
+赞助交流
+
+![alipay](https://gantestatic.oss-cn-hangzhou.aliyuncs.com/alipay-qrcode.jpg)
