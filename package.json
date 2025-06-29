@@ -148,7 +148,7 @@
     "electron-builder": "^23.0.6",
     "electron-devtools-installer": "^3.1.1",
     "electron-notarize": "^1.0.0",
-    "electron-rebuild": "^2.3.2",
+    "electron-rebuild": "^3.2.9",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.3",
     "enzyme-to-json": "^3.5.0",
