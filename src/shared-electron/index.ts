@@ -55,7 +55,6 @@ export default class ElectronIPC implements IPC {
   }
 
   setComicProperty(id: string, property: string, value: string) {
-    console.log("调用了", "/put/comic/property", value);
     return ipcRenderer.invoke("/put/comic/property", id, property, value);
   }
 

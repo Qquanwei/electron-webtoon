@@ -24,6 +24,7 @@ const SingleComic: React.FC<{ imgList: IImgListForSingleChapter }> = ({
   return (
     <>
       <ImgList
+        tag=""
         imgList={imgList}
         hasNextPage={false}
         onVisitPosition={onVisitPositionChange}

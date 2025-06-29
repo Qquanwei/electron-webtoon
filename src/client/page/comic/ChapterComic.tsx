@@ -36,7 +36,7 @@ const ChapterList: React.FC<{
         onChange(chapter);
         const ipc = await getIPC();
         if (comicId) {
-          ipc.saveComicTag(comicId, chapter.name, 0);
+          await ipc.saveComicTag(comicId, chapter.name, 0);
         }
       }
     },
@@ -162,15 +162,16 @@ const ChapterComic: React.FC<{ chapterList: IImgListForMultipleChapter }> = ({
 
   return (
     <>
-      <div className={"flex grow relative"}>
+      <div className="flex grow relative">
         <ChapterList
           toggleChapter={toggleChapter}
           imgList={chapterList}
           value={chapter}
           onChange={setChapter}
         />
-        <div className={"grow relative"}>
+        <div className="grow relative flex">
           <ImgList
+            tag={chapter.name}
             onVisitPosition={onVisitPositionChange}
             imgList={(chapter.list || []) as IImgListForSingleChapter}
             hasNextPage={hasNextPage}

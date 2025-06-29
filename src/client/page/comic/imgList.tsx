@@ -18,19 +18,25 @@ interface ImgListProps {
   imgList: string[];
   onVisitPosition?: UnaryFunction<number>;
   horizon?: boolean;
+  // 当前渲染的章节名
+  tag?: string;
 }
 
-function useFirstElePosition() {
+function useFirstElePosition(tag?: string) {
   const { comic } = useComicContext();
   /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
   const firstElePosition = useMemo(() => {
     if (comic) {
+      // 非本章节，返回0
+      if (tag && comic.tag && comic.tag !== tag) {
+        return 0;
+      }
       if (Number.isInteger(comic.position) && comic.position) {
         return Number(comic.position);
       }
     }
-    return -1;
-  }, [comic]);
+    return 0;
+  }, [comic, tag]);
   return firstElePosition;
 }
 
@@ -44,6 +50,7 @@ function useWatchComicPositionChange(
   onVisiblePosition?: UnaryFunction<number>,
 ) {
   const onVisitPositionRef = useRef(onVisiblePosition);
+  onVisitPositionRef.current = onVisiblePosition;
 
   useEffect(() => {
     if (!onVisiblePosition) {
@@ -100,14 +107,12 @@ function useImgLoadAutoScrollIntoView(
     if (Number(e.currentTarget.dataset.index) === firstElePosition) {
       const target = e.currentTarget;
       if (containerRef.current) {
-        console.log("添加类名");
         containerRef.current.classList.add("scroll-smooth");
       }
       if (firstElementOnLoadRef.current) {
         firstElementOnLoadRef.current();
       }
       setTimeout(() => {
-        console.log("开始滚动");
         target.scrollIntoView();
       }, 50);
       setTimeout(() => {
@@ -117,6 +122,7 @@ function useImgLoadAutoScrollIntoView(
       }, 100);
     }
   }, []);
+
   return { onLoad };
 }
 // onVisitPosition: 当对应图片露出时调用，用来记录看到的位置
@@ -126,10 +132,11 @@ const VerticalImgList: React.FC<ImgListProps> = ({
   imgList,
   onVisitPosition,
   horizon = false,
+  tag,
 }) => {
   const { filter, autoScroll } = useComicContext();
   /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
-  const firstElePosition = useFirstElePosition();
+  const firstElePosition = useFirstElePosition(tag);
 
   const [loading, setLoading] = useState(true);
   const [scrollingDone, setScrollingDone] = useState(false);
@@ -295,9 +302,10 @@ const VerticalImgList: React.FC<ImgListProps> = ({
 const HorizonImgList: React.FC<ImgListProps> = ({
   imgList,
   onVisitPosition,
+  tag,
 }) => {
   /* 只有首次初始化ImgList时才自动定位到comic.position位置*/
-  const firstElePosition = useFirstElePosition();
+  const firstElePosition = useFirstElePosition(tag);
   const [loading, setLoading] = useState(true);
   const [scrollingDone, setScrollingDone] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -348,7 +356,7 @@ const HorizonImgList: React.FC<ImgListProps> = ({
   return (
     <div
       ref={containerRef}
-      className="flex flex-row bg-white w-[100vw] h-[100vh] border-box overflow-x-scroll overflow-y-hidden"
+      className="flex flex-row bg-white h-[100vh] border-box overflow-x-scroll overflow-y-hidden"
     >
       <StartUpPage
         className={classNames("z-10", { "!hidden": !loading })}
@@ -375,6 +383,12 @@ const HorizonImgList: React.FC<ImgListProps> = ({
 
 const ImgList = (props: ImgListProps) => {
   const { comic } = useComicContext();
+
+  useEffect(() => {
+    // 当imgList发生变化时，重置滚动条
+    window.scrollTo(0, 0);
+  }, [props.imgList]);
+
   if (comic?.pageMode === "horizon") {
     return <HorizonImgList {...props}></HorizonImgList>;
   }
