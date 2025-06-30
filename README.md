@@ -50,4 +50,4 @@ yarn run package
 
 赞助交流
 
-![alipay](https://gantestatic.oss-cn-hangzhou.aliyuncs.com/alipay-qrcode.jpg width="500")
+![alipay](https://gantestatic.oss-cn-hangzhou.aliyuncs.com/alipay-qrcode.jpg =500x)
