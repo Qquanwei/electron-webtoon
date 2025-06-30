@@ -1,7 +1,7 @@
 {
   "name": "electron-webtoon",
   "productName": "electron-webtoon",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "ElectronWebtoon 漫画阅读器",
   "main": "./main.prod.js",
   "author": {

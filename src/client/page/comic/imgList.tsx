@@ -166,15 +166,12 @@ const VerticalImgList: React.FC<ImgListProps> = ({
           src={item}
           onLoad={onImgLoad}
           data-index={index}
-          className={classNames(
-            "comic-img border-box border border-black mx-auto",
-            {
-              "filter invert": filter === 4,
-              "filter backdrop-sepia-1": filter === 3,
-              "filter brightness-50": filter === 1,
-              "image-pixelated": filter === 2,
-            },
-          )}
+          className={classNames("comic-img border-box mx-auto", {
+            "filter invert": filter === 4,
+            "filter backdrop-sepia-1": filter === 3,
+            "filter brightness-50": filter === 1,
+            "image-pixelated": filter === 2,
+          })}
         />
       );
     });

@@ -42,8 +42,12 @@ yarn run package
 - react-router
 - electron-react-boilerplate
 
+## 友链接
+
+[https://mcabin.net/ AI Comic Translator - Multilingual Support](https://mcabin.net/)
+
 ## 赞助我
 
 赞助交流
 
-![alipay](https://gantestatic.oss-cn-hangzhou.aliyuncs.com/alipay-qrcode.jpg)
+![alipay](https://gantestatic.oss-cn-hangzhou.aliyuncs.com/alipay-qrcode.jpg width="500")
