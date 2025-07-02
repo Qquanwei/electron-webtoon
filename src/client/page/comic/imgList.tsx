@@ -61,16 +61,25 @@ function useWatchComicPositionChange(
       return () => {};
     }
 
-    const observer = new IntersectionObserver((entities) => {
-      if (entities[0].intersectionRatio && onVisitPositionRef.current) {
-        const img = entities[0].target as HTMLImageElement;
-        const position = Number(img?.dataset?.index);
-        img.src = img.src;
-        if (position > 0) {
-          onVisitPositionRef.current(position);
+    const observer = new IntersectionObserver(
+      (entities) => {
+        // 使用!entities[0].isIntersecting来只记录消失的DOM元素
+        if (
+          entities[0].intersectionRatio &&
+          onVisitPositionRef.current &&
+          !entities[0].isIntersecting
+        ) {
+          const img = entities[0].target as HTMLImageElement;
+          const position = Number(img?.dataset?.index);
+          if (position > 0) {
+            onVisitPositionRef.current(position);
+          }
         }
-      }
-    });
+      },
+      {
+        threshold: [0.8],
+      },
+    );
 
     document.querySelectorAll(".comic-img").forEach((ele) => {
       observer.observe(ele);
