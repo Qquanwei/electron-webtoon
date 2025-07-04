@@ -317,6 +317,7 @@ const HorizonImgList: React.FC<ImgListProps> = ({
   const [loading, setLoading] = useState(true);
   const [scrollingDone, setScrollingDone] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { autoScroll } = useComicContext();
   useWatchComicPositionChange(!loading && scrollingDone, onVisitPosition);
 
   const { onLoad: onImgLoad } = useImgLoadAutoScrollIntoView(
@@ -358,6 +359,28 @@ const HorizonImgList: React.FC<ImgListProps> = ({
     return () => {};
   }, []);
 
+  useEffect(() => {
+    const container = containerRef.current;
+    let hasbreak = false;
+    if (autoScroll && container) {
+      function scroll() {
+        if (hasbreak) {
+          return;
+        }
+        if (containerRef.current) {
+          containerRef.current.scrollLeft -= 4;
+          requestAnimationFrame(scroll);
+        }
+      }
+
+      requestAnimationFrame(scroll);
+      return () => {
+        hasbreak = true;
+      };
+    }
+    return () => {};
+  }, [autoScroll]);
+
   const reverseImgList = useMemo(() => {
     return [...imgList].reverse();
   }, [imgList]);
@@ -374,7 +397,7 @@ const HorizonImgList: React.FC<ImgListProps> = ({
         return (
           <div
             key={index}
-            className="flex-shrink-0 px-2 bg-gray-500 h-[100vh] bg-gray-100 ml-4 border border-box flex items-center"
+            className="pt-3 pb-5 flex-shrink-0 px-2 h-[100vh] bg-gray-100 border-x border-box flex items-center"
           >
             <img
               onLoad={onImgLoad}

@@ -62,7 +62,7 @@ const Control: React.FC<{}> = ({ children }) => {
       <Tooltip title="滤镜1" placement="top">
         <Filter1Icon
           className={classNames("bg-[#333] text-white", {
-            ["text-orange-300"]: filter === 1,
+            ["!text-orange-300"]: filter === 1,
           })}
           onClick={() => onClickFilter(1)}
         />
