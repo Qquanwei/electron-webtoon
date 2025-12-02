@@ -38,6 +38,10 @@ const supportCompressExts = [
   "tar.bz2",
 ];
 
+interface IStoreKeys {
+  decompressPath: string;
+}
+
 function extNameLegal(file: string) {
   const ext = path.extname(file);
   return supportExts.includes(ext);
@@ -132,9 +136,11 @@ interface IComic extends ILibraryComic {
 }
 
 export default class ComicService {
-  private store!: Store<{
-    library: Array<ILibraryComic>;
-  }>;
+  private store!: Store<
+    {
+      library: Array<ILibraryComic>;
+    } & IStoreKeys
+  >;
 
   mainWindow: Electron.BrowserWindow;
 
@@ -149,6 +155,7 @@ export default class ComicService {
     this.store = new Store({
       defaults: {
         library: [] as ILibraryComic[],
+        decompressPath: app.getPath("temp"),
       },
     });
     // old version config file
@@ -189,7 +196,7 @@ export default class ComicService {
         }
         return {
           ...comic,
-          cover: await getCoverUrl(comic.path, this.makeUrl),
+          cover: (await getCoverUrl(comic.path, this.makeUrl)) || "",
         };
       }),
     );
@@ -204,7 +211,7 @@ export default class ComicService {
 
     if (comics.length === 0) {
       const error = new Error();
-      error.code = 404;
+      (error as any).code = 404;
       throw error;
     }
 
@@ -331,12 +338,18 @@ export default class ComicService {
     this.store.set("library", newLibrary);
   }
 
-  async get(key: string) {
-    return this.store.get(`client/${key}`);
+  async get(key: keyof IStoreKeys): Promise<string> {
+    return this.store.get(`${key}`);
   }
 
-  async set(key: string, value: any) {
-    return this.store.set(`client/${key}`, value);
+  async set(key: keyof IStoreKeys, value: string) {
+    return this.store.set(`${key}`, value);
+  }
+
+  async reset(key: keyof IStoreKeys) {
+    if (key === "decompressPath") {
+      return this.store.reset("decompressPath");
+    }
   }
 
   /* 更新阅读位置 name: 当前章节名, position: 当前章节的阅读位置 */

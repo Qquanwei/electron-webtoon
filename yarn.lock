@@ -78,14 +78,6 @@
   dependencies:
     "@babel/types" "^7.27.3"
 
-"@babel/helper-builder-react-jsx@^7.27.1":
-  version "7.27.1"
-  resolved "https://registry.npmmirror.com/@babel/helper-builder-react-jsx/-/helper-builder-react-jsx-7.27.1.tgz"
-  integrity sha512-l/OHIt7g/cpCcj+ngMbyZ8PTsCiZhaa4/sG5Qy33VhrdIaWD3lyRH4V8v0CsL67CSQDPynYT83x5SL9weRQ8uw==
-  dependencies:
-    "@babel/helper-annotate-as-pure" "^7.27.1"
-    "@babel/types" "^7.27.1"
-
 "@babel/helper-compilation-targets@^7.22.6", "@babel/helper-compilation-targets@^7.27.1", "@babel/helper-compilation-targets@^7.27.2":
   version "7.27.2"
   resolved "https://registry.npmmirror.com/@babel/helper-compilation-targets/-/helper-compilation-targets-7.27.2.tgz"
@@ -271,13 +263,6 @@
     "@babel/helper-plugin-utils" "^7.27.1"
     "@babel/traverse" "^7.27.1"
 
-"@babel/plugin-proposal-do-expressions@^7.12.1":
-  version "7.27.7"
-  resolved "https://registry.npmmirror.com/@babel/plugin-proposal-do-expressions/-/plugin-proposal-do-expressions-7.27.7.tgz"
-  integrity sha512-rQpZSZ45+XBcXHnavv4s8mVCJAyabaRNQG9ZVINg20x/APDuz9DCY6enTpCK00bz4FFBQGygweOmOxqfaisztQ==
-  dependencies:
-    "@babel/helper-plugin-utils" "^7.27.1"
-
 "@babel/plugin-proposal-export-default-from@^7.12.1":
   version "7.27.1"
   resolved "https://registry.npmmirror.com/@babel/plugin-proposal-export-default-from/-/plugin-proposal-export-default-from-7.27.1.tgz"
@@ -292,29 +277,6 @@
   dependencies:
     "@babel/helper-plugin-utils" "^7.18.9"
     "@babel/plugin-syntax-export-namespace-from" "^7.8.3"
-
-"@babel/plugin-proposal-function-bind@^7.12.1":
-  version "7.27.1"
-  resolved "https://registry.npmmirror.com/@babel/plugin-proposal-function-bind/-/plugin-proposal-function-bind-7.27.1.tgz"
-  integrity sha512-CyWwteAXrh7X5IRCQxagcNAIJ8TDPdikCB8m9G+yas1flyvMpC79FvnLOmOa3aAV5u6Y4RhdJU8EolpTUgugOQ==
-  dependencies:
-    "@babel/helper-plugin-utils" "^7.27.1"
-
-"@babel/plugin-proposal-function-sent@^7.12.1":
-  version "7.27.1"
-  resolved "https://registry.npmmirror.com/@babel/plugin-proposal-function-sent/-/plugin-proposal-function-sent-7.27.1.tgz"
-  integrity sha512-xA8Bqt8p12TxOFy3os20LxmOoHjyhzRC3zBql57d2W/YarNHgxHB4IlLHf3nXb7N6vSZ6kAdOoK2z5h0evGMhw==
-  dependencies:
-    "@babel/helper-plugin-utils" "^7.27.1"
-    "@babel/helper-wrap-function" "^7.27.1"
-
-"@babel/plugin-proposal-json-strings@^7.12.1":
-  version "7.18.6"
-  resolved "https://registry.npmmirror.com/@babel/plugin-proposal-json-strings/-/plugin-proposal-json-strings-7.18.6.tgz"
-  integrity sha512-lr1peyn9kOdbYc0xr0OdHTZ5FMqS6Di+H0Fz2I/JwMzGmzJETNeOFq2pBySw6X/KFL5EWDjlJuMsUGRFb8fQgQ==
-  dependencies:
-    "@babel/helper-plugin-utils" "^7.18.6"
-    "@babel/plugin-syntax-json-strings" "^7.8.3"
 
 "@babel/plugin-proposal-logical-assignment-operators@^7.12.1":
   version "7.20.7"
@@ -353,13 +315,6 @@
   version "7.21.0-placeholder-for-preset-env.2"
   resolved "https://registry.npmmirror.com/@babel/plugin-proposal-private-property-in-object/-/plugin-proposal-private-property-in-object-7.21.0-placeholder-for-preset-env.2.tgz"
   integrity sha512-SOSkfJDddaM7mak6cPEpswyTRnuRltl429hMraQEglW+OkovnCzsiszTmsrlY//qLFjCpQDFRvjdm2wA5pPm9w==
-
-"@babel/plugin-proposal-throw-expressions@^7.12.1":
-  version "7.27.1"
-  resolved "https://registry.npmmirror.com/@babel/plugin-proposal-throw-expressions/-/plugin-proposal-throw-expressions-7.27.1.tgz"
-  integrity sha512-pnGZCFdGiN3vHk54wWIvLJV3MXviRjCkSWhPtCkra6AW3AP3AcrRByT5jOnuk6nwu9VYT/B7ujdaLiBnkmc0hw==
-  dependencies:
-    "@babel/helper-plugin-utils" "^7.27.1"
 
 "@babel/plugin-syntax-async-generators@^7.8.4":
   version "7.8.4"
@@ -830,14 +785,6 @@
   dependencies:
     "@babel/helper-plugin-utils" "^7.27.1"
 
-"@babel/plugin-transform-react-inline-elements@^7.12.1":
-  version "7.27.1"
-  resolved "https://registry.npmmirror.com/@babel/plugin-transform-react-inline-elements/-/plugin-transform-react-inline-elements-7.27.1.tgz"
-  integrity sha512-zlcXrd4ZO09aY3aMa/jFwDUm7FdyFv/fNA7IXauajDUbiP9duHHDcGWPxO/RBmfgsKJpMuQpON70oVmoQ852jg==
-  dependencies:
-    "@babel/helper-builder-react-jsx" "^7.27.1"
-    "@babel/helper-plugin-utils" "^7.27.1"
-
 "@babel/plugin-transform-react-jsx-development@^7.27.1":
   version "7.27.1"
   resolved "https://registry.npmmirror.com/@babel/plugin-transform-react-jsx-development/-/plugin-transform-react-jsx-development-7.27.1.tgz"
@@ -1101,6 +1048,11 @@
   dependencies:
     core-js-pure "^3.30.2"
     regenerator-runtime "^0.14.0"
+
+"@babel/runtime@7.28.4":
+  version "7.28.4"
+  resolved "https://registry.npmmirror.com/@babel/runtime/-/runtime-7.28.4.tgz#a70226016fabe25c5783b2f22d3e1c9bc5ca3326"
+  integrity sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==
 
 "@babel/runtime@^7.1.2", "@babel/runtime@^7.10.2", "@babel/runtime@^7.12.13", "@babel/runtime@^7.12.5", "@babel/runtime@^7.18.3", "@babel/runtime@^7.21.0", "@babel/runtime@^7.23.9", "@babel/runtime@^7.3.1", "@babel/runtime@^7.4.4", "@babel/runtime@^7.5.5", "@babel/runtime@^7.7.6", "@babel/runtime@^7.8.3", "@babel/runtime@^7.8.7", "@babel/runtime@^7.9.2":
   version "7.26.0"

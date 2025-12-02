@@ -9,7 +9,6 @@ const productionPlugins = [
 
   // babel-preset-react-optimize
   require("@babel/plugin-transform-react-constant-elements"),
-  require("@babel/plugin-transform-react-inline-elements"),
   require("babel-plugin-transform-react-remove-prop-types"),
 ];
 module.exports = (api) => {
@@ -29,9 +28,12 @@ module.exports = (api) => {
     ],
     plugins: [
       // Stage 1
-      ["@babel/plugin-transform-react-jsx", {
-        runtime: "automatic"
-      }],
+      [
+        "@babel/plugin-transform-react-jsx",
+        {
+          runtime: "automatic",
+        },
+      ],
       require("@babel/plugin-proposal-export-default-from"),
       require("@babel/plugin-proposal-logical-assignment-operators"),
       [require("@babel/plugin-proposal-optional-chaining"), { loose: false }],
@@ -43,17 +45,13 @@ module.exports = (api) => {
         require("@babel/plugin-proposal-nullish-coalescing-operator"),
         { loose: false },
       ],
-      require("@babel/plugin-proposal-do-expressions"),
 
       // Stage 2
-      require("@babel/plugin-proposal-function-sent"),
       require("@babel/plugin-proposal-export-namespace-from"),
-      require("@babel/plugin-proposal-throw-expressions"),
 
       // Stage 3
       require("@babel/plugin-syntax-dynamic-import"),
       require("@babel/plugin-syntax-import-meta"),
-      require("@babel/plugin-proposal-json-strings"),
 
       ...(development ? developmentPlugins : productionPlugins),
     ],

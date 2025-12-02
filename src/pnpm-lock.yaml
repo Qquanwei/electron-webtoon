@@ -1,0 +1,29 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      7zip-min:
+        specifier: ^1.4.1
+        version: 1.4.5
+
+packages:
+
+  7zip-bin@5.1.1:
+    resolution: {integrity: sha512-sAP4LldeWNz0lNzmTird3uWfFDWWTeg6V/MsmyyLR9X1idwKBWIgt/ZvinqQldJm3LecKEs1emkbquO6PCiLVQ==}
+
+  7zip-min@1.4.5:
+    resolution: {integrity: sha512-S+FzNwJFKF5LgQYs+hPQo+qeffdi+259Ak63rWEfkHP9arsU8gbe5K+4HscuWN1ih1lP1gTjDNPddbU0qhPtHQ==}
+
+snapshots:
+
+  7zip-bin@5.1.1: {}
+
+  7zip-min@1.4.5:
+    dependencies:
+      7zip-bin: 5.1.1

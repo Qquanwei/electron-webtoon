@@ -51,6 +51,14 @@ export interface IPC {
    */
   removeComic: UnaryFunction<string, Promise<unknown>>;
 
+  /**
+   * get client config value by key
+   */
+  get: (key: string) => Promise<any>;
+
+  /**
+   * set client config value by key
+   */
   set: (key: string, value: any) => Promise<unknown>;
 
   fetchComicList: EmptyFunction<Promise<IComic[]>>;

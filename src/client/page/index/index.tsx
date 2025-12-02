@@ -99,7 +99,7 @@ function IndexPage() {
 
   // <StarBar list={comicList} />
   return (
-    <div className="pt-[70px] text-black bg-[#eee] w-full h-full">
+    <div className="pt-[70px] text-black bg-[#eee] w-full min-h-full scroll-smooth">
       <ElectronWebtoonAppBar hasAdd hasSearch onSearch={onSubmitSearch} />
       <h1 className="mb-2 text-gray-400">漫画库 {comicList!.length}</h1>
 
