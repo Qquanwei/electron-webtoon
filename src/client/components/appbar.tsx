@@ -5,7 +5,6 @@ import Alert from "@material-ui/lab/Alert";
 import { Snackbar } from "@material-ui/core";
 import { Link } from "react-router-dom";
 import { useRecoilRefresher_UNSTABLE } from "recoil";
-import { version } from "../../package.json";
 import * as selector from "../selector";
 import { getIPC } from "../ipc";
 import { UnaryFunction } from "../../shared/type";
@@ -74,7 +73,7 @@ const ElectronWebtoonAppBar: React.FC<ElectronWebtoonAppBarProps> = ({
     <div className="shadow z-10 px-2 fixed top-0 left-0 right-0 bg-white text-black flex justify-center h-[60px] items-center">
       <Typography variant="h6" noWrap>
         <Link to="/">
-          ElectronWebtoon<span className="text-[10px]">@{version}</span>
+          ElectronWebtoon<span className="text-[10px]">@{VERSION}</span>
         </Link>
       </Typography>
 
