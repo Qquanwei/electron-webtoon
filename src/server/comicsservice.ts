@@ -155,7 +155,7 @@ export default class ComicService {
     this.store = new Store({
       defaults: {
         library: [] as ILibraryComic[],
-        decompressPath: app.getPath("temp"),
+        decompressPath: app.getPath("appData"),
       },
     });
     // old version config file
@@ -297,7 +297,7 @@ export default class ComicService {
       properties: ["openFile", "multiSelections"],
       filters: [{ name: "compress", extensions: supportCompressExts }],
     });
-    const cachePath = app.getPath("cache");
+    const cachePath = this.store.get("decompressPath");
 
     const onEntry = (data) => {
       this.mainWindow.webContents.send("decompress", data);

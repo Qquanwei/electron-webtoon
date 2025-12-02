@@ -10,15 +10,12 @@ import * as selector from "../selector";
 import { getIPC } from "../ipc";
 import { UnaryFunction } from "../../shared/type";
 import Popup from "./Popup";
+import { useMessage } from "./useMessage";
 
 interface ElectronWebtoonAppBarProps {
   onSearch?: UnaryFunction<string | null>;
   hasSearch?: boolean;
   hasAdd?: boolean;
-}
-
-interface IMsg {
-  msg: string;
 }
 
 const ElectronWebtoonAppBar: React.FC<ElectronWebtoonAppBarProps> = ({
@@ -36,6 +33,7 @@ const ElectronWebtoonAppBar: React.FC<ElectronWebtoonAppBarProps> = ({
       onSearch(searchRef.current.value);
     }
   }, []);
+  const { messages, pushMessage } = useMessage();
 
   useEffect(() => {
     async function work() {
@@ -70,22 +68,6 @@ const ElectronWebtoonAppBar: React.FC<ElectronWebtoonAppBarProps> = ({
   const [popupVisible, setPopupVisible] = useState(false);
   const onClickAdd = useCallback(() => {
     setPopupVisible(true);
-  }, []);
-
-  const [messages, setMessages] = useState<IMsg[]>([]);
-  const pushMessage = useCallback((msg, ms) => {
-    const msgItem = {
-      msg,
-    };
-    setTimeout(() => {
-      setMessages((msgs) => {
-        console.log("msg:", msgs);
-        return msgs.filter((item) => item !== msgItem);
-      });
-    }, ms);
-    setMessages((msgs) => {
-      return msgs.concat(msgItem);
-    });
   }, []);
 
   return (

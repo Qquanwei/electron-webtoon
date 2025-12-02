@@ -10,6 +10,10 @@ export default class ElectronIPC implements IPC {
     return ipcRenderer.invoke("/set", key, value);
   }
 
+  reset(key: string) {
+    return ipcRenderer.invoke("/reset", key);
+  }
+
   onCompressFile(callback: UnaryFunction<string, void>) {
     ipcRenderer.on("decompress", (_, data) => callback(data));
   }

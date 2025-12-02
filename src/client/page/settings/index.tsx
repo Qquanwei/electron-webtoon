@@ -1,11 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
 import ElectronWebtoonAppBar from "@components/appbar";
 import { getIPC } from "@client/ipc";
+import { useMessage } from "@components/useMessage";
 
 // 设置页面
 export default function Settings() {
   const [path, setPath] = useState<string>("");
   const [saving, setSaving] = useState<boolean>(false);
+  const [resetting, setResetting] = useState<boolean>(false);
+  const { pushMessage } = useMessage();
 
   useEffect(() => {
     let mounted = true;
@@ -35,10 +38,27 @@ export default function Settings() {
     try {
       const ipc = await getIPC();
       await ipc.set("decompressPath", path);
+      pushMessage("保存成功", 1000);
+    } catch {
+      pushMessage("保存失败", 1000);
     } finally {
       setSaving(false);
     }
-  }, [path]);
+  }, [path, pushMessage]);
+
+  const onReset = useCallback(async () => {
+    setResetting(true);
+    try {
+      const ipc = await getIPC();
+      await ipc.reset("decompressPath");
+      const value = await ipc.get("decompressPath");
+      if (value) {
+        setPath(value as string);
+      }
+    } finally {
+      setResetting(false);
+    }
+  }, []);
 
   return (
     <div className="pt-[70px]">
@@ -62,11 +82,18 @@ export default function Settings() {
               选择...
             </button>
             <button
+              className="bg-gray-200 px-3 py-2 rounded mr-2"
+              onClick={onReset}
+              disabled={resetting}
+            >
+              {resetting ? "重置中..." : "重置"}
+            </button>
+            <button
               className="bg-sky-500 text-white px-3 py-2 rounded"
               onClick={onSave}
               disabled={saving}
             >
-              {saving ? "保存中..." : "保存"}
+              保存
             </button>
           </div>
         </div>

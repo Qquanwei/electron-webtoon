@@ -24,6 +24,10 @@ export default function init(_app, mainWindow: Electron.BrowserWindow) {
     return service.set(key, value);
   });
 
+  ipcMain.handle("/reset", (event, key) => {
+    return service.reset(key);
+  });
+
   ipcMain.handle("/post/comic", (event, path) => {
     return service.addComicToLibrary(path);
   });

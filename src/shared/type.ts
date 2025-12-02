@@ -61,6 +61,11 @@ export interface IPC {
    */
   set: (key: string, value: any) => Promise<unknown>;
 
+  /**
+   * reset client config value by key to default
+   */
+  reset: (key: string) => Promise<any>;
+
   fetchComicList: EmptyFunction<Promise<IComic[]>>;
 
   fetchComic: UnaryFunction<string, Promise<IComic>>;
