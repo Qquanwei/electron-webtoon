@@ -16,3 +16,4 @@ declare module "tiny-event-manager" {
 }
 
 declare module "*.css";
+declare const VERSION: string;
