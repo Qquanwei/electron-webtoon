@@ -1,17 +1,22 @@
-import { Suspense, useState, useCallback } from "react";
+import { Suspense, useState, useCallback, useEffect } from "react";
 import { webUtils } from "electron";
 import { HashRouter as Router, Switch, Route } from "react-router-dom";
 import Index from "./page/index";
 import Comic from "./page/comic";
 import Settings from "./page/settings";
+import * as selector from "./selector";
 import StartUpPage from "./startPage";
 import "./App.global.css";
 import { getIPC } from "./ipc";
 import { useMessage } from "@components/useMessage";
+import { Snackbar } from "@material-ui/core";
+import Alert from "@material-ui/lab/Alert";
+import { useRecoilRefresher_UNSTABLE } from "recoil";
 
 export default function App() {
   const [dragActive, setDragActive] = useState(false);
-  const { pushMessage } = useMessage();
+  const { pushMessage, messages } = useMessage();
+  const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
 
   const onDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -56,6 +61,24 @@ export default function App() {
       console.error("drop error:", err);
     }
   }, []);
+
+  useEffect(() => {
+    async function work() {
+      const ipc = await getIPC();
+      ipc.onMsg((msg) => {
+        pushMessage(msg, 3000);
+      });
+      ipc.onCompressFile((msg) => {
+        pushMessage(msg, 3000);
+      });
+      ipc.onCompressDone(() => {
+        pushMessage("处理完毕", 3000);
+        refreshComicList();
+      });
+    }
+    work();
+  }, []);
+
   // TODO: loading 时能自动从所有logo中选一张岂不是完美了。
   return (
     <div
@@ -94,6 +117,23 @@ export default function App() {
           将漫画文件夹或压缩包拖到这里以导入（松开即可导入）
         </div>
       )}
+
+      <Snackbar
+        open={messages.length > 0}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      >
+        <div>
+          {messages
+            .filter((msg) => msg.id)
+            .map((item) => {
+              return (
+                <Alert severity="info" key={item.id} className="mt-2">
+                  {item.msg}
+                </Alert>
+              );
+            })}
+        </div>
+      </Snackbar>
     </div>
   );
 }
