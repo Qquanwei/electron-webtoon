@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { atom, useRecoilState } from "recoil";
 export interface IMsg {
   msg: string;
+  id: string;
 }
 
 const messageAtom = atom<IMsg[]>({
@@ -12,12 +13,14 @@ const messageAtom = atom<IMsg[]>({
 export function useMessage() {
   const [messages, setMessages] = useRecoilState(messageAtom);
   const pushMessage = useCallback((msg, ms) => {
+    const id = Math.random().toString(16).slice(2);
     const msgItem = {
       msg,
+      id,
     };
     setTimeout(() => {
       setMessages((msgs) => {
-        return msgs.filter((item) => item !== msgItem);
+        return msgs.filter((item) => item.id !== id);
       });
     }, ms);
     setMessages((msgs) => {
