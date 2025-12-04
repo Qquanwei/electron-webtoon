@@ -66,6 +66,11 @@ export interface IPC {
    */
   reset: (key: string) => Promise<any>;
 
+  /**
+   * handle files/paths dropped into the app (folders or archive files)
+   */
+  handleDroppedFiles: (paths: string[]) => Promise<any>;
+
   fetchComicList: EmptyFunction<Promise<IComic[]>>;
 
   fetchComic: UnaryFunction<string, Promise<IComic>>;

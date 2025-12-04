@@ -77,17 +77,21 @@ const ElectronWebtoonAppBar: React.FC<ElectronWebtoonAppBarProps> = ({
         </Link>
       </Typography>
 
-      {messages.map((item, index) => {
-        return (
-          <Snackbar
-            open
-            key={index}
-            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          >
-            <Alert severity="info">{item.msg}</Alert>
-          </Snackbar>
-        );
-      })}
+      <Snackbar
+        open={messages.length > 0}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      >
+        <div>
+          {messages.map((item) => {
+            return (
+              <Alert severity="info" key={item.id} className="mt-2">
+                {item.msg}
+              </Alert>
+            );
+          })}
+        </div>
+      </Snackbar>
+
       {hasSearch && (
         <form
           onSubmit={onSubmitSearch}

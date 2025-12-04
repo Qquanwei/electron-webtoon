@@ -38,6 +38,10 @@ export default class ElectronIPC implements IPC {
     return ipcRenderer.invoke("/post/comic", path);
   }
 
+  handleDroppedFiles(paths: string[]) {
+    return ipcRenderer.invoke("/post/drop", paths);
+  }
+
   fetchComicList() {
     return ipcRenderer.invoke("/comic");
   }

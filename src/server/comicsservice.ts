@@ -315,6 +315,57 @@ export default class ComicService {
     }
   }
 
+  /**
+   * Handle files/paths dropped into the app.
+   * Accepts directories or compress files. Directories will be added as comics.
+   * Compress files will be decompressed to the configured cache and added.
+   */
+  async handleDroppedFiles(paths: string[]) {
+    console.log(paths);
+    if (!paths || !paths.length) return;
+    const cachePath = this.store.get("decompressPath");
+
+    const onEntry = (data) => {
+      this.mainWindow.webContents.send("decompress", data);
+    };
+
+    for (let i = 0; i < paths.length; ++i) {
+      const p = paths[i];
+      try {
+        if (isDirectory(p)) {
+          await this.addComicToLibrary(p);
+          this.mainWindow.webContents.send("decompress-done", { pathname: p });
+        } else {
+          // for files, try to detect compress ext by extension
+          const lower = p.toLowerCase();
+          const isCompress = supportCompressExts.some((s) =>
+            lower.endsWith(`.${s}`),
+          );
+          if (isCompress) {
+            // decompress and add
+            // decompress will call onDone with pathname
+            // reuse same flow as takeCompressAndAddToComic
+            // eslint-disable-next-line no-loop-func
+            await new Promise((resolve) => {
+              decompress(p, cachePath, onEntry, async (data) => {
+                const { pathname } = data;
+                await this.addComicToLibrary2(pathname, p);
+                this.mainWindow.webContents.send("decompress-done", data);
+                resolve(null);
+              });
+            });
+          } else {
+            // unknown file type — ignore or try to add as a single-file comic?
+            // For now ignore
+          }
+        }
+      } catch (e) {
+        // ignore single file errors and continue
+        console.error("handleDroppedFiles error:", e);
+      }
+    }
+  }
+
   /*
      删除一个漫画，如果是文件夹漫画，此时不会删除物理资源
      如果打开的是压缩包类型漫画，删除时会自动删除磁盘上解压的目录. 漫画字段包含 compressFilePath 则说明这是一个压缩包类型的漫画

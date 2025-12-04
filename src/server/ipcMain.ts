@@ -32,6 +32,10 @@ export default function init(_app, mainWindow: Electron.BrowserWindow) {
     return service.addComicToLibrary(path);
   });
 
+  ipcMain.handle("/post/drop", async (event, paths: string[]) => {
+    return service.handleDroppedFiles(paths);
+  });
+
   ipcMain.handle("/delete/comic", (event, id) => {
     return service.removeComic(id);
   });
