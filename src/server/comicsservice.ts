@@ -84,10 +84,20 @@ async function buildComicImgList(
         deep - 1,
         makeUrl,
       );
-      result.push({
-        name: fileOrDirName,
-        list,
-      });
+
+      if (list.length) {
+        const isPureImgList = list.every((item) => {
+          return typeof item === "string";
+        });
+        if (isPureImgList) {
+          result.push({
+            name: fileOrDirName,
+            list,
+          });
+        } else {
+          result.push(...list);
+        }
+      }
     } else {
       singlePics.push(makeUrl(path.resolve(pathname, fileOrDirName)));
     }
@@ -110,7 +120,7 @@ async function buildComicImgList(
 
 async function getCoverUrl(comicPath: string, makeUrl: IMakeUrl) {
   try {
-    const list = flatten(await buildComicImgList(comicPath, 2, makeUrl));
+    const list = flatten(await buildComicImgList(comicPath, 3, makeUrl));
     return list[0] || list[1];
   } catch (e) {
     return null;
@@ -228,21 +238,24 @@ export default class ComicService {
       return filename;
     });
     return await new Promise((resolve, reject) => {
-      imageSize(coverUrl, (err: any, dimen: { width: any; height: any }) => {
-        if (err) {
-          console.log(coverUrl);
-          reject(err);
-          return;
-        }
-        resolve({
-          path: pathstr,
-          width: dimen.width,
-          height: dimen.height,
-          coverFileName: coverUrl,
-          name: ps[ps.length - 1],
-          id: uuidv4(),
-        });
-      });
+      imageSize(
+        coverUrl || "",
+        (err: any, dimen: { width: any; height: any }) => {
+          if (err) {
+            console.log(coverUrl);
+            reject(err);
+            return;
+          }
+          resolve({
+            path: pathstr,
+            width: dimen.width,
+            height: dimen.height,
+            coverFileName: coverUrl || undefined,
+            name: ps[ps.length - 1],
+            id: uuidv4(),
+          });
+        },
+      );
     });
   }
 
@@ -321,7 +334,6 @@ export default class ComicService {
    * Compress files will be decompressed to the configured cache and added.
    */
   async handleDroppedFiles(paths: string[]) {
-    console.log(paths);
     if (!paths || !paths.length) return;
     const cachePath = this.store.get("decompressPath");
 

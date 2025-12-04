@@ -1,15 +1,12 @@
-import React, { useRef, useCallback, useEffect, useState } from "react";
+import React, { useRef, useCallback, useState } from "react";
 import Typography from "@material-ui/core/Typography";
 import SearchIcon from "@material-ui/icons/Search";
-import Alert from "@material-ui/lab/Alert";
-import { Snackbar } from "@material-ui/core";
 import { Link } from "react-router-dom";
 import { useRecoilRefresher_UNSTABLE } from "recoil";
 import * as selector from "../selector";
 import { getIPC } from "../ipc";
 import { UnaryFunction } from "../../shared/type";
 import Popup from "./Popup";
-import { useMessage } from "./useMessage";
 
 interface ElectronWebtoonAppBarProps {
   onSearch?: UnaryFunction<string | null>;
@@ -32,25 +29,6 @@ const ElectronWebtoonAppBar: React.FC<ElectronWebtoonAppBarProps> = ({
       onSearch(searchRef.current.value);
     }
   }, []);
-  const { messages, pushMessage } = useMessage();
-
-  useEffect(() => {
-    async function work() {
-      const ipc = await getIPC();
-      ipc.onMsg((msg) => {
-        pushMessage(msg, 3000);
-      });
-      ipc.onCompressFile((msg) => {
-        pushMessage(msg, 3000);
-      });
-      ipc.onCompressDone(() => {
-        pushMessage("处理完毕", 3000);
-        refreshComicList();
-      });
-    }
-    work();
-  }, [refreshComicList]);
-
   const onClickAddFile = useCallback(async () => {
     (await getIPC()).takeCompressAndAddToComic();
   }, []);
@@ -76,21 +54,6 @@ const ElectronWebtoonAppBar: React.FC<ElectronWebtoonAppBarProps> = ({
           ElectronWebtoon<span className="text-[10px]">@{VERSION}</span>
         </Link>
       </Typography>
-
-      <Snackbar
-        open={messages.length > 0}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-      >
-        <div>
-          {messages.map((item) => {
-            return (
-              <Alert severity="info" key={item.id} className="mt-2">
-                {item.msg}
-              </Alert>
-            );
-          })}
-        </div>
-      </Snackbar>
 
       {hasSearch && (
         <form
