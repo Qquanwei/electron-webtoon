@@ -52,6 +52,11 @@ export interface IPC {
   removeComic: UnaryFunction<string, Promise<unknown>>;
 
   /**
+   * 根据comicId 归档一个漫画（移动到归档路径）
+   */
+  archiveComic: UnaryFunction<string, Promise<unknown>>;
+
+  /**
    * get client config value by key
    */
   get: (key: string) => Promise<any>;

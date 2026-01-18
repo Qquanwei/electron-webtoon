@@ -9,6 +9,7 @@ import { useHistory } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import ElectronWebtoonAppBar from "../../components/appbar";
 import Popup from "@components/Popup";
+import { useMessage } from "@components/useMessage";
 import styles from "./index.css";
 import { useRecoilValueMemo } from "../../utils";
 
@@ -53,11 +54,28 @@ function getCardGridStyle(width: number, height: number) {
 
 function IndexPage() {
   const [contextComicId, setContextComicId] = useState<string | null>(null);
+  const [archivePath, setArchivePath] = useState<string>("");
   const [searchKey, setSearchKey] = useState("");
   const comicList = useRecoilValueMemo(selector.comicList);
   const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
   const history = useHistory();
   const [_, setNextOpenComicInfo] = useRecoilState(selector.nextOpenComicInfo);
+  const { pushMessage } = useMessage();
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadArchivePath() {
+      const ipc = await getIPC();
+      const value = await ipc.get("archivePath");
+      if (mounted && value) {
+        setArchivePath(value as string);
+      }
+    }
+    loadArchivePath();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const onContextMenu = useCallback((e) => {
     e.preventDefault();
@@ -77,7 +95,24 @@ function IndexPage() {
     }
 
     setContextComicId(null);
-  }, [contextComicId]);
+  }, [contextComicId, refreshComicList]);
+
+  const onArchiveComic = useCallback(async () => {
+    const ipc = await getIPC();
+    if (contextComicId) {
+      try {
+        await ipc.archiveComic(contextComicId);
+        refreshComicList();
+      } catch (error) {
+        console.error("Archive error:", error);
+        const errorMsg =
+          (error as any)?.message || "归档失败，请检查路径和权限";
+        pushMessage(errorMsg, 2000);
+      }
+    }
+
+    setContextComicId(null);
+  }, [contextComicId, refreshComicList, pushMessage]);
 
   const onClickItem = useCallback((e) => {
     if (e.currentTarget.dataset.cover) {
@@ -124,15 +159,35 @@ function IndexPage() {
                 visibleChange={() => setContextComicId(null)}
                 visible={contextComicId === comic.id}
                 tooltip={
-                  <div className="flex bg-white p-5 cursor-pointer text-rose-400 transition-all whitespace-nowrap">
+                  <div className="flex flex-col bg-white divide-y divide-gray-100 cursor-pointer shadow-md rounded-md overflow-hidden min-w-[120px]">
                     <div
                       onClick={onDeleteComic}
-                      className="p-2 hover:bg-gray-100/10"
+                      className="px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
                     >
                       删除本漫画
                     </div>
                     <div
-                      className="p-2 ml-2 text-black hover:bg-gray-100/10"
+                      onClick={
+                        archivePath
+                          ? onArchiveComic
+                          : () =>
+                              pushMessage("请先在设置页面配置归档路径", 2000)
+                      }
+                      className={`px-4 py-2.5 text-sm font-medium transition-colors ${
+                        archivePath
+                          ? "text-orange-600 hover:bg-orange-50 cursor-pointer"
+                          : "text-gray-400 cursor-not-allowed opacity-60"
+                      }`}
+                      title={
+                        archivePath
+                          ? "归档此漫画"
+                          : "请先在设置页面配置归档路径"
+                      }
+                    >
+                      归档
+                    </div>
+                    <div
+                      className="px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors font-medium"
                       onClick={() => setContextComicId(null)}
                     >
                       取消

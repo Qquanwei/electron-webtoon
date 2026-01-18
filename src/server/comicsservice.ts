@@ -40,6 +40,7 @@ const supportCompressExts = [
 
 interface IStoreKeys {
   decompressPath: string;
+  archivePath: string;
 }
 
 function extNameLegal(file: string) {
@@ -58,6 +59,36 @@ function flatten(tree: IComicImgList): string[] {
     }
   }
   return list;
+}
+
+// 递归复制文件或文件夹
+async function copyFileOrDirectory(
+  source: string,
+  destination: string,
+): Promise<void> {
+  try {
+    const stat = await fsPromisese.stat(source);
+
+    if (stat.isDirectory()) {
+      // 创建目标目录
+      await fsPromisese.mkdir(destination, { recursive: true });
+      // 读取源目录内容
+      const files = await fsPromisese.readdir(source);
+      // 递归复制每个文件/文件夹
+      for (const file of files) {
+        const srcPath = path.join(source, file);
+        const dstPath = path.join(destination, file);
+        await copyFileOrDirectory(srcPath, dstPath);
+      }
+    } else {
+      // 复制文件
+      console.log(`Copying file: ${source} -> ${destination}`);
+      await fsPromisese.copyFile(source, destination);
+    }
+  } catch (error) {
+    console.error(`Error copying ${source} to ${destination}:`, error);
+    throw error;
+  }
 }
 
 // deep 子文件夹个数
@@ -166,6 +197,7 @@ export default class ComicService {
       defaults: {
         library: [] as ILibraryComic[],
         decompressPath: app.getPath("appData"),
+        archivePath: "",
       },
     });
     // old version config file
@@ -401,6 +433,118 @@ export default class ComicService {
     this.store.set("library", newLibrary);
   }
 
+  /*
+     归档一个漫画，将源文件移动到归档路径，并从库中删除
+     如果是压缩包类型漫画（有compressFilePath），则移动源压缩文件
+     如果是文件夹漫画，则移动文件夹
+   */
+  async archiveComic(id: string) {
+    const comic = await this.getComic(id);
+    const archivePath = this.store.get("archivePath");
+
+    if (!comic || !archivePath) {
+      throw new Error("漫画不存在或未配置归档路径");
+    }
+
+    try {
+      let sourcePathToArchive: string;
+      let fileName: string;
+
+      // 如果是压缩包类型漫画，归档源压缩文件
+      if (comic.compressFilePath) {
+        sourcePathToArchive = comic.compressFilePath;
+        const ps = sourcePathToArchive.split(path.sep);
+        fileName = ps[ps.length - 1];
+      } else {
+        // 否则归档漫画文件夹
+        sourcePathToArchive = comic.path;
+        const ps = sourcePathToArchive.split(path.sep);
+        fileName = ps[ps.length - 1];
+      }
+
+      const targetPath = path.resolve(archivePath, fileName);
+
+      // 如果目标路径已存在，则添加时间戳
+      let finalTargetPath = targetPath;
+      let counter = 1;
+      while (fs.existsSync(finalTargetPath)) {
+        const nameWithoutExt = fileName.substring(
+          0,
+          fileName.lastIndexOf("."),
+        );
+        const ext = fileName.substring(fileName.lastIndexOf("."));
+        finalTargetPath = path.resolve(
+          archivePath,
+          `${nameWithoutExt}_${counter}${ext}`,
+        );
+        counter++;
+      }
+
+      // 移动文件或文件夹
+      // 首先尝试使用 rename，如果失败（如跨磁盘）则使用复制+删除
+      let moved = false;
+      try {
+        await fsPromisese.rename(sourcePathToArchive, finalTargetPath);
+        moved = true;
+      } catch (renameError: any) {
+        console.warn("Rename failed, attempting copy+delete:", renameError);
+        // 如果是跨设备错误，使用复制+删除的方式
+        if (
+          renameError.code === "EXDEV" ||
+          renameError.errno === -18 ||
+          renameError.message.includes("cross-device") ||
+          renameError.message.includes("EXDEV")
+        ) {
+          console.log("Cross-device detected, using copy+delete method");
+          try {
+            // 复制文件/文件夹
+            await copyFileOrDirectory(sourcePathToArchive, finalTargetPath);
+            // 删除源文件/文件夹
+            if (fs.lstatSync(sourcePathToArchive).isDirectory()) {
+              await fsPromisese.rmdir(sourcePathToArchive, { recursive: true });
+            } else {
+              await fsPromisese.unlink(sourcePathToArchive);
+            }
+            moved = true;
+          } catch (copyError) {
+            console.error("Copy+delete failed:", copyError);
+            throw new Error(
+              `跨磁盘移动失败：${(copyError as any).message}`,
+            );
+          }
+        } else {
+          throw new Error(`移动失败：${renameError.message}`);
+        }
+      }
+
+      if (!moved) {
+        throw new Error("文件移动失败，请检查路径和权限");
+      }
+
+      // 如果是压缩包类型漫画，还要删除解压的临时目录
+      if (comic.compressFilePath) {
+        try {
+          await fsPromisese.rmdir(comic.path, { recursive: true });
+        } catch (e) {
+          // 如果删除失败，继续，因为主要文件已经归档
+          console.warn("Failed to remove temporary directory:", e);
+        }
+      }
+
+      this.mainWindow.webContents.send("msg", `已归档至：${finalTargetPath}`);
+    } catch (e) {
+      console.error("Archive comic error:", e);
+      throw new Error(`归档失败：${(e as any).message}`);
+    }
+
+    // 从库中删除该漫画
+    const oldLibrary = this.store.get("library");
+    const newLibrary = oldLibrary.filter((item) => {
+      return item.id !== id;
+    });
+    this.store.set("library", newLibrary);
+  }
+
   async get(key: keyof IStoreKeys): Promise<string> {
     return this.store.get(`${key}`);
   }
@@ -412,6 +556,9 @@ export default class ComicService {
   async reset(key: keyof IStoreKeys) {
     if (key === "decompressPath") {
       return this.store.reset("decompressPath");
+    }
+    if (key === "archivePath") {
+      return this.store.set("archivePath", "");
     }
   }
 
