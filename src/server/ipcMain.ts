@@ -40,6 +40,10 @@ export default function init(_app, mainWindow: Electron.BrowserWindow) {
     return service.removeComic(id);
   });
 
+  ipcMain.handle("/archive/comic", (event, id) => {
+    return service.archiveComic(id);
+  });
+
   ipcMain.handle("/put/bookmark", (event, id, tag, position) => {
     return service.saveComicTag(id, { tag, position });
   });

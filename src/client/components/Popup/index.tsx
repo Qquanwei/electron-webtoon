@@ -61,6 +61,9 @@ const Popup: React.FC<PopupProps> = ({
       }
 
       div.classList.remove("invisible");
+      div.classList.add("shadow-lg");
+      div.classList.add("border");
+      div.classList.add("border-gray-200");
 
       setTimeout(() => {
         subscriptionRef.current = createEventListener(
@@ -75,6 +78,9 @@ const Popup: React.FC<PopupProps> = ({
       });
     } else {
       div.classList.add("invisible");
+      div.classList.remove("shadow-lg");
+      div.classList.remove("border");
+      div.classList.remove("border-gray-200");
     }
 
     return () => {
