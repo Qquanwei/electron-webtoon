@@ -468,10 +468,7 @@ export default class ComicService {
       let finalTargetPath = targetPath;
       let counter = 1;
       while (fs.existsSync(finalTargetPath)) {
-        const nameWithoutExt = fileName.substring(
-          0,
-          fileName.lastIndexOf("."),
-        );
+        const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf("."));
         const ext = fileName.substring(fileName.lastIndexOf("."));
         finalTargetPath = path.resolve(
           archivePath,
@@ -508,9 +505,7 @@ export default class ComicService {
             moved = true;
           } catch (copyError) {
             console.error("Copy+delete failed:", copyError);
-            throw new Error(
-              `跨磁盘移动失败：${(copyError as any).message}`,
-            );
+            throw new Error(`跨磁盘移动失败：${(copyError as any).message}`);
           }
         } else {
           throw new Error(`移动失败：${renameError.message}`);
