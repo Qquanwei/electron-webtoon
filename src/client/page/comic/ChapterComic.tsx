@@ -1,16 +1,16 @@
 /* eslint-disable */
-import React, { useCallback, useMemo, useState } from "react";
-import Typography from "@material-ui/core/Typography";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ImportContactsIcon from "@material-ui/icons/ImportContacts";
-import ListItemText from "@material-ui/core/ListItemText";
-import Breadcrumbs from "@material-ui/core/Breadcrumbs";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
+import Typography from "@mui/material/Typography";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ImportContactsIcon from "@mui/icons-material/ImportContacts";
+import ListItemText from "@mui/material/ListItemText";
+import Breadcrumbs from "@mui/material/Breadcrumbs";
 import classNames from "classnames";
 import { Link } from "react-router-dom";
-import Divider from "@material-ui/core/Divider";
-import List from "@material-ui/core/List";
-import AppIcon from "@material-ui/icons/Apps";
+import Divider from "@mui/material/Divider";
+import List from "@mui/material/List";
+import AppIcon from "@mui/icons-material/Apps";
 import ImgControl from "./ImgControl";
 import ImgList from "./imgList";
 import useComicContext from "./useComicContext";
@@ -143,6 +143,9 @@ const ChapterComic: React.FC<{ chapterList: IImgListForMultipleChapter }> = ({
         }
       }
       const newChapter = chapterList[index + 1];
+      if (!newChapter) {
+        return chapter;
+      }
 
       getIPC().then((ipc) => {
         ipc.saveComicTag(comic?.id || "", newChapter.name, 0);
@@ -151,6 +154,50 @@ const ChapterComic: React.FC<{ chapterList: IImgListForMultipleChapter }> = ({
       return newChapter;
     });
   }, [chapterList, comic]);
+
+  const onPrevPage = useCallback(() => {
+    setChapter((chapter) => {
+      let index = -1;
+      for (let i = 0; i < chapterList.length; ++i) {
+        if (chapterList[i].name === chapter.name) {
+          index = i;
+          break;
+        }
+      }
+      const newChapter = chapterList[index - 1];
+      if (!newChapter) {
+        return chapter;
+      }
+
+      getIPC().then((ipc) => {
+        ipc.saveComicTag(comic?.id || "", newChapter.name, 0);
+      });
+
+      return newChapter;
+    });
+  }, [chapterList, comic]);
+
+  const { shortcutHandlersRef } = useComicContext();
+
+  useEffect(() => {
+    shortcutHandlersRef.current.nextChapter = hasNextPage ? onNextPage : undefined;
+    shortcutHandlersRef.current.prevChapter =
+      chapterList.findIndex((item) => item.name === chapter.name) > 0
+        ? onPrevPage
+        : undefined;
+
+    return () => {
+      shortcutHandlersRef.current.nextChapter = undefined;
+      shortcutHandlersRef.current.prevChapter = undefined;
+    };
+  }, [
+    chapter,
+    chapterList,
+    hasNextPage,
+    onNextPage,
+    onPrevPage,
+    shortcutHandlersRef,
+  ]);
 
   const onVisitPositionChange = useCallback(
     async (position) => {

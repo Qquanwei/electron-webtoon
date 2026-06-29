@@ -1,5 +1,10 @@
 import { EmptyFunction, IComic, UnaryFunction } from "@shared/type";
-import React, { useContext } from "react";
+import React, { useContext, useRef } from "react";
+
+export interface ComicShortcutHandlers {
+  nextChapter?: () => void;
+  prevChapter?: () => void;
+}
 
 export interface IComicContext {
   autoScroll: boolean;
@@ -8,6 +13,7 @@ export interface IComicContext {
   onClickFilter: UnaryFunction<number>;
   setAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
   refreshCurrentComic: EmptyFunction;
+  shortcutHandlersRef: React.MutableRefObject<ComicShortcutHandlers>;
 }
 
 const context = React.createContext<IComicContext>(undefined!);

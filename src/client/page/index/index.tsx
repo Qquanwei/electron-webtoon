@@ -10,7 +10,7 @@ import { useRecoilState } from "recoil";
 import ElectronWebtoonAppBar from "../../components/appbar";
 import Popup from "@components/Popup";
 import { useMessage } from "@components/useMessage";
-import styles from "./index.css";
+import styles from "./index.module.css";
 import { useRecoilValueMemo } from "../../utils";
 
 import * as selector from "../../selector";

@@ -1,14 +1,14 @@
 /* eslint-disable */
 import { useCallback, useEffect } from "react";
 import classNames from "classnames";
-import Filter1Icon from "@material-ui/icons/Filter1";
-import Filter2Icon from "@material-ui/icons/Filter2";
-import Filter3Icon from "@material-ui/icons/Filter3";
-import Filter4Icon from "@material-ui/icons/Filter4";
-import ArrowCircleDown from "@material-ui/icons/ArrowDownward";
-import AddAPhotoIcon from "@material-ui/icons/AddAPhoto";
-import HomeIcon from "@material-ui/icons/Home";
-import { Tooltip } from "@material-ui/core";
+import Filter1Icon from "@mui/icons-material/Filter1";
+import Filter2Icon from "@mui/icons-material/Filter2";
+import Filter3Icon from "@mui/icons-material/Filter3";
+import Filter4Icon from "@mui/icons-material/Filter4";
+import ArrowCircleDown from "@mui/icons-material/ArrowDownward";
+import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
+import HomeIcon from "@mui/icons-material/Home";
+import { Tooltip } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import useComicContext from "./useComicContext";
 import Icon from "@components/Icon";

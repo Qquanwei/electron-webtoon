@@ -1,26 +1,22 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
-    "module": "nodenext",
+    "target": "ES2022",
+    "module": "ESNext",
     "lib": ["dom", "esnext"],
-    "declaration": true,
-    "declarationMap": true,
-    "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
-    "pretty": true,
     "sourceMap": true,
-    /* Additional Checks */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    /* Module Resolution Options */
-    "moduleResolution": "nodenext",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "allowJs": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
     "paths": {
       "@shared/*": ["./src/shared/*"],
       "@components/*": ["./src/client/components/*"],
@@ -28,12 +24,13 @@
       "@imgs/*": ["./src/client/imgs/*"]
     }
   },
+  "include": [
+    "src/**/*",
+    "electron.vite.config.ts"
+  ],
   "exclude": [
-    "test",
     "release",
-    "src/main.prod.js",
-    "src/renderer.prod.js",
-    "src/dist",
-    ".erb/dll"
+    "out",
+    "node_modules"
   ]
 }

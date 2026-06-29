@@ -1,10 +1,10 @@
-/* eslint-disable */
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useRecoilValue, useRecoilRefresher_UNSTABLE } from "recoil";
 import SingleComic from "./SingleComic";
 import ChapterComic from "./ChapterComic";
 import { IComicContext, Provider } from "./useComicContext";
+import useComicShortcuts from "./useComicShortcuts";
 import * as selector from "../../selector";
 import {
   IImgListForMultipleChapter,
@@ -16,6 +16,7 @@ function ComicPage() {
   const { id } = useParams<{ id: string }>();
   const [autoScroll, setAutoScroll] = useState(false);
   const [filter, setFilter] = useState(0);
+  const shortcutHandlersRef = useRef<IComicContext["shortcutHandlersRef"]["current"]>({});
   const { imgList, comic } = useRecoilValue(selector.comicDetail(id));
   const refresh = useRecoilRefresher_UNSTABLE(selector.comicDetail(id));
 
@@ -50,12 +51,14 @@ function ComicPage() {
       onClickFilter,
       comic,
       refreshCurrentComic: refresh,
+      shortcutHandlersRef,
     };
-  }, [autoScroll, setAutoScroll, filter, onClickFilter, comic]);
+  }, [autoScroll, filter, onClickFilter, comic, refresh]);
 
   return (
     <div className="w-full border-box">
       <Provider value={contextValue}>
+        <ComicShortcutListener />
         {isChapterComic ? (
           <ChapterComic chapterList={imgList as IImgListForMultipleChapter} />
         ) : (
@@ -64,6 +67,11 @@ function ComicPage() {
       </Provider>
     </div>
   );
+}
+
+function ComicShortcutListener() {
+  useComicShortcuts();
+  return null;
 }
 
 export default ComicPage;

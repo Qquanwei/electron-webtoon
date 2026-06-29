@@ -4,27 +4,20 @@ on: [push, pull_request]
 
 jobs:
   release:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
-      - name: Install Node.js, NPM and Yarn
-        uses: actions/setup-node@v1
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22.12.0
+          cache: npm
 
-      - name: yarn install
-        run: |
-          yarn install --network-timeout 300000
+      - name: Install dependencies
+        run: npm ci
 
-      - name: yarn test
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          yarn package
+      - name: Build package
+        run: npm run package

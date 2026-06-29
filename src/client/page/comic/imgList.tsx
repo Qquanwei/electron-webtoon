@@ -388,7 +388,7 @@ const HorizonImgList: React.FC<ImgListProps> = ({
   return (
     <div
       ref={containerRef}
-      className="flex flex-row bg-white h-[100vh] border-box overflow-x-scroll overflow-y-hidden"
+      className="flex flex-row bg-white h-[100vh] border-box overflow-x-scroll overflow-y-hidden comic-horizon-scroll"
     >
       <StartUpPage
         className={classNames("z-10", { "!hidden": !loading })}
