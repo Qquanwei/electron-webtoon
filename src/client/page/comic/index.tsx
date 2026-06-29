@@ -5,6 +5,7 @@ import SingleComic from "./SingleComic";
 import ChapterComic from "./ChapterComic";
 import { IComicContext, Provider } from "./useComicContext";
 import useComicShortcuts from "./useComicShortcuts";
+import { useComicZoomState, useComicZoomWheel } from "./useComicZoom";
 import * as selector from "../../selector";
 import {
   IImgListForMultipleChapter,
@@ -19,6 +20,7 @@ function ComicPage() {
   const shortcutHandlersRef = useRef<IComicContext["shortcutHandlersRef"]["current"]>({});
   const { imgList, comic } = useRecoilValue(selector.comicDetail(id));
   const refresh = useRecoilRefresher_UNSTABLE(selector.comicDetail(id));
+  const { zoomScale, setZoomScale } = useComicZoomState(comic);
 
   // 带有章节的漫画
   const isChapterComic = useMemo(() => {
@@ -48,15 +50,18 @@ function ComicPage() {
       filter,
       onClickFilter,
       comic,
+      zoomScale,
+      setZoomScale,
       refreshCurrentComic: refresh,
       shortcutHandlersRef,
     };
-  }, [autoScroll, filter, onClickFilter, comic, refresh]);
+  }, [autoScroll, filter, onClickFilter, comic, zoomScale, setZoomScale, refresh]);
 
   return (
     <div className="w-full border-box">
       <Provider value={contextValue}>
         <ComicShortcutListener />
+        <ComicZoomListener />
         {isChapterComic ? (
           <ChapterComic chapterList={imgList as IImgListForMultipleChapter} />
         ) : (
@@ -69,6 +74,11 @@ function ComicPage() {
 
 function ComicShortcutListener() {
   useComicShortcuts();
+  return null;
+}
+
+function ComicZoomListener() {
+  useComicZoomWheel();
   return null;
 }
 

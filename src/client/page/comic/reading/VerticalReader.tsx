@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef } from "react";
+import { useCallback, useLayoutEffect, useRef, type CSSProperties, type MouseEvent } from "react";
 import classNames from "classnames";
 import StartUpPage from "../../../startPage";
 import useComicContext from "../useComicContext";
@@ -7,11 +7,12 @@ import {
   useFirstElePosition,
   useReadingReadyState,
   useVerticalAutoScroll,
-  useVerticalScrollLock,
+  useVerticalReadingEnvironment,
   useWatchComicPositionChange,
 } from "./hooks";
 import type { ImgListProps } from "./types";
 import { getComicImageClassName } from "./utils";
+import styles from "./VerticalReader.module.css";
 
 export default function VerticalReader({
   onNextPage,
@@ -20,7 +21,7 @@ export default function VerticalReader({
   onVisitPosition,
   tag,
 }: ImgListProps) {
-  const { filter, autoScroll } = useComicContext();
+  const { filter, autoScroll, zoomScale } = useComicContext();
   const firstElePosition = useFirstElePosition(tag);
   const scrollContainerRef = useRef<Element | null>(null);
 
@@ -39,12 +40,12 @@ export default function VerticalReader({
     !loading && scrollingDone,
     onVisitPosition,
   );
-  useVerticalScrollLock();
+  useVerticalReadingEnvironment(zoomScale > 1.001);
   useVerticalAutoScroll(autoScroll);
   const { triggerRef, countdown } = useAutoNextPage(autoScroll, onNextPage);
 
   const onClickNextPage = useCallback(
-    (event: React.MouseEvent) => {
+    (event: MouseEvent) => {
       event.preventDefault();
       event.stopPropagation();
       onNextPage?.();
@@ -53,26 +54,41 @@ export default function VerticalReader({
   );
 
   return (
-    <div className="flex w-full select-none flex-col justify-center text-0">
-      <StartUpPage className={classNames("z-10", { "!hidden": !loading })} />
-      {imgList.map((src, index) => (
-        <img
-          key={`${tag ?? ""}-${index}-${src}`}
-          src={src}
-          onLoad={onLoad}
-          data-index={index}
-          className={getComicImageClassName(filter, "mx-auto")}
-        />
-      ))}
-      {hasNextPage ? (
-        <div
-          onClick={onClickNextPage}
-          className="mx-auto w-[50px] cursor-pointer py-[20px] text-center text-sky-300 transition transition-all hover:font-bold hover:text-sky-500"
-          ref={triggerRef}
-        >
-          下一页{countdown === 0 ? "" : countdown}
-        </div>
-      ) : null}
-    </div>
+    <>
+      <div className={styles.ambient} aria-hidden />
+      <div
+        className={styles.reader}
+        style={{ "--comic-zoom": zoomScale } as CSSProperties}
+      >
+        <StartUpPage className={classNames("z-10", { "!hidden": !loading })} />
+        {imgList.map((src, index) => (
+          <div key={`${tag ?? ""}-${index}-${src}`} className={styles.page}>
+            <div className={styles.pageFrame}>
+              <img
+                src={src}
+                onLoad={onLoad}
+                data-index={index}
+                className={getComicImageClassName(
+                  filter,
+                  styles.pageImage,
+                )}
+              />
+            </div>
+          </div>
+        ))}
+        {hasNextPage ? (
+          <div
+            onClick={onClickNextPage}
+            className={styles.nextChapter}
+            ref={triggerRef}
+          >
+            下一页
+            {countdown === 0 ? null : (
+              <span className={styles.nextChapterCount}>{countdown}</span>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </>
   );
 }

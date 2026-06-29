@@ -10,8 +10,10 @@ export interface IComicContext {
   autoScroll: boolean;
   filter?: number;
   comic?: IComic;
+  zoomScale: number;
   onClickFilter: UnaryFunction<number>;
   setAutoScroll: React.Dispatch<React.SetStateAction<boolean>>;
+  setZoomScale: (value: number | ((prev: number) => number)) => void;
   refreshCurrentComic: EmptyFunction;
   shortcutHandlersRef: React.MutableRefObject<ComicShortcutHandlers>;
 }

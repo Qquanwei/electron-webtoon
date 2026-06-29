@@ -12,6 +12,11 @@
   .image-pixelated {
     image-rendering: pixelated;
   }
+
+  html.comic-vertical-reading,
+  html.comic-vertical-reading body {
+    background-color: #0a0908;
+  }
 }
 
 

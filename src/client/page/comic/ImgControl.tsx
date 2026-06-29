@@ -58,7 +58,7 @@ const Control: React.FC<{}> = ({ children }) => {
   }, []);
 
   return (
-    <div className="fixed right-0 bottom-[20px] flex flex-col justify-end cursor-pointer px-[20px]">
+    <div className="fixed right-0 bottom-[20px] z-50 flex flex-col justify-end cursor-pointer px-[20px]">
       <Tooltip title="滤镜1" placement="top">
         <Filter1Icon
           className={classNames("bg-[#333] text-white", {

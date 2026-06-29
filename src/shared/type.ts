@@ -46,6 +46,10 @@ export interface IComic {
    * 横竖屏翻页模式
    */
   pageMode?: "horizon" | "vertical";
+  /**
+   * 阅读缩放比例
+   */
+  zoomScale?: number | string;
 }
 
 export interface IChapter {

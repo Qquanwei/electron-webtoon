@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type CSSProperties } from "react";
 import classNames from "classnames";
 import StartUpPage from "../../../startPage";
 import useComicContext from "../useComicContext";
@@ -17,7 +17,7 @@ export default function HorizonReader({
   onVisitPosition,
   tag,
 }: ImgListProps) {
-  const { filter, autoScroll } = useComicContext();
+  const { filter, autoScroll, zoomScale } = useComicContext();
   const firstElePosition = useFirstElePosition(tag);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -37,10 +37,27 @@ export default function HorizonReader({
 
   const reverseImgList = useMemo(() => [...imgList].reverse(), [imgList]);
 
+  const pageStyle = useMemo(
+    () =>
+      ({
+        "--comic-zoom": zoomScale,
+      }) as CSSProperties,
+    [zoomScale],
+  );
+
+  const imageStyle = useMemo(
+    () => ({
+      maxHeight: `calc((100vh - 2.5rem) * ${zoomScale})`,
+      maxWidth: `calc((100vw - 2rem) * ${zoomScale})`,
+    }),
+    [zoomScale],
+  );
+
   return (
     <div
       ref={containerRef}
       className="comic-horizon-scroll flex h-[100vh] flex-row overflow-x-scroll overflow-y-hidden border-box bg-white"
+      style={pageStyle}
     >
       <StartUpPage className={classNames("z-10", { "!hidden": !loading })} />
       {reverseImgList.map((src, index) => (
@@ -53,9 +70,10 @@ export default function HorizonReader({
             src={src}
             loading="eager"
             data-index={reverseImgList.length - 1 - index}
+            style={imageStyle}
             className={getComicImageClassName(
               filter,
-              "my-auto max-h-full max-w-full bg-gray-100",
+              "my-auto bg-gray-100",
             )}
           />
         </div>

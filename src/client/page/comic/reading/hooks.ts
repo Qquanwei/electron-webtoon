@@ -33,6 +33,7 @@ export function useReadingReadyState(
 ) {
   const [loading, setLoading] = useState(true);
   const [scrollingDone, setScrollingDone] = useState(false);
+  const loadingRef = useRef(true);
   const containerRefValue = useRef(containerRef);
   containerRefValue.current = containerRef;
   const firstElePositionRef = useRef(firstElePosition);
@@ -41,11 +42,37 @@ export function useReadingReadyState(
   onReadyRef.current = onReady;
 
   const markReady = useCallback(() => {
+    loadingRef.current = false;
     setLoading(false);
     setTimeout(() => {
       setScrollingDone(true);
     }, 500);
   }, []);
+
+  useEffect(() => {
+    loadingRef.current = true;
+    setLoading(true);
+    setScrollingDone(false);
+  }, [imgList]);
+
+  useLayoutEffect(() => {
+    const target = document.querySelector<HTMLImageElement>(
+      `img.comic-img[data-index="${firstElePositionRef.current}"]`,
+    );
+    if (!target?.complete) return;
+
+    markReady();
+    const container = containerRefValue.current.current;
+    if (container) {
+      container.classList.add("scroll-smooth");
+    }
+    setTimeout(() => {
+      target.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }, 50);
+    setTimeout(() => {
+      container?.classList.remove("scroll-smooth");
+    }, 100);
+  }, [imgList, firstElePosition, markReady]);
 
   useEffect(() => {
     if (firstElePosition < 0 || firstElePosition > imgList.length) {
@@ -54,9 +81,15 @@ export function useReadingReadyState(
   }, [firstElePosition, imgList.length, markReady]);
 
   useEffect(() => {
-    setLoading(true);
-    setScrollingDone(false);
-  }, [imgList]);
+    const timeoutId = window.setTimeout(() => {
+      if (loadingRef.current) {
+        markReady();
+      }
+    }, 3000);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [imgList, markReady]);
 
   const onLoad = useCallback((event: SyntheticEvent<HTMLImageElement>) => {
     if (
@@ -127,13 +160,19 @@ export function useWatchComicPositionChange(
   }, [enabled, imgList, onVisiblePosition]);
 }
 
-export function useVerticalScrollLock() {
+export function useVerticalReadingEnvironment(allowHorizontalScroll = false) {
   useLayoutEffect(() => {
-    document.scrollingElement?.classList.add("overflow-x-hidden");
+    document.documentElement.classList.add("comic-vertical-reading");
+    document.scrollingElement?.classList.toggle(
+      "overflow-x-hidden",
+      !allowHorizontalScroll,
+    );
+
     return () => {
+      document.documentElement.classList.remove("comic-vertical-reading");
       document.scrollingElement?.classList.remove("overflow-x-hidden");
     };
-  }, []);
+  }, [allowHorizontalScroll]);
 }
 
 export function useHorizontalScrollLock() {
@@ -151,6 +190,7 @@ export function useHorizontalScrollLock() {
       scrollingElement,
       "wheel",
       (event: WheelEvent) => {
+        if (event.ctrlKey) return;
         const container = document.querySelector<HTMLElement>(
           ".comic-horizon-scroll",
         );

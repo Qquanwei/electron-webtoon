@@ -11,7 +11,7 @@ function StartUpPage({ className = "" }) {
     <div
       className={classNames(
         className,
-        "fixed bg-gray-300 top-0 bottom-0 left-0 right-0 flex items-center justify-center"
+        "pointer-events-none fixed bg-gray-300 top-0 bottom-0 left-0 right-0 flex items-center justify-center"
       )}
     >
       {nextOpenComicInfo ? (
