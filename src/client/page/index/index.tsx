@@ -1,38 +1,33 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import classNames from "classnames";
 import { useRecoilRefresher_UNSTABLE } from "recoil";
-import { Link } from "react-router-dom";
-
-import "../../App.global.css";
-
-import { useHistory } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import ElectronWebtoonAppBar from "../../components/appbar";
 import Popup from "@components/Popup";
 import { useMessage } from "@components/useMessage";
 import styles from "./index.module.css";
 import { useRecoilValueMemo } from "../../utils";
-
 import * as selector from "../../selector";
 import { getIPC } from "@client/ipc";
+import ComicWallCard from "./ComicWallCard";
+import { getFrameVariant } from "./frameVariant";
 
-// css 中一个格子为 200/150, 这里要根据图片尺寸选取合适的格子数量
+import "../../App.global.css";
 
 const GRID_WIDTH = 200;
 const GRID_HEIGHT = 150;
 
 const PAIRS = [
-  // w, h
   [1, 1],
   [2, 1],
   [3, 1],
   [1, 2],
   [3, 2],
 ];
+
 function getCardGridStyle(width: number, height: number) {
-  // ratio = m / n
   const ratio = (width / height) * (GRID_HEIGHT / GRID_WIDTH);
-  // 找出最接近 ratio 的 pair
   let minPairIndex = 0;
   let minValue = Infinity;
   for (let pairIndex = 0; pairIndex < PAIRS.length; ++pairIndex) {
@@ -54,13 +49,19 @@ function getCardGridStyle(width: number, height: number) {
 
 function IndexPage() {
   const [contextComicId, setContextComicId] = useState<string | null>(null);
-  const [archivePath, setArchivePath] = useState<string>("");
+  const [archivePath, setArchivePath] = useState("");
   const [searchKey, setSearchKey] = useState("");
   const comicList = useRecoilValueMemo(selector.comicList);
   const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
   const history = useHistory();
   const [_, setNextOpenComicInfo] = useRecoilState(selector.nextOpenComicInfo);
   const { pushMessage } = useMessage();
+
+  const filteredComics = useMemo(() => {
+    return [...comicList!]
+      .reverse()
+      .filter((comic) => comic.name.includes(searchKey));
+  }, [comicList, searchKey]);
 
   useEffect(() => {
     let mounted = true;
@@ -77,14 +78,14 @@ function IndexPage() {
     };
   }, []);
 
-  const onContextMenu = useCallback((e) => {
+  const onContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setContextComicId(e.currentTarget?.dataset?.id);
+    setContextComicId(e.currentTarget?.dataset?.id || null);
   }, []);
 
-  const onSubmitSearch = useCallback((value) => {
-    setSearchKey(value);
+  const onSubmitSearch = useCallback((value: string | null) => {
+    setSearchKey(value || "");
   }, []);
 
   const onDeleteComic = useCallback(async () => {
@@ -93,7 +94,6 @@ function IndexPage() {
       await ipc.removeComic(contextComicId);
       refreshComicList();
     }
-
     setContextComicId(null);
   }, [contextComicId, refreshComicList]);
 
@@ -106,23 +106,24 @@ function IndexPage() {
       } catch (error) {
         console.error("Archive error:", error);
         const errorMsg =
-          (error as any)?.message || "归档失败，请检查路径和权限";
+          (error as Error)?.message || "归档失败，请检查路径和权限";
         pushMessage(errorMsg, 2000);
       }
     }
-
     setContextComicId(null);
   }, [contextComicId, refreshComicList, pushMessage]);
 
-  const onClickItem = useCallback((e) => {
-    if (e.currentTarget.dataset.cover) {
-      setNextOpenComicInfo({
-        cover: e.currentTarget.dataset.cover,
-      });
-    }
-
-    history.push(`/comic/${e.currentTarget.dataset.id}`);
-  }, []);
+  const onClickItem = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.currentTarget.dataset.cover) {
+        setNextOpenComicInfo({
+          cover: e.currentTarget.dataset.cover,
+        });
+      }
+      history.push(`/comic/${e.currentTarget.dataset.id}`);
+    },
+    [history, setNextOpenComicInfo],
+  );
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -132,98 +133,111 @@ function IndexPage() {
     };
   }, []);
 
-  // <StarBar list={comicList} />
   return (
-    <div className="pt-[70px] text-black bg-[#eee] w-full min-h-full scroll-smooth">
+    <div className="min-h-full w-full scroll-smooth bg-white pt-[70px] text-slate-900">
       <ElectronWebtoonAppBar hasAdd hasSearch onSearch={onSubmitSearch} />
-      <h1 className="mb-2 text-gray-400">漫画库 {comicList!.length}</h1>
 
-      <div className={styles.gridlist}>
-        {[...comicList!]
-          .reverse()
-          .filter((comic) => {
-            return comic.name.indexOf(searchKey) !== -1;
-          })
-          .map((comic) => {
-            const width = comic.width || 1;
-            const height = comic.height || 1;
-            const cardStyle = getCardGridStyle(width, height);
-            return (
-              <Popup
-                position="center"
-                style={cardStyle}
-                className={classNames(
-                  styles.card,
-                  "transition-all duration-750 hover:border-2 border-sky-300 ",
-                )}
-                visibleChange={() => setContextComicId(null)}
-                visible={contextComicId === comic.id}
-                tooltip={
-                  <div className="flex flex-col bg-white divide-y divide-gray-100 cursor-pointer shadow-md rounded-md overflow-hidden min-w-[120px]">
-                    <div
-                      onClick={onDeleteComic}
-                      className="px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
-                    >
-                      删除本漫画
+      <div className="w-full">
+        <header className="px-3 py-3">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+            漫画库
+          </h1>
+          <p className="mt-0.5 text-sm text-slate-500">
+            {comicList!.length} 部作品
+            {searchKey ? (
+              <span className="text-sky-600"> · 搜索「{searchKey}」</span>
+            ) : null}
+          </p>
+        </header>
+
+        <div className={styles.gridlist}>
+          {filteredComics.length === 0 ? (
+            <div className={styles.emptyState}>
+              <p className="text-base font-medium text-slate-600">
+                {searchKey ? "没有匹配的漫画" : "书架还是空的"}
+              </p>
+              <p className="mt-2 max-w-sm text-sm leading-relaxed">
+                {searchKey
+                  ? "试试换个关键词，或清空搜索框查看全部作品。"
+                  : "点击右上角添加本地漫画，或将压缩包/文件夹拖入窗口。"}
+              </p>
+            </div>
+          ) : (
+            filteredComics.map((comic) => {
+              const width = comic.width || 1;
+              const height = comic.height || 1;
+              const cardStyle = getCardGridStyle(width, height);
+
+              const variant = getFrameVariant(comic.id);
+
+              return (
+                <Popup
+                  key={comic.id}
+                  position="center"
+                  style={cardStyle}
+                  className={classNames(styles.card, styles[`frame_${variant}`])}
+                  visibleChange={() => setContextComicId(null)}
+                  visible={contextComicId === comic.id}
+                  tooltip={
+                    <div className="flex min-w-[128px] flex-col overflow-hidden rounded-xl border border-slate-100 bg-white shadow-xl shadow-slate-300/30">
+                      <div
+                        onClick={onDeleteComic}
+                        className="cursor-pointer px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                      >
+                        删除本漫画
+                      </div>
+                      <div
+                        onClick={
+                          archivePath
+                            ? onArchiveComic
+                            : () =>
+                                pushMessage("请先在设置页面配置归档路径", 2000)
+                        }
+                        className={classNames(
+                          "px-4 py-2.5 text-sm font-medium transition-colors",
+                          archivePath
+                            ? "cursor-pointer text-orange-600 hover:bg-orange-50"
+                            : "cursor-not-allowed text-slate-400 opacity-60",
+                        )}
+                        title={
+                          archivePath
+                            ? "归档此漫画"
+                            : "请先在设置页面配置归档路径"
+                        }
+                      >
+                        归档
+                      </div>
+                      <div
+                        className="cursor-pointer px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+                        onClick={() => setContextComicId(null)}
+                      >
+                        取消
+                      </div>
                     </div>
-                    <div
-                      onClick={
-                        archivePath
-                          ? onArchiveComic
-                          : () =>
-                              pushMessage("请先在设置页面配置归档路径", 2000)
-                      }
-                      className={`px-4 py-2.5 text-sm font-medium transition-colors ${
-                        archivePath
-                          ? "text-orange-600 hover:bg-orange-50 cursor-pointer"
-                          : "text-gray-400 cursor-not-allowed opacity-60"
-                      }`}
-                      title={
-                        archivePath
-                          ? "归档此漫画"
-                          : "请先在设置页面配置归档路径"
-                      }
-                    >
-                      归档
-                    </div>
-                    <div
-                      className="px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors font-medium"
-                      onClick={() => setContextComicId(null)}
-                    >
-                      取消
-                    </div>
-                  </div>
-                }
-                key={comic.id}
-              >
-                <div
-                  data-id={comic.id}
-                  data-cover={comic.cover}
-                  onClick={onClickItem}
-                  onContextMenu={onContextMenu}
+                  }
                 >
-                  <div className={styles["card-content"]}>
-                    <img src={comic.cover} />
-                  </div>
+                  <ComicWallCard
+                    comic={comic}
+                    onClick={onClickItem}
+                    onContextMenu={onContextMenu}
+                  />
+                </Popup>
+              );
+            })
+          )}
+        </div>
 
-                  <div className="bg-black/50 text-white absolute left-0 right-0 bottom-0 text-center">
-                    {comic.name}
-                  </div>
-                </div>
-              </Popup>
-            );
-          })}
-      </div>
-      <div className="text-center pb-[20px] text-black">
-        贡献和支持
-        <a
-          className="ml-2 text-blue-300"
-          target="_blank"
-          href="https://github.com/Qquanwei/electron-webtoon"
-          rel="noreferrer"
-        >
-          Github
-        </a>
+        <footer className="border-t border-slate-200/80 py-6 text-center text-sm text-slate-500">
+          贡献与支持
+          <a
+            className="ml-2 font-medium text-sky-600 transition hover:text-sky-700"
+            target="_blank"
+            href="https://github.com/Qquanwei/electron-webtoon"
+            rel="noreferrer"
+          >
+            GitHub
+          </a>
+        </footer>
       </div>
     </div>
   );

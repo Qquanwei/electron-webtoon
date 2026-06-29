@@ -48,9 +48,6 @@ export default function App() {
       const paths = files
         .map((f) => webUtils.getPathForFile(f))
         .filter(Boolean);
-      paths.forEach((filePath) => {
-        pushMessage(`已检测到文件拖入[${filePath}]，正在导入……`, 2000);
-      });
       if (paths.length) {
         await ipc.handleDroppedFiles(paths);
       }
@@ -63,7 +60,6 @@ export default function App() {
   useEffect(() => {
     const unsubscribers = [
       ipc.onEvent("msg", (msg) => pushMessage(msg, 3000)),
-      ipc.onEvent("decompress", (msg) => pushMessage(msg, 5000)),
       ipc.onEvent("decompress-progress", setProgress),
       ipc.onEvent("decompress-done", () => refreshComicList()),
     ];

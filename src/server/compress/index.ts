@@ -1,6 +1,10 @@
 import fs from "fs/promises";
 import path from "path";
 import { ArchiveReader, libarchiveWasm } from "libarchive-wasm";
+import {
+  parseZipEntryPathnames,
+  resolveArchiveEntryPathname,
+} from "./pathnameEncoding";
 
 type LibarchiveModule = Awaited<ReturnType<typeof libarchiveWasm>>;
 
@@ -74,8 +78,14 @@ async function writeEntry(
     skipData(): void;
   },
   outputDir: string,
+  zipPathnames: string[] | null,
+  entryIndex: number,
 ): Promise<boolean> {
-  const entryPath = entry.getPathname();
+  const entryPath = resolveArchiveEntryPathname(
+    entry.getPathname(),
+    zipPathnames,
+    entryIndex,
+  );
   if (!entryPath || entryPath === "." || entryPath === "./") {
     entry.skipData();
     return false;
@@ -122,9 +132,11 @@ export default async function decompress(
 
   const archiveBuffer = await fs.readFile(file);
   const mod = await getWasmModule();
+  const zipPathnames = parseZipEntryPathnames(archiveBuffer);
   const totalEntries = countFileEntries(mod, archiveBuffer);
   const reader = new ArchiveReader(mod, new Int8Array(archiveBuffer));
   let processedEntries = 0;
+  let entryIndex = 0;
 
   onProgress?.({ processed: 0, total: totalEntries });
 
@@ -134,7 +146,13 @@ export default async function decompress(
     }
 
     for (const entry of reader.entries()) {
-      const wroteFile = await writeEntry(entry, outputDirname);
+      const wroteFile = await writeEntry(
+        entry,
+        outputDirname,
+        zipPathnames,
+        entryIndex,
+      );
+      entryIndex += 1;
       if (wroteFile) {
         processedEntries += 1;
         onProgress?.({ processed: processedEntries, total: totalEntries });

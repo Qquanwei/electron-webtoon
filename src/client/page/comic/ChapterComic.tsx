@@ -20,6 +20,11 @@ import {
   IImgListForSingleChapter,
   UnaryFunction,
 } from "@shared/type";
+import {
+  getAdjacentChapter,
+  hasNextChapter,
+  hasPrevChapter,
+} from "./chapterUtils";
 import { getIPC } from "@client/ipc";
 
 const ChapterList: React.FC<{
@@ -121,70 +126,49 @@ const ChapterComic: React.FC<{ chapterList: IImgListForMultipleChapter }> = ({
     setToggleChapter((v) => !v);
   }, []);
 
-  const hasNextPage = useMemo(() => {
-    let index = -1;
-    for (let i = 0; i < chapterList.length; ++i) {
-      if (chapterList[i].name === chapter.name) {
-        index = i;
-        break;
-      }
-    }
+  const hasNextPage = useMemo(
+    () => hasNextChapter(chapterList, chapter),
+    [chapter, chapterList],
+  );
 
-    return index < chapterList.length - 1;
-  }, [chapter, chapterList]);
+  const saveChapterTag = useCallback(
+    (nextChapter: IChapter) => {
+      getIPC().then((ipc) => {
+        ipc.saveComicTag(comic?.id || "", nextChapter.name, 0);
+      });
+    },
+    [comic?.id],
+  );
 
   const onNextPage = useCallback(() => {
-    setChapter((chapter) => {
-      let index = -1;
-      for (let i = 0; i < chapterList.length; ++i) {
-        if (chapterList[i].name === chapter.name) {
-          index = i;
-          break;
-        }
+    setChapter((current) => {
+      const nextChapter = getAdjacentChapter(chapterList, current, 1);
+      if (nextChapter === current) {
+        return current;
       }
-      const newChapter = chapterList[index + 1];
-      if (!newChapter) {
-        return chapter;
-      }
-
-      getIPC().then((ipc) => {
-        ipc.saveComicTag(comic?.id || "", newChapter.name, 0);
-      });
-
-      return newChapter;
+      saveChapterTag(nextChapter);
+      return nextChapter;
     });
-  }, [chapterList, comic]);
+  }, [chapterList, saveChapterTag]);
 
   const onPrevPage = useCallback(() => {
-    setChapter((chapter) => {
-      let index = -1;
-      for (let i = 0; i < chapterList.length; ++i) {
-        if (chapterList[i].name === chapter.name) {
-          index = i;
-          break;
-        }
+    setChapter((current) => {
+      const prevChapter = getAdjacentChapter(chapterList, current, -1);
+      if (prevChapter === current) {
+        return current;
       }
-      const newChapter = chapterList[index - 1];
-      if (!newChapter) {
-        return chapter;
-      }
-
-      getIPC().then((ipc) => {
-        ipc.saveComicTag(comic?.id || "", newChapter.name, 0);
-      });
-
-      return newChapter;
+      saveChapterTag(prevChapter);
+      return prevChapter;
     });
-  }, [chapterList, comic]);
+  }, [chapterList, saveChapterTag]);
 
   const { shortcutHandlersRef } = useComicContext();
 
   useEffect(() => {
     shortcutHandlersRef.current.nextChapter = hasNextPage ? onNextPage : undefined;
-    shortcutHandlersRef.current.prevChapter =
-      chapterList.findIndex((item) => item.name === chapter.name) > 0
-        ? onPrevPage
-        : undefined;
+    shortcutHandlersRef.current.prevChapter = hasPrevChapter(chapterList, chapter)
+      ? onPrevPage
+      : undefined;
 
     return () => {
       shortcutHandlersRef.current.nextChapter = undefined;

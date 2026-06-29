@@ -104,15 +104,15 @@ export default function Settings() {
   }, []);
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-slate-100 via-slate-50 to-white pt-[70px]">
+    <div className="min-h-full bg-neutral-50 pt-[70px]">
       <ElectronWebtoonAppBar hasSearch={false} />
 
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <header className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-black">
             设置
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-neutral-500">
             管理阅读快捷键、解压目录与归档路径
           </p>
         </header>

@@ -1,65 +1,385 @@
-@media screen and (max-width: 600px) {
-  .card {
-    width: 200px !important;
-  }
+.gridlist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-auto-rows: 150px;
+  grid-auto-flow: row dense;
+  gap: 10px;
+  width: 100%;
+  padding: 0 0 16px;
 }
 
-h1 {
-  font-size: 24px;
-  padding: 0 20px;
+/* ── 基础卡片 / 画芯 ── */
+.card {
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transform-origin: center center;
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  flex-shrink: 0;
+  flex-grow: 1;
+}
+
+.card:hover {
+  transform: translateY(-5px) scale(1.04);
+  z-index: 20;
+}
+
+.cardMat {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.cardInner {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  background: #111;
+}
+
+.card-content {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.carouselFrame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.carouselFrameActive {
+  opacity: 1;
+}
+
+.cardShade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    180deg,
+    rgb(15 23 42 / 0) 50%,
+    rgb(15 23 42 / 0.5) 100%
+  );
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.card:hover .cardShade {
+  opacity: 0.9;
+}
+
+.cardTitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  padding: 20px 8px 7px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.65);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 1. 深色胡桃木 + 白卡纸 ── */
+.frame_walnut {
+  padding: 11px;
+  background:
+    repeating-linear-gradient(
+      92deg,
+      rgb(0 0 0 / 0.06) 0 1px,
+      transparent 1px 5px
+    ),
+    linear-gradient(
+      180deg,
+      #5c3d28 0%,
+      #3d2817 35%,
+      #4a3020 65%,
+      #2e1e12 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 -2px 6px rgb(0 0 0 / 0.35),
+    0 3px 10px rgb(0 0 0 / 0.28),
+    0 8px 20px rgb(0 0 0 / 0.12);
+}
+
+.frame_walnut .cardMat {
+  padding: 9px;
+  background: #f5f2eb;
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.07),
+    inset 0 1px 3px rgb(0 0 0 / 0.06);
+}
+
+.frame_walnut:hover {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    0 6px 16px rgb(0 0 0 / 0.32),
+    0 14px 28px rgb(0 0 0 / 0.16);
+}
+
+/* ── 2. 欧式雕花金框 + 米白卡纸 ── */
+.frame_goldOrnate {
+  padding: 13px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgb(255 255 255 / 0.06) 0 2px,
+      transparent 2px 6px
+    ),
+    linear-gradient(
+      160deg,
+      #fff0a8 0%,
+      #d4af37 22%,
+      #a67c00 48%,
+      #f0d060 72%,
+      #c9a227 100%
+    );
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.45),
+    inset 0 0 0 3px rgb(120 90 10 / 0.35),
+    inset 0 -3px 8px rgb(0 0 0 / 0.2),
+    0 4px 14px rgb(0 0 0 / 0.3);
+}
+
+.frame_goldOrnate .cardMat {
+  padding: 7px;
+  background: #faf6ee;
+  box-shadow: inset 0 0 0 1px rgb(160 120 20 / 0.2);
+}
+
+.frame_goldOrnate:hover {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.5),
+    0 8px 22px rgb(0 0 0 / 0.35),
+    0 0 20px rgb(212 175 55 / 0.18);
+}
+
+/* ── 3. 极简细黑框 ── */
+.frame_blackThin {
+  padding: 3px;
+  background: #111;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.06),
+    0 2px 8px rgb(0 0 0 / 0.22);
+}
+
+.frame_blackThin .cardMat {
+  padding: 0;
+}
+
+.frame_blackThin:hover {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    0 6px 18px rgb(0 0 0 / 0.3);
+}
+
+/* ── 4. 斜切黑框 + 白卡纸 ── */
+.frame_blackBevel {
+  padding: 9px;
+  background: linear-gradient(145deg, #444 0%, #1a1a1a 45%, #0a0a0a 100%);
+  box-shadow:
+    inset 2px 2px 0 rgb(255 255 255 / 0.1),
+    inset -2px -2px 0 rgb(0 0 0 / 0.5),
+    0 3px 12px rgb(0 0 0 / 0.28);
+}
+
+.frame_blackBevel .cardMat {
+  padding: 8px;
+  background: #f8f8f6;
+  box-shadow:
+    inset 1px 1px 0 rgb(255 255 255 / 0.8),
+    inset -1px -1px 0 rgb(0 0 0 / 0.06);
+}
+
+.frame_blackBevel:hover {
+  box-shadow:
+    inset 2px 2px 0 rgb(255 255 255 / 0.12),
+    0 8px 20px rgb(0 0 0 / 0.32);
+}
+
+/* ── 5. 浅色原木 ── */
+.frame_naturalWood {
+  padding: 10px;
+  background:
+    repeating-linear-gradient(
+      88deg,
+      rgb(0 0 0 / 0.04) 0 1px,
+      transparent 1px 7px
+    ),
+    linear-gradient(180deg, #d4b896 0%, #b8956a 50%, #a07850 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.25),
+    inset 0 -1px 3px rgb(0 0 0 / 0.15),
+    0 3px 10px rgb(0 0 0 / 0.2);
+}
+
+.frame_naturalWood .cardMat {
+  padding: 5px;
+  background: #faf8f4;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.05);
+}
+
+.frame_naturalWood:hover {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.3),
+    0 6px 16px rgb(0 0 0 / 0.26);
+}
+
+/* ── 6. 深框 + 银色内衬 + 卡纸 ── */
+.frame_silverAccent {
+  padding: 10px;
+  background: linear-gradient(180deg, #3a3a3a 0%, #1e1e1e 100%);
+  box-shadow:
+    inset 0 0 0 2px #888,
+    inset 0 0 0 4px #222,
+    inset 0 0 0 5px #bbb,
+    0 3px 12px rgb(0 0 0 / 0.3);
+}
+
+.frame_silverAccent .cardMat {
+  padding: 8px;
+  background: #f0f0ee;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+}
+
+.frame_silverAccent:hover {
+  box-shadow:
+    inset 0 0 0 2px #999,
+    inset 0 0 0 4px #222,
+    inset 0 0 0 5px #ccc,
+    0 8px 20px rgb(0 0 0 / 0.34);
+}
+
+/* ── 7. 香槟金细框 ── */
+.frame_champagne {
+  padding: 6px;
+  background: linear-gradient(
+    135deg,
+    #f5e6c8 0%,
+    #d4c4a0 40%,
+    #e8dcc4 70%,
+    #c9b896 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.55),
+    inset 0 0 0 2px rgb(180 160 120 / 0.4),
+    0 2px 10px rgb(0 0 0 / 0.18);
+}
+
+.frame_champagne .cardMat {
+  padding: 4px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgb(200 180 140 / 0.25);
+}
+
+.frame_champagne:hover {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.6),
+    0 6px 16px rgb(0 0 0 / 0.24);
+}
+
+/* ── 8. 深灰纹理 + 银边 ── */
+.frame_charcoal {
+  padding: 9px;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgb(255 255 255 / 0.03) 0 1px,
+      transparent 1px 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(255 255 255 / 0.02) 0 1px,
+      transparent 1px 3px
+    ),
+    linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 100%);
+  box-shadow:
+    inset 0 0 0 1px #777,
+    inset 0 0 0 3px #1a1a1a,
+    0 3px 12px rgb(0 0 0 / 0.3);
+}
+
+.frame_charcoal .cardMat {
+  padding: 6px;
+  background: #ececea;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+}
+
+.frame_charcoal:hover {
+  box-shadow:
+    inset 0 0 0 1px #888,
+    inset 0 0 0 3px #1a1a1a,
+    0 8px 20px rgb(0 0 0 / 0.34);
+}
+
+.emptyState {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  padding: 48px 24px;
+  border-radius: 20px;
+  border: 1px dashed rgb(148 163 184 / 0.45);
+  background: rgb(255 255 255 / 0.65);
+  color: rgb(100 116 139);
+  text-align: center;
+}
+
+@media screen and (max-width: 600px) {
+  .gridlist {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-auto-rows: 120px;
+    gap: 8px;
+  }
+
+  .frame_walnut,
+  .frame_goldOrnate,
+  .frame_blackBevel,
+  .frame_naturalWood,
+  .frame_silverAccent,
+  .frame_charcoal {
+    padding: 7px;
+  }
+
+  .frame_walnut .cardMat,
+  .frame_goldOrnate .cardMat,
+  .frame_blackBevel .cardMat,
+  .frame_silverAccent .cardMat,
+  .frame_charcoal .cardMat {
+    padding: 5px;
+  }
 }
 
 .full {
   box-sizing: border-box;
   height: 100%;
-  height: 100%;
-}
-
-.gridlist {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 200px);
-  grid-auto-rows: 150px;
-  grid-auto-flow: row dense;
-  justify-content: center;
-}
-
-.card {
-  box-sizing: border-box;
-  border: 7px solid white;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-  flex-grow: 1;
-  flex-flow: column;
-}
-
-.card img {
-  width: 100%;
-  max-height: 100%;
-}
-
-.card-content {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 130%;
-  height: 130%;
-  overflow: hidden;
-}
-
-.card:hover {
-  overflow: visible;
-}
-
-.card:hover .card-content {
-  z-index: 2;
 }
 
 .addcard {
@@ -124,4 +444,3 @@ h1 {
   cursor: pointer;
   white-space: nowrap;
 }
-

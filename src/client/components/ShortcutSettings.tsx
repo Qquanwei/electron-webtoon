@@ -87,7 +87,7 @@ export default function ShortcutSettings() {
       title="阅读快捷键"
       description="仅在漫画阅读页生效，焦点在输入框时不会触发"
     >
-      <div className="divide-y divide-slate-100 rounded-xl border border-slate-100 overflow-hidden">
+      <div className="divide-y divide-neutral-200 overflow-hidden border border-neutral-300">
         {(Object.keys(SHORTCUT_ACTION_LABELS) as ShortcutAction[]).map(
           (action) => {
             const meta = SHORTCUT_ACTION_LABELS[action];
@@ -99,20 +99,20 @@ export default function ShortcutSettings() {
                 className="flex flex-col gap-3 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
               >
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-slate-800">
+                  <div className="text-sm font-medium text-black">
                     {meta.label}
                   </div>
-                  <div className="mt-0.5 text-xs text-slate-400">
+                  <div className="mt-0.5 text-xs text-neutral-400">
                     {meta.description}
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  className={`inline-flex min-w-[7rem] items-center justify-center rounded-lg border px-4 py-2.5 font-mono text-sm font-semibold transition focus:outline-none focus:ring-4 focus:ring-sky-500/15 ${
+                  className={`inline-flex min-w-[7rem] items-center justify-center border px-4 py-2.5 font-mono text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-black/10 ${
                     isRecording
-                      ? "border-sky-400 bg-sky-50 text-sky-700 ring-2 ring-sky-200"
-                      : "border-slate-200 bg-slate-50 text-slate-700 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-300 hover:bg-white"
+                      ? "border-black bg-neutral-100 text-black ring-1 ring-black"
+                      : "border-neutral-300 bg-neutral-50 text-neutral-800 hover:border-black hover:bg-white"
                   }`}
                   onClick={() => setRecordingAction(action)}
                   onBlur={() =>
@@ -130,7 +130,7 @@ export default function ShortcutSettings() {
         )}
       </div>
 
-      <p className="mt-4 text-sm leading-relaxed text-slate-500">
+      <p className="mt-4 text-sm leading-relaxed text-neutral-500">
         点击右侧按键区域后按下目标键即可绑定，按 Esc 取消。
       </p>
 

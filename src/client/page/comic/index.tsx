@@ -22,11 +22,9 @@ function ComicPage() {
 
   // 带有章节的漫画
   const isChapterComic = useMemo(() => {
-    if (typeof imgList[0] === "string") {
-      return false;
-    }
-    return true;
-  }, []);
+    if (!imgList.length) return false;
+    return typeof imgList[0] !== "string";
+  }, [imgList]);
 
   useEffect(() => {
     return refresh;
