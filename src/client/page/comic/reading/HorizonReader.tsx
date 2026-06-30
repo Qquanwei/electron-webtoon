@@ -29,7 +29,7 @@ import styles from "./HorizonReader.module.css";
 const FLIP_DURATION_MS = 800;
 const WHEEL_GESTURE_START_THRESHOLD = 6;
 const WHEEL_GESTURE_GAP_MS = 260;
-const WHEEL_TRACKPAD_BLOCK_MS = 520;
+const WHEEL_TURN_THROTTLE_MS = 520;
 const WHEEL_PROGRESS_SENSITIVITY = 0.55;
 const WHEEL_MAX_DELTA_Y = 36;
 const WHEEL_MAX_PROGRESS_STEP = 12;
@@ -75,7 +75,8 @@ interface WheelFoldSession {
 interface WheelGestureGate {
   lastEventAt: number;
   hasTurnedPage: boolean;
-  blockedUntil: number;
+  /** 节流：上次翻页动画结束后，下一次允许翻页的最早时间 */
+  nextTurnAllowedAt: number;
 }
 
 function getDistPos(
@@ -217,8 +218,9 @@ export default function HorizonReader({
   const wheelGestureRef = useRef<WheelGestureGate>({
     lastEventAt: 0,
     hasTurnedPage: false,
-    blockedUntil: 0,
+    nextTurnAllowedAt: 0,
   });
+  const prevFlipStateRef = useRef("read");
 
   const [spreadIndex, setSpreadIndex] = useState(() =>
     getSpreadIndexForPage(spreads, firstElePosition),
@@ -245,9 +247,7 @@ export default function HorizonReader({
   );
 
   const markWheelPageTurn = useCallback(() => {
-    const gesture = wheelGestureRef.current;
-    gesture.hasTurnedPage = true;
-    gesture.blockedUntil = Date.now() + FLIP_DURATION_MS + WHEEL_TRACKPAD_BLOCK_MS;
+    wheelGestureRef.current.hasTurnedPage = true;
   }, []);
 
   const resetWheelFoldSession = useCallback(() => {
@@ -504,13 +504,13 @@ export default function HorizonReader({
       const gesture = wheelGestureRef.current;
 
       if (now - gesture.lastEventAt > WHEEL_GESTURE_GAP_MS) {
-        if (now >= gesture.blockedUntil) {
+        if (now >= gesture.nextTurnAllowedAt) {
           gesture.hasTurnedPage = false;
         }
       }
       gesture.lastEventAt = now;
 
-      if (gesture.hasTurnedPage || now < gesture.blockedUntil) {
+      if (gesture.hasTurnedPage || now < gesture.nextTurnAllowedAt) {
         return;
       }
 
@@ -611,13 +611,14 @@ export default function HorizonReader({
 
   const onChangeState = useCallback(
     (event: { data: string }) => {
+      const prevState = prevFlipStateRef.current;
+      prevFlipStateRef.current = event.data;
+
       setAnimating(event.data === "flipping");
-      if (event.data === "read") {
-        const gesture = wheelGestureRef.current;
-        gesture.blockedUntil = Math.max(
-          gesture.blockedUntil,
-          Date.now() + WHEEL_TRACKPAD_BLOCK_MS,
-        );
+      if (event.data === "read" && prevState === "flipping") {
+        // 节流：动画结束时固定冷却点，不因后续 read 事件延长
+        wheelGestureRef.current.nextTurnAllowedAt =
+          Date.now() + WHEEL_TURN_THROTTLE_MS;
         resetWheelFoldSession();
       }
     },
