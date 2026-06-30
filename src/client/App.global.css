@@ -14,7 +14,9 @@
   }
 
   html.comic-vertical-reading,
-  html.comic-vertical-reading body {
+  html.comic-vertical-reading body,
+  html.comic-horizon-reading,
+  html.comic-horizon-reading body {
     background-color: #0a0908;
   }
 }

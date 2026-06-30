@@ -53,16 +53,8 @@
   box-sizing: border-box;
 }
 
-.page + .page {
-  margin-top: 3px;
-}
-
 .pageFrame {
-  border: 2px solid #080706;
-  box-shadow:
-    0 0 0 1px #3a3530,
-    0 14px 36px rgb(0 0 0 / 0.5);
-  background: #080706;
+  background: transparent;
 }
 
 .pageImage {

@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, type MutableRefObject } from "react";
 import useComicContext from "./useComicContext";
+import type { ComicShortcutHandlers } from "./useComicContext";
 import { useShortcutBindings } from "../../hooks/useShortcutBindings";
 import {
   isEditableElement,
@@ -9,15 +10,9 @@ import {
 
 const SCROLL_RATIO = 0.85;
 const HOLD_SCROLL_SPEED = 14;
+const HORIZON_HOLD_TURN_MS = 680;
 
 type HoldScrollDirection = "down" | "up" | "forward" | "back";
-
-function getScrollElement(horizon: boolean): HTMLElement | null {
-  if (horizon) {
-    return document.querySelector<HTMLElement>(".comic-horizon-scroll");
-  }
-  return document.scrollingElement;
-}
 
 function scrollVertical(direction: "down" | "up") {
   const element = document.scrollingElement;
@@ -29,26 +24,22 @@ function scrollVertical(direction: "down" | "up") {
   });
 }
 
-function scrollHorizontal(direction: "forward" | "back") {
-  const container = document.querySelector<HTMLElement>(
-    ".comic-horizon-scroll",
-  );
-  if (!container) return;
-  const delta = container.clientWidth * SCROLL_RATIO;
-  container.scrollBy({
-    left: direction === "forward" ? -delta : delta,
-    behavior: "smooth",
-  });
-}
-
-function createHoldScroller(horizon: boolean) {
+function createHoldScroller(
+  horizon: boolean,
+  handlersRef: MutableRefObject<ComicShortcutHandlers>,
+) {
   let frameId: number | null = null;
   let direction: HoldScrollDirection | null = null;
+  let horizonTimer: ReturnType<typeof setInterval> | null = null;
 
   function stop() {
     if (frameId !== null) {
       cancelAnimationFrame(frameId);
       frameId = null;
+    }
+    if (horizonTimer !== null) {
+      clearInterval(horizonTimer);
+      horizonTimer = null;
     }
     direction = null;
   }
@@ -60,19 +51,24 @@ function createHoldScroller(horizon: boolean) {
     stop();
     direction = nextDirection;
 
+    if (horizon) {
+      const pageDirection =
+        nextDirection === "forward" ? "forward" : "back";
+      handlersRef.current.turnHorizonPage?.(pageDirection);
+      horizonTimer = setInterval(() => {
+        handlersRef.current.turnHorizonPage?.(pageDirection);
+      }, HORIZON_HOLD_TURN_MS);
+      return;
+    }
+
     const tick = () => {
-      const element = getScrollElement(horizon);
+      const element = document.scrollingElement;
       if (!element || direction !== nextDirection) {
         return;
       }
 
-      if (horizon) {
-        element.scrollLeft +=
-          nextDirection === "forward" ? -HOLD_SCROLL_SPEED : HOLD_SCROLL_SPEED;
-      } else {
-        element.scrollTop +=
-          nextDirection === "down" ? HOLD_SCROLL_SPEED : -HOLD_SCROLL_SPEED;
-      }
+      element.scrollTop +=
+        nextDirection === "down" ? HOLD_SCROLL_SPEED : -HOLD_SCROLL_SPEED;
 
       frameId = requestAnimationFrame(tick);
     };
@@ -96,7 +92,7 @@ export default function useComicShortcuts() {
       },
     );
 
-    const holdScroll = createHoldScroller(horizon);
+    const holdScroll = createHoldScroller(horizon, shortcutHandlersRef);
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -108,7 +104,9 @@ export default function useComicShortcuts() {
       if (action === "scrollDown" || action === "scrollUp") {
         event.preventDefault();
         if (horizon) {
-          scrollHorizontal(action === "scrollDown" ? "forward" : "back");
+          shortcutHandlersRef.current.turnHorizonPage?.(
+            action === "scrollDown" ? "forward" : "back",
+          );
         } else {
           scrollVertical(action === "scrollDown" ? "down" : "up");
         }

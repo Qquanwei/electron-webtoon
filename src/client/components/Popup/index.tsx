@@ -40,7 +40,7 @@ const Popup: React.FC<PopupProps> = ({
     ret.style.position = "fixed";
     ret.classList.add("invisible");
     ret.classList.add("rounded");
-    ret.classList.add("z-10");
+    ret.classList.add("z-50");
     document.body.appendChild(ret);
     return ret;
   }, []);

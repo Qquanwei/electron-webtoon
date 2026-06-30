@@ -4,6 +4,7 @@ import React, { useContext, useRef } from "react";
 export interface ComicShortcutHandlers {
   nextChapter?: () => void;
   prevChapter?: () => void;
+  turnHorizonPage?: (direction: "forward" | "back") => void;
 }
 
 export interface IComicContext {

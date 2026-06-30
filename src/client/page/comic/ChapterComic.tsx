@@ -2,6 +2,7 @@
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import Typography from "@mui/material/Typography";
 import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ImportContactsIcon from "@mui/icons-material/ImportContacts";
 import ListItemText from "@mui/material/ListItemText";
@@ -45,7 +46,7 @@ const ChapterList: React.FC<{
         }
       }
     },
-    [onChange],
+    [comicId, onChange],
   );
 
   let deep = 0;
@@ -57,28 +58,44 @@ const ChapterList: React.FC<{
     }
 
     return list.map((item, index) => {
-      if (item.name) {
-        return (
-          <ListItem key={index}>
-            <ListItemIcon>
-              <ImportContactsIcon />
-            </ListItemIcon>
-            <ListItemText
-              className={classNames("cursor-pointer", {
-                ["text-sky-500"]: value === item,
-              })}
-            >
-              <div onClick={() => onClick(item)} title={item.name}>
-                {item.name}
-              </div>
-            </ListItemText>
-            <Divider />
-            {item.list.length && deep < 2 ? (
-              <List>{renderList(item.list as IImgListForMultipleChapter)}</List>
-            ) : null}
-          </ListItem>
-        );
+      if (!item.name) {
+        return null;
       }
+
+      const nested =
+        item.list.length && deep < 2 ? (
+          <List disablePadding className="pl-2">
+            {renderList(item.list as IImgListForMultipleChapter)}
+          </List>
+        ) : null;
+
+      return (
+        <React.Fragment key={`${item.name}-${index}`}>
+          <ListItem disablePadding className="text-slate-200">
+            <ListItemButton
+              selected={value === item}
+              onClick={() => onClick(item)}
+              title={item.name}
+              className="text-slate-200 hover:bg-white/5"
+            >
+              <ListItemIcon className="min-w-[36px] text-slate-400">
+                <ImportContactsIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary={item.name}
+                primaryTypographyProps={{
+                  className: classNames("text-slate-200", {
+                    "!text-sky-400": value === item,
+                  }),
+                  noWrap: true,
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+          {nested}
+          <Divider className="border-slate-700/80" />
+        </React.Fragment>
+      );
     });
   }
 
@@ -87,25 +104,19 @@ const ChapterList: React.FC<{
   }
 
   return (
-    <div className={"basis-[320px] shrink-0 grow-0"}>
-      <div
-        className={"fixed top-0 left-0 z-10 bg-gray-300/10 py-[20px] px-[20px]"}
-      >
+    <aside className="sticky top-0 z-40 flex h-screen w-[320px] shrink-0 flex-col border-r border-slate-700/60 bg-[#141210] text-slate-200">
+      <div className="shrink-0 border-b border-slate-700/60 px-5 py-5">
         <Breadcrumbs aria-label="breadcrumb">
-          <Link to="/" className={"text-[#333]"}>
+          <Link to="/" className="text-sky-400 hover:text-sky-300">
             Home
           </Link>
-          <Typography>{comic?.name}</Typography>
+          <Typography className="text-slate-300">{comic?.name}</Typography>
         </Breadcrumbs>
       </div>
-      <div
-        className={
-          "fixed border-box left-0 top-[50px] w-[300px] h-[calc(100%-100px)] overflow-auto"
-        }
-      >
-        {renderList(imgList)}
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
+        <List disablePadding>{renderList(imgList)}</List>
       </div>
-    </div>
+    </aside>
   );
 };
 
@@ -193,14 +204,14 @@ const ChapterComic: React.FC<{ chapterList: IImgListForMultipleChapter }> = ({
 
   return (
     <>
-      <div className="flex relative">
+      <div className="flex">
         <ChapterList
           toggleChapter={toggleChapter}
           imgList={chapterList}
           value={chapter}
           onChange={setChapter}
         />
-        <div className="grow relative flex w-[calc(100%-320px)]">
+        <div className="relative min-w-0 flex-1">
           <ImgList
             tag={chapter.name}
             onVisitPosition={onVisitPositionChange}

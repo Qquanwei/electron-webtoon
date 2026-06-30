@@ -126,6 +126,10 @@ function IndexPage() {
   );
 
   useEffect(() => {
+    refreshComicList();
+  }, [refreshComicList]);
+
+  useEffect(() => {
     window.scrollTo(0, 0);
     document.scrollingElement?.classList.add("overflow-x-hidden");
     return () => {
