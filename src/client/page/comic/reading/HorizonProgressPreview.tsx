@@ -6,6 +6,33 @@ import styles from "./HorizonReader.module.css";
 
 export const PREVIEW_SEGMENT_MIN_WIDTH = 50;
 
+function scrollHighlightedSegmentToCenter(
+  scroller: HTMLDivElement,
+  activeButton: HTMLElement,
+) {
+  const segmentStart = activeButton.offsetLeft;
+  const segmentWidth = activeButton.offsetWidth;
+  const segmentEnd = segmentStart + segmentWidth;
+  const segmentCenter = segmentStart + segmentWidth / 2;
+
+  const viewWidth = scroller.clientWidth;
+  const viewStart = scroller.scrollLeft;
+  const viewEnd = viewStart + viewWidth;
+  const edgeMargin = segmentWidth * 0.5;
+
+  const shouldScroll =
+    segmentStart < viewStart + edgeMargin ||
+    segmentEnd > viewEnd - edgeMargin;
+
+  if (!shouldScroll) {
+    return;
+  }
+
+  const maxScroll = Math.max(0, scroller.scrollWidth - viewWidth);
+  const targetScroll = segmentCenter - viewWidth / 2;
+  scroller.scrollLeft = Math.min(maxScroll, Math.max(0, targetScroll));
+}
+
 interface HorizonProgressPreviewProps {
   spreads: HorizonSpread[];
   spreadIndex: number;
@@ -24,25 +51,18 @@ export default function HorizonProgressPreview({
 
   useEffect(() => {
     const scroller = scrollerRef.current;
-    if (!scroller) return;
+    if (!scroller) return undefined;
 
-    const activeButton = scroller.querySelector<HTMLElement>(
-      '[aria-current="true"]',
-    );
-    if (!activeButton) return;
+    const frameId = window.requestAnimationFrame(() => {
+      const activeButton = scroller.querySelector<HTMLElement>(
+        '[aria-current="true"]',
+      );
+      if (!activeButton) return;
 
-    const segmentStart = activeButton.offsetLeft;
-    const segmentEnd = segmentStart + activeButton.offsetWidth;
-    const viewStart = scroller.scrollLeft;
-    const viewEnd = viewStart + scroller.clientWidth;
+      scrollHighlightedSegmentToCenter(scroller, activeButton);
+    });
 
-    if (segmentStart < viewStart) {
-      scroller.scrollLeft = segmentStart;
-      return;
-    }
-    if (segmentEnd > viewEnd) {
-      scroller.scrollLeft = segmentEnd - scroller.clientWidth;
-    }
+    return () => window.cancelAnimationFrame(frameId);
   }, [spreadIndex]);
 
   if (spreads.length <= 1) {

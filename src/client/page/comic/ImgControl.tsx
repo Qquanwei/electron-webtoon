@@ -10,6 +10,7 @@ import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import HomeIcon from "@mui/icons-material/Home";
 import { Tooltip } from "@mui/material";
 import { useHistory } from "react-router-dom";
+import { resolveComicPageMode } from "@shared/type";
 import useComicContext from "./useComicContext";
 import Icon from "@components/Icon";
 import { getIPC } from "@client/ipc";
@@ -34,6 +35,8 @@ const Control: React.FC<{}> = ({ children }) => {
       document.title = ori;
     };
   }, [comic]);
+
+  const pageMode = resolveComicPageMode(comic?.pageMode);
 
   const onClickHome = useCallback(() => {
     history.push("/");
@@ -61,7 +64,7 @@ const Control: React.FC<{}> = ({ children }) => {
     <div
       className={classNames(
         "fixed right-0 z-50 flex flex-col justify-end cursor-pointer px-[20px]",
-        comic?.pageMode === "horizon" ? "bottom-[92px]" : "bottom-[20px]",
+        pageMode === "horizon" ? "bottom-[92px]" : "bottom-[20px]",
       )}
     >
       <Tooltip title="滤镜1" placement="top">
@@ -103,8 +106,8 @@ const Control: React.FC<{}> = ({ children }) => {
         name="comic"
         tooltip="日漫横屏翻页模式"
         className={classNames("text-white mt-[10px] w-[24px] h-[24px]", {
-          ["bg-sky-300"]: comic?.pageMode === "horizon",
-          ["bg-[#333]"]: comic?.pageMode !== "horizon",
+          ["bg-sky-300"]: pageMode === "horizon",
+          ["bg-[#333]"]: pageMode !== "horizon",
         })}
         onClick={onClickHorizonMode}
       ></Icon>
@@ -113,8 +116,8 @@ const Control: React.FC<{}> = ({ children }) => {
         name="phone"
         tooltip="韩漫上下翻页模式"
         className={classNames("text-white mt-[10px] w-[24px] h-[24px]", {
-          ["bg-sky-300"]: comic?.pageMode === "vertical",
-          ["bg-[#333]"]: comic?.pageMode !== "vertical",
+          ["bg-sky-300"]: pageMode === "vertical",
+          ["bg-[#333]"]: pageMode !== "vertical",
         })}
         onClick={onClickVerticalMode}
       ></Icon>

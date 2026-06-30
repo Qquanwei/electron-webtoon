@@ -1,4 +1,6 @@
 import { useEffect, type MutableRefObject } from "react";
+import { useHistory } from "react-router-dom";
+import { resolveComicPageMode } from "@shared/type";
 import useComicContext from "./useComicContext";
 import type { ComicShortcutHandlers } from "./useComicContext";
 import { useShortcutBindings } from "../../hooks/useShortcutBindings";
@@ -71,7 +73,8 @@ function createHoldScroller(
 export default function useComicShortcuts() {
   const { comic, shortcutHandlersRef } = useComicContext();
   const { bindings } = useShortcutBindings();
-  const horizon = comic?.pageMode === "horizon";
+  const history = useHistory();
+  const horizon = resolveComicPageMode(comic?.pageMode) === "horizon";
 
   useEffect(() => {
     const actionByKey = new Map<string, ShortcutAction>();
@@ -117,6 +120,14 @@ export default function useComicShortcuts() {
           event.preventDefault();
           shortcutHandlersRef.current.prevChapter();
         }
+        return;
+      }
+
+      if (action === "exitComic" || action === "exitComicEsc") {
+        if (!event.repeat) {
+          event.preventDefault();
+          history.push("/");
+        }
       }
     }
 
@@ -140,5 +151,5 @@ export default function useComicShortcuts() {
       window.removeEventListener("blur", onBlur);
       holdScroll.stop();
     };
-  }, [bindings, horizon, shortcutHandlersRef]);
+  }, [bindings, history, horizon, shortcutHandlersRef]);
 }

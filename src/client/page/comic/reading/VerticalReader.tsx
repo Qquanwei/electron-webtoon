@@ -1,6 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, type CSSProperties, type MouseEvent } from "react";
 import classNames from "classnames";
-import StartUpPage from "../../../startPage";
 import useComicContext from "../useComicContext";
 import {
   useAutoNextPage,
@@ -10,6 +9,7 @@ import {
   useVerticalReadingEnvironment,
   useWatchComicPositionChange,
 } from "./hooks";
+import { useComicReaderLoadingGate } from "./useComicReaderLoadingGate";
 import type { ImgListProps } from "./types";
 import { getComicImageClassName } from "./utils";
 import styles from "./VerticalReader.module.css";
@@ -34,6 +34,7 @@ export default function VerticalReader({
     firstElePosition,
     scrollContainerRef,
   );
+  useComicReaderLoadingGate(loading);
 
   useWatchComicPositionChange(
     imgList,
@@ -60,7 +61,6 @@ export default function VerticalReader({
         className={styles.reader}
         style={{ "--comic-zoom": zoomScale } as CSSProperties}
       >
-        <StartUpPage className={classNames("z-10", { "!hidden": !loading })} />
         {imgList.map((src, index) => (
           <div key={`${tag ?? ""}-${index}-${src}`} className={styles.page}>
             <div className={styles.pageFrame}>
