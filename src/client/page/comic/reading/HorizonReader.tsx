@@ -28,7 +28,13 @@ import {
   isHorizonFlipPadPage,
   spreadToFlipIndex,
 } from "./horizonSpreads";
-import { flipMangaSpread } from "./mangaPageFlip";
+import {
+  flipMangaSpread,
+  mapMangaFoldDistPos,
+  prepareMangaDragFold,
+  revertMangaDragFold,
+  type MangaDragFoldPrep,
+} from "./mangaPageFlip";
 import {
   computeHorizonPageSize,
   loadHorizonPageAspectRatio,
@@ -103,7 +109,7 @@ function constrainCornerDragPos(
     x = Math.min(startPos.x, pos.x);
   }
 
-  return { x, y: startPos.y };
+  return { x, y: pos.y };
 }
 
 function getFlipPageEdgeClass(pageIndex: number) {
@@ -197,9 +203,12 @@ export default function HorizonReader({
   const spreadIndexRef = useRef(0);
   const cornerDragRef = useRef({
     active: false,
+    prepared: false,
+    direction: null as TurnDirection | null,
     pos: { x: 0, y: 0 },
     startPos: { x: 0, y: 0 },
   });
+  const dragFoldPrepRef = useRef<MangaDragFoldPrep | null>(null);
   const pointerGestureRef = useRef({
     down: false,
     startX: 0,
@@ -234,6 +243,57 @@ export default function HorizonReader({
   const getPageFlip = useCallback((): PageFlip | null => {
     return bookRef.current?.pageFlip?.() ?? null;
   }, []);
+
+  const revertDragFoldPrep = useCallback(() => {
+    const prep = dragFoldPrepRef.current;
+    if (!prep) {
+      return;
+    }
+
+    const pageFlip = getPageFlip();
+    if (pageFlip) {
+      revertMangaDragFold(
+        pageFlip,
+        prep,
+        flipIndexOfSpread(prep.previousLogicalSpread),
+      );
+    }
+
+    setSpreadIndex(prep.previousLogicalSpread);
+    dragFoldPrepRef.current = null;
+    cornerDragRef.current.prepared = false;
+  }, [getPageFlip, flipIndexOfSpread]);
+
+  const prepareDragFold = useCallback(
+    (direction: TurnDirection) => {
+      const pageFlip = getPageFlip();
+      if (!pageFlip || dragFoldPrepRef.current) {
+        return false;
+      }
+
+      const delta = direction === "forward" ? 1 : -1;
+      const nextSpread = spreadIndexRef.current + delta;
+      if (nextSpread < 0 || nextSpread >= spreads.length) {
+        return false;
+      }
+
+      const prep = prepareMangaDragFold(
+        pageFlip,
+        flipIndexOfSpread(nextSpread),
+        spreadIndexRef.current,
+        nextSpread,
+      );
+      if (!prep) {
+        return false;
+      }
+
+      dragFoldPrepRef.current = prep;
+      cornerDragRef.current.prepared = true;
+      setSpreadIndex(nextSpread);
+      return true;
+    },
+    [getPageFlip, spreads.length, flipIndexOfSpread],
+  );
 
   const releaseActiveFold = useCallback((pageFlip: PageFlip, pos: BookPoint) => {
       if (pageFlip.getState() !== "user_fold") return;
@@ -491,11 +551,21 @@ export default function HorizonReader({
 
       const pageFlip = getPageFlip();
       if (pageFlip?.getState() === "user_fold") {
-        const { startPos } = cornerDragRef.current;
-        pageFlip.userMove(startPos, false);
-        pageFlip.userStop(startPos);
+        const { startPos, direction } = cornerDragRef.current;
+        if (direction) {
+          const bounds = pageFlip.getBoundsRect();
+          const foldPos = mapMangaFoldDistPos(startPos, startPos, bounds, direction);
+          pageFlip.userMove(foldPos, false);
+          pageFlip.userStop(foldPos);
+        } else {
+          pageFlip.userMove(startPos, false);
+          pageFlip.userStop(startPos);
+        }
       }
       cornerDragRef.current.active = false;
+      cornerDragRef.current.prepared = false;
+      cornerDragRef.current.direction = null;
+      revertDragFoldPrep();
     }
 
     function tryClickTurn(clientX: number, clientY: number) {
@@ -526,10 +596,18 @@ export default function HorizonReader({
 
       const bounds = pageFlip.getBoundsRect();
       const pos = getDistPos(clientX, clientY, distEl);
-      if (!getBookHalf(pos, bounds)) return;
+      const direction = getBookHalf(pos, bounds);
+      if (!direction || !prepareDragFold(direction)) return;
 
-      pageFlip.startUserTouch(pos);
-      cornerDragRef.current = { active: true, pos, startPos: { ...pos } };
+      const foldStartPos = mapMangaFoldDistPos(pos, pos, bounds, direction);
+      pageFlip.startUserTouch(foldStartPos);
+      cornerDragRef.current = {
+        active: true,
+        prepared: true,
+        direction,
+        pos,
+        startPos: { ...pos },
+      };
     }
 
     function moveCornerDrag(clientX: number, clientY: number) {
@@ -539,6 +617,9 @@ export default function HorizonReader({
       const distEl = getDistElement();
       if (!pageFlip || !distEl) return;
 
+      const direction = cornerDragRef.current.direction;
+      if (!direction) return;
+
       const bounds = pageFlip.getBoundsRect();
       const raw = getDistPos(clientX, clientY, distEl);
       const pos = constrainCornerDragPos(
@@ -546,8 +627,15 @@ export default function HorizonReader({
         cornerDragRef.current.startPos,
         bounds,
       );
+      const foldPos = mapMangaFoldDistPos(
+        pos,
+        cornerDragRef.current.startPos,
+        bounds,
+        direction,
+      );
+
       cornerDragRef.current.pos = pos;
-      pageFlip.userMove(pos, false);
+      pageFlip.userMove(foldPos, false);
     }
 
     function endCornerDrag() {
@@ -556,8 +644,18 @@ export default function HorizonReader({
       const pageFlip = getPageFlip();
       if (!pageFlip) return;
 
-      const { pos } = cornerDragRef.current;
+      const { pos, direction, startPos } = cornerDragRef.current;
       cornerDragRef.current.active = false;
+      cornerDragRef.current.prepared = false;
+      cornerDragRef.current.direction = null;
+
+      if (direction) {
+        const bounds = pageFlip.getBoundsRect();
+        const foldPos = mapMangaFoldDistPos(pos, startPos, bounds, direction);
+        releaseActiveFold(pageFlip, foldPos);
+        return;
+      }
+
       releaseActiveFold(pageFlip, pos);
     }
 
@@ -649,9 +747,10 @@ export default function HorizonReader({
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
       cornerDragRef.current.active = false;
+      cornerDragRef.current.prepared = false;
       resetPointerGesture();
     };
-  }, [getPageFlip, loading, releaseActiveFold]);
+  }, [getPageFlip, loading, releaseActiveFold, prepareDragFold, revertDragFoldPrep]);
 
   useEffect(() => {
     if (!autoScroll || animating) return undefined;
@@ -666,9 +765,15 @@ export default function HorizonReader({
     return () => window.clearInterval(timer);
   }, [autoScroll, animating, spreads.length]);
 
-  const onFlip = useCallback((event: { data: number }) => {
-    pendingPageIndexRef.current = event.data;
-  }, []);
+  const onFlip = useCallback(
+    (event: { data: number }) => {
+      pendingPageIndexRef.current = event.data;
+      dragFoldPrepRef.current = null;
+      cornerDragRef.current.prepared = false;
+      syncSpreadFromFlip(event.data);
+    },
+    [syncSpreadFromFlip],
+  );
 
   const syncFlipMotionClass = useCallback((state: string) => {
     const active =
@@ -702,9 +807,15 @@ export default function HorizonReader({
         return;
       }
 
+      if (event.data === "read" && prevState === "user_fold") {
+        if (dragFoldPrepRef.current) {
+          revertDragFoldPrep();
+        }
+      }
+
       setAnimating(event.data === "flipping");
     },
-    [getPageFlip, syncSpreadFromFlip, syncFlipMotionClass],
+    [getPageFlip, syncSpreadFromFlip, syncFlipMotionClass, revertDragFoldPrep],
   );
 
   const flipBookPages = useMemo(() => {
