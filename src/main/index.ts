@@ -10,6 +10,9 @@ import {
   setupComicFileProtocol,
 } from '../server/comic-file-protocol';
 
+// 与旧版一致，确保 electron-store 读写 ~/Library/Application Support/electron-webtoon/
+app.setName('electron-webtoon');
+
 registerComicFileScheme();
 
 class AppUpdater {

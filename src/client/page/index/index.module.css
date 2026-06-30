@@ -111,6 +111,26 @@
   pointer-events: none;
 }
 
+.cardProgress {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 4;
+  min-width: 28px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgb(15 23 42 / 0.72);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+}
+
 /* ── 1. 深色胡桃木 + 白卡纸 ── */
 .frame_walnut {
   padding: 11px;

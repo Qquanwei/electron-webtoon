@@ -1,6 +1,6 @@
 {
   "name": "ElectronWebtoon",
-  "productName": "ElectronWebtoon",
+  "productName": "electron-webtoon",
   "version": "2.5.0",
   "description": "Electron Webtoon 漫画阅读器",
   "main": "./out/main/index.js",
@@ -14,7 +14,7 @@
     "test": "jest"
   },
   "build": {
-    "productName": "ElectronWebtoon",
+    "productName": "electron-webtoon",
     "appId": "org.erb.ElectronWebtoon",
     "files": [
       "out/**/*",

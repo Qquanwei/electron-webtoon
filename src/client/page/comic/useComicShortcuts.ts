@@ -8,21 +8,10 @@ import {
   type ShortcutAction,
 } from "../../../shared/shortcuts";
 
-const SCROLL_RATIO = 0.85;
 const HOLD_SCROLL_SPEED = 14;
 const HORIZON_HOLD_TURN_MS = 680;
 
 type HoldScrollDirection = "down" | "up" | "forward" | "back";
-
-function scrollVertical(direction: "down" | "up") {
-  const element = document.scrollingElement;
-  if (!element) return;
-  const delta = element.clientHeight * SCROLL_RATIO;
-  element.scrollBy({
-    top: direction === "down" ? delta : -delta,
-    behavior: "smooth",
-  });
-}
 
 function createHoldScroller(
   horizon: boolean,
@@ -103,24 +92,28 @@ export default function useComicShortcuts() {
 
       if (action === "scrollDown" || action === "scrollUp") {
         event.preventDefault();
-        if (horizon) {
-          shortcutHandlersRef.current.turnHorizonPage?.(
-            action === "scrollDown" ? "forward" : "back",
-          );
-        } else {
-          scrollVertical(action === "scrollDown" ? "down" : "up");
-        }
+        holdScroll.start(
+          horizon
+            ? action === "scrollDown"
+              ? "forward"
+              : "back"
+            : action === "scrollDown"
+              ? "down"
+              : "up",
+        );
         return;
       }
 
       if (action === "nextChapter") {
-        event.preventDefault();
-        holdScroll.start(horizon ? "forward" : "down");
+        if (!event.repeat && shortcutHandlersRef.current.nextChapter) {
+          event.preventDefault();
+          shortcutHandlersRef.current.nextChapter();
+        }
         return;
       }
 
       if (action === "prevChapter") {
-        if (shortcutHandlersRef.current.prevChapter) {
+        if (!event.repeat && shortcutHandlersRef.current.prevChapter) {
           event.preventDefault();
           shortcutHandlersRef.current.prevChapter();
         }
@@ -129,7 +122,7 @@ export default function useComicShortcuts() {
 
     function onKeyUp(event: KeyboardEvent) {
       const action = actionByKey.get(normalizeShortcutKey(event.key));
-      if (action === "nextChapter") {
+      if (action === "scrollDown" || action === "scrollUp") {
         holdScroll.stop();
       }
     }

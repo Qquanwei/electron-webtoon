@@ -51,6 +51,7 @@
 }
 
 .flipPage {
+  position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -59,13 +60,56 @@
   box-sizing: border-box;
 }
 
+.flipPageCover {
+  padding: 10px 12px 12px;
+  background:
+    linear-gradient(165deg, #ebe0cc 0%, #d8c8aa 42%, #c9b896 100%);
+  border: 5px solid #120e0a;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.28),
+    inset 0 0 0 3px rgb(0 0 0 / 0.12),
+    inset 0 3px 10px rgb(255 255 255 / 0.18),
+    inset 0 -4px 14px rgb(0 0 0 / 0.22),
+    6px 0 14px rgb(0 0 0 / 0.35);
+}
+
+.flipPageCover::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgb(0 0 0 / 0.14);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    inset 0 -2px 6px rgb(0 0 0 / 0.08);
+  pointer-events: none;
+}
+
 .flipPageImage {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  object-position: center center;
   background: #faf6ee;
+}
+
+.flipPageImageBoard {
+  border: 2px solid rgb(0 0 0 / 0.28);
+  box-shadow:
+    0 2px 6px rgb(0 0 0 / 0.18),
+    inset 0 1px 0 rgb(255 255 255 / 0.12);
+  background: #f5efe3;
+}
+
+.flipPageImageCover {
+  object-position: center center;
+}
+
+.flipPageImageSlotRight {
+  object-position: left center;
+}
+
+.flipPageImageSlotLeft {
+  object-position: right center;
 }
 
 .progressPreview {
@@ -100,7 +144,6 @@
   display: flex;
   flex-direction: row-reverse;
   height: 56px;
-  min-width: 100%;
   border: 1px solid #3a3530;
   background: #0a0908;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
@@ -129,6 +172,10 @@
 
 .progressSegmentActive {
   z-index: 1;
+  box-shadow:
+    inset 0 0 0 2px rgb(255 255 255 / 0.42),
+    inset 0 0 12px rgb(255 255 255 / 0.06);
+  background: rgb(255 255 255 / 0.1);
 }
 
 .progressSegmentInner {
@@ -152,8 +199,15 @@
   width: 50%;
   height: 100%;
   object-fit: cover;
-  object-position: top center;
   pointer-events: none;
+}
+
+.progressPageThumbLeft {
+  object-position: right top;
+}
+
+.progressPageThumbRight {
+  object-position: left top;
 }
 
 .progressCoverThumb {
@@ -170,19 +224,4 @@
   width: 50%;
   height: 100%;
   background: #1a1816;
-}
-
-.progressIndicator {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  z-index: 2;
-  border: 2px solid rgb(255 255 255 / 0.42);
-  background: rgb(255 255 255 / 0.1);
-  box-shadow:
-    0 0 0 1px rgb(0 0 0 / 0.45),
-    inset 0 0 12px rgb(255 255 255 / 0.06);
-  pointer-events: none;
-  transition: left 800ms cubic-bezier(0.42, 0.04, 0.2, 1);
-  box-sizing: border-box;
 }
