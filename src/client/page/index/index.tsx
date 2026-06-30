@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
 import { useRecoilRefresher_UNSTABLE } from "recoil";
 import { Link, useHistory } from "react-router-dom";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState, useRecoilCallback } from "recoil";
+import DragHandleIcon from "@mui/icons-material/DragHandle";
 import ElectronWebtoonAppBar from "../../components/appbar";
 import Popup from "@components/Popup";
 import { useMessage } from "@components/useMessage";
@@ -17,6 +18,7 @@ import "../../App.global.css";
 
 const GRID_WIDTH = 200;
 const GRID_HEIGHT = 150;
+const COLLAPSE_DEFAULT_THRESHOLD = 10;
 
 const PAIRS = [
   [1, 1],
@@ -51,10 +53,20 @@ function IndexPage() {
   const [contextComicId, setContextComicId] = useState<string | null>(null);
   const [archivePath, setArchivePath] = useState("");
   const [searchKey, setSearchKey] = useState("");
+  const [navCollapsed, setNavCollapsed] = useState(false);
+  const navDefaultAppliedRef = useRef(false);
   const comicList = useRecoilValueMemo(selector.comicList);
   const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
   const history = useHistory();
   const [_, setNextOpenComicInfo] = useRecoilState(selector.nextOpenComicInfo);
+  const setComicOpenPhase = useSetRecoilState(selector.comicOpenPhase);
+  const prefetchComicDetail = useRecoilCallback(
+    ({ snapshot }) =>
+      (comicId: string) => {
+        void snapshot.getLoadable(selector.comicDetail(comicId)).toPromise();
+      },
+    [],
+  );
   const { pushMessage } = useMessage();
 
   const filteredComics = useMemo(() => {
@@ -115,19 +127,43 @@ function IndexPage() {
 
   const onClickItem = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.currentTarget.dataset.cover) {
+      const target = e.currentTarget;
+      const rect = target.getBoundingClientRect();
+
+      if (target.dataset.cover && target.dataset.id) {
+        setComicOpenPhase("fly-start");
         setNextOpenComicInfo({
-          cover: e.currentTarget.dataset.cover,
+          cover: target.dataset.cover,
+          originRect: {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+          },
         });
+        prefetchComicDetail(target.dataset.id);
       }
-      history.push(`/comic/${e.currentTarget.dataset.id}`);
+      history.push(`/comic/${target.dataset.id}`);
     },
-    [history, setNextOpenComicInfo],
+    [history, prefetchComicDetail, setComicOpenPhase, setNextOpenComicInfo],
   );
 
   useEffect(() => {
+    if (!comicList || navDefaultAppliedRef.current) {
+      return;
+    }
+
+    navDefaultAppliedRef.current = true;
+    if (comicList.length > COLLAPSE_DEFAULT_THRESHOLD) {
+      setNavCollapsed(true);
+    }
+  }, [comicList]);
+
+  useEffect(() => {
     refreshComicList();
-  }, [refreshComicList]);
+    setComicOpenPhase("idle");
+    setNextOpenComicInfo(null);
+  }, [refreshComicList, setComicOpenPhase, setNextOpenComicInfo]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -137,18 +173,57 @@ function IndexPage() {
     };
   }, []);
 
+  const onToggleNav = useCallback(() => {
+    setNavCollapsed((collapsed) => !collapsed);
+  }, []);
+
   return (
-    <div className="min-h-full w-full scroll-smooth bg-white pt-[70px] text-slate-900">
-      <ElectronWebtoonAppBar hasAdd hasSearch onSearch={onSubmitSearch} />
+    <div
+      className={classNames(styles.pageRoot, {
+        [styles.pageCollapsed]: navCollapsed,
+        [styles.pageExpanded]: !navCollapsed,
+      })}
+    >
+      <div
+        className={classNames(styles.navShell, {
+          [styles.navShellCollapsed]: navCollapsed,
+        })}
+      >
+        <ElectronWebtoonAppBar
+          embedded
+          hasAdd
+          hasSearch
+          onSearch={onSubmitSearch}
+        />
+      </div>
+
+      <button
+        type="button"
+        className={classNames(styles.bookmarkTab, {
+          [styles.bookmarkTabExpanded]: !navCollapsed,
+        })}
+        onClick={onToggleNav}
+        aria-label={navCollapsed ? "展开导航栏" : "收起导航栏"}
+        aria-expanded={!navCollapsed}
+      >
+        <DragHandleIcon className={styles.bookmarkIcon} fontSize="small" />
+      </button>
 
       <div className="w-full">
-        <header className="px-3 py-3">
-          <h1 className="flex flex-wrap items-baseline gap-x-2 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-            <span>漫画库</span>
-            <span className="text-sm font-normal text-slate-500 sm:text-base">
+        <header
+          className={classNames(styles.libraryHeader, {
+            [styles.libraryHeaderCollapsed]: navCollapsed,
+          })}
+        >
+          <h1 className="flex flex-wrap items-baseline gap-x-2">
+            <span className={styles.libraryTitle}>漫画库</span>
+            <span className={styles.libraryMeta}>
               {comicList!.length} 部作品
               {searchKey ? (
-                <span className="text-sky-600"> · 搜索「{searchKey}」</span>
+                <span className={styles.librarySearchHint}>
+                  {" "}
+                  · 搜索「{searchKey}」
+                </span>
               ) : null}
             </span>
           </h1>
@@ -157,10 +232,10 @@ function IndexPage() {
         <div className={styles.gridlist}>
           {filteredComics.length === 0 ? (
             <div className={styles.emptyState}>
-              <p className="text-base font-medium text-slate-600">
+              <p className={styles.emptyStateTitle}>
                 {searchKey ? "没有匹配的漫画" : "书架还是空的"}
               </p>
-              <p className="mt-2 max-w-sm text-sm leading-relaxed">
+              <p className={styles.emptyStateHint}>
                 {searchKey
                   ? "试试换个关键词，或清空搜索框查看全部作品。"
                   : "点击右上角添加本地漫画，或将压缩包/文件夹拖入窗口。"}
@@ -231,10 +306,10 @@ function IndexPage() {
           )}
         </div>
 
-        <footer className="border-t border-slate-200/80 py-6 text-center text-sm text-slate-500">
+        <footer className={styles.pageFooter}>
           贡献与支持
           <a
-            className="ml-2 font-medium text-sky-600 transition hover:text-sky-700"
+            className={styles.pageFooterLink}
             target="_blank"
             href="https://github.com/Qquanwei/electron-webtoon"
             rel="noreferrer"

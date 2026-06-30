@@ -1,0 +1,225 @@
+.bar {
+  --manga-white: #f7f7f5;
+  --manga-gray-light: #d8d8d4;
+  --manga-gray: #8f8f8f;
+  --manga-black: #121212;
+
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 60px;
+  padding: 0 16px;
+  background-color: var(--manga-white);
+  background-image: radial-gradient(
+    circle,
+    rgb(0 0 0 / 0.05) 0.65px,
+    transparent 0.65px
+  );
+  background-size: 11px 11px;
+}
+
+.barFixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.barEmbedded {
+  position: relative;
+  width: 100%;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.brandTitle {
+  font-size: 0.98rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: var(--manga-black);
+  white-space: nowrap;
+}
+
+.brandSubtitle {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--manga-gray);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.brandVersion {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--manga-gray);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--manga-gray);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.searchForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: min(320px, 34vw);
+  margin-left: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--manga-gray);
+  border-radius: 2px;
+  background: #fff;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.searchForm:focus-within {
+  border-color: var(--manga-black);
+  background: var(--manga-white);
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  width: 18px !important;
+  height: 18px !important;
+  color: var(--manga-gray);
+}
+
+.searchInput {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--manga-black);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.searchInput::placeholder {
+  color: var(--manga-gray);
+}
+
+.searchInput:focus {
+  outline: none;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 2px solid var(--manga-black);
+  border-radius: 2px;
+  background: var(--manga-black);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.addButton:hover {
+  background: #fff;
+  color: var(--manga-black);
+}
+
+.addIcon {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.settingsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--manga-gray);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--manga-black);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.settingsLink:hover {
+  border-color: var(--manga-black);
+  background: var(--manga-gray-light);
+  color: var(--manga-black);
+}
+
+.settingsIcon {
+  width: 18px !important;
+  height: 18px !important;
+  color: var(--manga-gray);
+}
+
+.settingsLink:hover .settingsIcon {
+  color: var(--manga-black);
+}
+
+.addMenu {
+  min-width: 168px;
+  overflow: hidden;
+  border: 2px solid var(--manga-black);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--manga-black);
+}
+
+.addMenuItem {
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.addMenuItem:hover {
+  background: var(--manga-black);
+  color: #fff;
+}
+
+.addMenuItem + .addMenuItem {
+  border-top: 1px solid var(--manga-gray-light);
+}

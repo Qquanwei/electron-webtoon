@@ -1,0 +1,46 @@
+.bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 14px 18px 16px;
+  background: linear-gradient(180deg, rgb(18 16 14 / 0.92) 0%, rgb(10 9 8 / 0.98) 100%);
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 0.35);
+  backdrop-filter: blur(12px);
+}
+
+.label {
+  margin-bottom: 10px;
+  color: rgb(255 255 255 / 0.82);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.1);
+}
+
+.fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #a67c00 0%, #f0d060 45%, #d4af37 100%);
+  box-shadow: 0 0 12px rgb(212 175 55 / 0.35);
+  transition: width 180ms ease-out;
+}
+
+.percent {
+  margin-top: 8px;
+  color: rgb(255 255 255 / 0.48);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}

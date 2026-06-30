@@ -31,6 +31,12 @@ export default function ShortcutSettings() {
       event.stopPropagation();
 
       if (event.key === "Escape") {
+        if (action === "exitComicEsc") {
+          setBindings((current) => ({
+            ...current,
+            [action]: "escape",
+          }));
+        }
         setRecordingAction(null);
         return;
       }
@@ -40,7 +46,7 @@ export default function ShortcutSettings() {
       }
 
       const nextKey = normalizeShortcutKey(event.key);
-      if (!nextKey || nextKey === "escape") {
+      if (!nextKey || (nextKey === "escape" && action !== "exitComicEsc")) {
         return;
       }
 

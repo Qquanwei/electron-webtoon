@@ -34,6 +34,16 @@ export const IDLE_DECOMPRESS_PROGRESS: IDecompressProgress = {
 
 export type { IpcClient } from "./ipc/contract";
 
+export type ComicPageMode = "horizon" | "vertical";
+
+export const DEFAULT_COMIC_PAGE_MODE: ComicPageMode = "horizon";
+
+export function resolveComicPageMode(
+  pageMode?: ComicPageMode,
+): ComicPageMode {
+  return pageMode ?? DEFAULT_COMIC_PAGE_MODE;
+}
+
 export interface IComic {
   id: string;
   tag: string;
@@ -45,11 +55,19 @@ export interface IComic {
   /**
    * 横竖屏翻页模式
    */
-  pageMode?: "horizon" | "vertical";
+  pageMode?: ComicPageMode;
   /**
    * 阅读缩放比例
    */
   zoomScale?: number | string;
+  /**
+   * 阅读进度 0–100，持久化在配置中
+   */
+  readProgressPercent?: number;
+  /**
+   * 首页轮播预览图 URL，持久化在配置中
+   */
+  previewUrls?: string[];
 }
 
 export interface IChapter {

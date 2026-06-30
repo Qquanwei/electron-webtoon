@@ -1,34 +1,44 @@
 import React, { useRef, useCallback, useState } from "react";
-import Typography from "@mui/material/Typography";
+import classNames from "classnames";
 import SearchIcon from "@mui/icons-material/Search";
+import AddIcon from "@mui/icons-material/Add";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Link } from "react-router-dom";
 import { useRecoilRefresher_UNSTABLE } from "recoil";
 import * as selector from "../selector";
 import { getIPC } from "../ipc";
 import { UnaryFunction } from "../../shared/type";
 import Popup from "./Popup";
+import styles from "./appbar.module.css";
 
 interface ElectronWebtoonAppBarProps {
   onSearch?: UnaryFunction<string | null>;
   hasSearch?: boolean;
   hasAdd?: boolean;
+  /** 嵌入首页可收起导航时使用，避免 fixed 脱离父容器 */
+  embedded?: boolean;
 }
 
 const ElectronWebtoonAppBar: React.FC<ElectronWebtoonAppBarProps> = ({
   onSearch,
   hasSearch,
   hasAdd,
+  embedded = false,
 }) => {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
 
-  const onSubmitSearch = useCallback((e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (onSearch && searchRef.current) {
-      onSearch(searchRef.current.value);
-    }
-  }, []);
+  const onSubmitSearch = useCallback(
+    (e: React.FormEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (onSearch && searchRef.current) {
+        onSearch(searchRef.current.value);
+      }
+    },
+    [onSearch],
+  );
+
   const onClickAddFile = useCallback(async () => {
     (await getIPC()).takeCompressAndAddToComic();
   }, []);
@@ -40,7 +50,7 @@ const ElectronWebtoonAppBar: React.FC<ElectronWebtoonAppBarProps> = ({
       await (await getIPC()).addComicToLibrary(path.filePaths[0]);
       refreshComicList();
     }
-  }, []);
+  }, [refreshComicList]);
 
   const [popupVisible, setPopupVisible] = useState(false);
   const onClickAdd = useCallback(() => {
@@ -48,58 +58,64 @@ const ElectronWebtoonAppBar: React.FC<ElectronWebtoonAppBarProps> = ({
   }, []);
 
   return (
-    <div className="shadow z-10 px-2 fixed top-0 left-0 right-0 bg-white text-black flex justify-center h-[60px] items-center">
-      <Typography variant="h6" noWrap>
-        <Link to="/">
-          ElectronWebtoon<span className="text-[10px]">@{VERSION}</span>
-        </Link>
-      </Typography>
+    <header
+      className={classNames(styles.bar, {
+        [styles.barEmbedded]: embedded,
+        [styles.barFixed]: !embedded,
+      })}
+    >
+      <Link to="/" className={styles.brand}>
+        <span className={styles.brandText}>
+          <span className={styles.brandTitle}>
+            ElectronWebtoon
+            <span className={styles.brandVersion}>v{VERSION}</span>
+          </span>
+          <span className={styles.brandSubtitle}>本地漫画库</span>
+        </span>
+      </Link>
 
-      {hasSearch && (
-        <form
-          onSubmit={onSubmitSearch}
-          className="border-box transition-all rounded p-1 relative ml-2 hover:border-sky-500 focus-within:border-sky-500 border-gray-200 border"
-        >
-          <SearchIcon />
+      {hasSearch ? (
+        <form onSubmit={onSubmitSearch} className={styles.searchForm}>
+          <SearchIcon className={styles.searchIcon} />
           <input
-            className="focus:outline-none bg-transparent ml-1"
+            className={styles.searchInput}
             ref={searchRef}
-            placeholder="Search…"
+            placeholder="搜索漫画…"
+            aria-label="搜索漫画"
           />
         </form>
-      )}
-      <div className="ml-auto flex items-center">
-        {hasAdd && (
+      ) : null}
+
+      <div className={styles.actions}>
+        {hasAdd ? (
           <Popup
             visible={popupVisible}
-            className="bg-indigo-500 text-white p-2 cursor-pointer rounded transition transition-all active:scale-95 select-none"
+            className={styles.addButton}
             visibleChange={(vis) => setPopupVisible(vis)}
             tooltip={
-              <div className="min-w-[150px] h-[50px] bg-gray-500/90 flex text-14 text-white items-center cursor-pointer px-4 whitespace-nowrap rounded">
-                <div
-                  onClick={onClickAddFile}
-                  className="p-2 hover:bg-gray-100/10 hover:text-sky-300 rounded "
-                >
+              <div className={styles.addMenu}>
+                <div className={styles.addMenuItem} onClick={onClickAddFile}>
                   添加压缩包
                 </div>
-                <div
-                  onClick={onClickAddFolder}
-                  className="ml-2 p-2 hover:bg-gray-100/10 hover:text-sky-300 rounded"
-                >
+                <div className={styles.addMenuItem} onClick={onClickAddFolder}>
                   添加文件夹
                 </div>
               </div>
             }
           >
-            <div onClick={onClickAdd}>添加本地漫画</div>
+            <div className="flex items-center gap-1.5" onClick={onClickAdd}>
+              <AddIcon className={styles.addIcon} />
+              <span>添加漫画</span>
+            </div>
           </Popup>
-        )}
+        ) : null}
 
-        <div className="ml-4">
-          <Link to="/settings">设置页面</Link>
-        </div>
+        <Link to="/settings" className={styles.settingsLink}>
+          <SettingsOutlinedIcon className={styles.settingsIcon} />
+          <span>设置</span>
+        </Link>
       </div>
-    </div>
+    </header>
   );
 };
 

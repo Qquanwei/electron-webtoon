@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { resolveComicPageMode } from "@shared/type";
 import useComicContext from "../useComicContext";
 import HorizonReader from "./HorizonReader";
 import VerticalReader from "./VerticalReader";
@@ -7,7 +8,7 @@ import { resetVerticalScroll } from "./utils";
 
 export default function ImgList(props: ImgListProps) {
   const { comic } = useComicContext();
-  const isHorizon = comic?.pageMode === "horizon";
+  const isHorizon = resolveComicPageMode(comic?.pageMode) === "horizon";
 
   useEffect(() => {
     resetVerticalScroll();

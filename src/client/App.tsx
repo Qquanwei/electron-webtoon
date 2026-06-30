@@ -5,7 +5,7 @@ import Index from "./page/index";
 import Comic from "./page/comic";
 import Settings from "./page/settings";
 import * as selector from "./selector";
-import StartUpPage from "./startPage";
+import { ComicOpenOverlay, RouteSuspenseFallback } from "./ComicOpenOverlay";
 import "./App.global.css";
 import { ipc } from "./ipc";
 import { useMessage } from "@components/useMessage";
@@ -79,7 +79,8 @@ export default function App() {
       style={{ height: "100%" }}
     >
       <Router>
-        <Suspense fallback={<StartUpPage />}>
+        <ComicOpenOverlay />
+        <Suspense fallback={<RouteSuspenseFallback />}>
           <Switch>
             <Route exact path="/" component={Index} />
             <Route exact path="/settings" component={Settings} />

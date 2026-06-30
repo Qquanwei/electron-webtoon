@@ -2,7 +2,9 @@ export type ShortcutAction =
   | "scrollDown"
   | "scrollUp"
   | "nextChapter"
-  | "prevChapter";
+  | "prevChapter"
+  | "exitComic"
+  | "exitComicEsc";
 
 export type ShortcutBindings = Record<ShortcutAction, string>;
 
@@ -11,6 +13,8 @@ export const DEFAULT_SHORTCUT_BINDINGS: ShortcutBindings = {
   scrollUp: "k",
   nextChapter: "n",
   prevChapter: "p",
+  exitComic: "q",
+  exitComicEsc: "escape",
 };
 
 export const SHORTCUT_ACTION_LABELS: Record<
@@ -21,6 +25,8 @@ export const SHORTCUT_ACTION_LABELS: Record<
   scrollUp: { label: "按住向上滚动", description: "默认 k，竖屏平滑滚动；双页模式向后翻页" },
   nextChapter: { label: "下一章节", description: "默认 n" },
   prevChapter: { label: "上一章节", description: "默认 p" },
+  exitComic: { label: "退出阅读", description: "默认 q，返回首页" },
+  exitComicEsc: { label: "退出阅读 (Esc)", description: "默认 Esc，返回首页" },
 };
 
 export function parseShortcutBindings(raw: unknown): ShortcutBindings {
@@ -56,6 +62,7 @@ export function normalizeShortcutKey(key: string): string {
 export function formatShortcutKey(key: string): string {
   const map: Record<string, string> = {
     space: "Space",
+    escape: "Esc",
     arrowdown: "↓",
     arrowup: "↑",
     arrowleft: "←",
