@@ -27,9 +27,98 @@ import { getComicImageClassName } from "./utils";
 import styles from "./HorizonReader.module.css";
 
 const FLIP_DURATION_MS = 800;
-const WHEEL_THRESHOLD = 48;
+const WHEEL_FOLD_IDLE_MS = 400;
+const WHEEL_GESTURE_START_THRESHOLD = 24;
+const WHEEL_DELTA_FOR_FULL_FLIP = 280;
+const WHEEL_FOLD_COMMIT_PROGRESS = 38;
 
 type TurnDirection = "forward" | "back";
+
+interface BookPoint {
+  x: number;
+  y: number;
+}
+
+interface BookBounds {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  pageWidth: number;
+}
+
+interface PageFlipSurface {
+  flipNext: (corner?: "top" | "bottom") => void;
+  flipPrev: (corner?: "top" | "bottom") => void;
+  turnToPage: (pageNum: number) => void;
+  getCurrentPageIndex: () => number;
+  getBoundsRect: () => BookBounds;
+  getState: () => string;
+  getFlipController: () => {
+    getCalculation: () => { getFlippingProgress: () => number } | null;
+  };
+  startUserTouch: (pos: BookPoint) => void;
+  userMove: (pos: BookPoint, isTouch: boolean) => void;
+  userStop: (pos: BookPoint, isSwipe?: boolean) => void;
+}
+
+interface WheelFoldSession {
+  active: boolean;
+  direction: TurnDirection | null;
+  accumulated: number;
+  startPos: BookPoint;
+  pos: BookPoint;
+  idleTimer: number | null;
+}
+
+function getDistPos(
+  clientX: number,
+  clientY: number,
+  distEl: HTMLElement,
+): BookPoint {
+  const rect = distEl.getBoundingClientRect();
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+function isBookEdgeOrCorner(distPos: BookPoint, bounds: BookBounds) {
+  const bookPos = {
+    x: distPos.x - bounds.left,
+    y: distPos.y - bounds.top,
+  };
+  const edgeReach = bounds.pageWidth / 5;
+
+  if (
+    bookPos.x <= 0 ||
+    bookPos.y <= 0 ||
+    bookPos.x >= bounds.width ||
+    bookPos.y >= bounds.height
+  ) {
+    return false;
+  }
+
+  return bookPos.x <= edgeReach || bookPos.x >= bounds.width - edgeReach;
+}
+
+function getWheelDragProgress(
+  accumulated: number,
+  direction: TurnDirection,
+) {
+  const signed = direction === "forward" ? accumulated : -accumulated;
+  return Math.max(0, Math.min(1, signed / WHEEL_DELTA_FOR_FULL_FLIP));
+}
+
+function getPosForWheelProgress(
+  start: BookPoint,
+  bounds: BookBounds,
+  direction: TurnDirection,
+  progress: number,
+): BookPoint {
+  const span = bounds.pageWidth * 0.92;
+  if (direction === "forward") {
+    return { x: start.x + progress * span, y: start.y };
+  }
+  return { x: start.x - progress * span, y: start.y };
+}
 
 interface ComicFlipPageProps {
   src: string;
@@ -66,11 +155,18 @@ export default function HorizonReader({
   const firstElePosition = useFirstElePosition(tag);
   const spreads = useMemo(() => buildHorizonSpreads(imgList), [imgList]);
 
-  const bookRef = useRef<{ pageFlip: () => PageFlipApi } | null>(null);
+  const bookRef = useRef<{ pageFlip: () => PageFlipSurface } | null>(null);
   const bookAreaRef = useRef<HTMLDivElement>(null);
   const spreadIndexRef = useRef(0);
-  const wheelLockedRef = useRef(false);
-  const wheelAccumRef = useRef(0);
+  const wheelFoldRef = useRef<WheelFoldSession>({
+    active: false,
+    direction: null,
+    accumulated: 0,
+    startPos: { x: 0, y: 0 },
+    pos: { x: 0, y: 0 },
+    idleTimer: null,
+  });
+  const cornerDragRef = useRef({ active: false, pos: { x: 0, y: 0 } });
 
   const [spreadIndex, setSpreadIndex] = useState(() =>
     getSpreadIndexForPage(spreads, firstElePosition),
@@ -82,16 +178,117 @@ export default function HorizonReader({
 
   spreadIndexRef.current = spreadIndex;
 
-  interface PageFlipApi {
-    flipNext: (corner?: "top" | "bottom") => void;
-    flipPrev: (corner?: "top" | "bottom") => void;
-    turnToPage: (pageNum: number) => void;
-    getCurrentPageIndex: () => number;
-  }
-
-  const getPageFlip = useCallback((): PageFlipApi | null => {
+  const getPageFlip = useCallback((): PageFlipSurface | null => {
     return bookRef.current?.pageFlip?.() ?? null;
   }, []);
+
+  const getWheelCornerStart = useCallback(
+    (direction: TurnDirection, bounds: BookBounds): BookPoint => {
+      if (direction === "forward") {
+        return { x: bounds.left + 10, y: bounds.top + 1 };
+      }
+      return { x: bounds.left + bounds.width - 10, y: bounds.top + 1 };
+    },
+    [],
+  );
+
+  const resetWheelFoldSession = useCallback(() => {
+    const session = wheelFoldRef.current;
+    if (session.idleTimer !== null) {
+      window.clearTimeout(session.idleTimer);
+      session.idleTimer = null;
+    }
+    session.active = false;
+    session.direction = null;
+    session.accumulated = 0;
+    session.startPos = { x: 0, y: 0 };
+    session.pos = { x: 0, y: 0 };
+  }, []);
+
+  const finishWheelFold = useCallback(() => {
+    const session = wheelFoldRef.current;
+    if (session.idleTimer !== null) {
+      window.clearTimeout(session.idleTimer);
+      session.idleTimer = null;
+    }
+    if (!session.active) {
+      session.accumulated = 0;
+      session.direction = null;
+      return;
+    }
+
+    const pageFlip = getPageFlip();
+    if (pageFlip && pageFlip.getState() === "user_fold") {
+      const progress =
+        pageFlip.getFlipController().getCalculation()?.getFlippingProgress() ??
+        0;
+
+      if (progress >= WHEEL_FOLD_COMMIT_PROGRESS) {
+        pageFlip.userStop(session.pos);
+      } else {
+        pageFlip.userMove(session.startPos, false);
+        pageFlip.userStop(session.startPos);
+      }
+    }
+
+    resetWheelFoldSession();
+  }, [getPageFlip, resetWheelFoldSession]);
+
+  const applyWheelFoldDelta = useCallback(
+    (direction: TurnDirection, deltaY: number) => {
+      const pageFlip = getPageFlip();
+      const state = pageFlip?.getState();
+      if (!pageFlip || state === "flipping") return;
+
+      const bounds = pageFlip.getBoundsRect();
+      const session = wheelFoldRef.current;
+
+      if (session.active && session.direction !== direction) {
+        finishWheelFold();
+        return;
+      }
+
+      if (!session.active) {
+        if (session.direction && session.direction !== direction) {
+          session.accumulated = 0;
+        }
+        session.direction = direction;
+        session.accumulated += deltaY;
+
+        if (Math.abs(session.accumulated) < WHEEL_GESTURE_START_THRESHOLD) {
+          return;
+        }
+
+        session.startPos = getWheelCornerStart(direction, bounds);
+        session.active = true;
+        pageFlip.startUserTouch(session.startPos);
+      } else {
+        session.accumulated += deltaY;
+      }
+
+      const progress = getWheelDragProgress(
+        session.accumulated,
+        session.direction!,
+      );
+      session.pos = getPosForWheelProgress(
+        session.startPos,
+        bounds,
+        session.direction!,
+        progress,
+      );
+
+      pageFlip.userMove(session.pos, false);
+
+      if (session.idleTimer !== null) {
+        window.clearTimeout(session.idleTimer);
+      }
+      session.idleTimer = window.setTimeout(() => {
+        session.idleTimer = null;
+        finishWheelFold();
+      }, WHEEL_FOLD_IDLE_MS);
+    },
+    [finishWheelFold, getPageFlip, getWheelCornerStart],
+  );
 
   useLayoutEffect(() => {
     const area = bookAreaRef.current;
@@ -158,46 +355,37 @@ export default function HorizonReader({
 
   const turnPage = useCallback(
     (direction: TurnDirection) => {
-      if (animating || wheelLockedRef.current) return;
+      if (animating) return;
+
+      finishWheelFold();
 
       const pageFlip = getPageFlip();
       if (!pageFlip) return;
-
-      wheelLockedRef.current = true;
-      wheelAccumRef.current = 0;
 
       if (direction === "forward") {
         pageFlip.flipNext("top");
       } else {
         pageFlip.flipPrev("top");
       }
-
-      window.setTimeout(() => {
-        wheelLockedRef.current = false;
-      }, FLIP_DURATION_MS + 80);
     },
-    [animating, getPageFlip],
+    [animating, finishWheelFold, getPageFlip],
   );
 
   const goToSpread = useCallback(
     (index: number) => {
-      if (animating || wheelLockedRef.current || index === spreadIndexRef.current) {
+      if (animating || index === spreadIndexRef.current) {
         return;
       }
+
+      finishWheelFold();
 
       const pageFlip = getPageFlip();
       if (!pageFlip) return;
 
-      wheelLockedRef.current = true;
-      wheelAccumRef.current = 0;
       pageFlip.turnToPage(spreadIndexToPageIndex(index));
       syncSpreadFromFlip(spreadIndexToPageIndex(index));
-
-      window.setTimeout(() => {
-        wheelLockedRef.current = false;
-      }, 200);
     },
-    [animating, getPageFlip, syncSpreadFromFlip],
+    [animating, finishWheelFold, getPageFlip, syncSpreadFromFlip],
   );
 
   const turnPageRef = useRef(turnPage);
@@ -236,29 +424,87 @@ export default function HorizonReader({
         return;
       }
       event.preventDefault();
-      if (wheelLockedRef.current) return;
 
-      wheelAccumRef.current += event.deltaY;
-      if (Math.abs(wheelAccumRef.current) < WHEEL_THRESHOLD) return;
-
-      const direction = wheelAccumRef.current > 0 ? "forward" : "back";
-      wheelAccumRef.current = 0;
-      turnPageRef.current(direction);
+      const direction: TurnDirection = event.deltaY > 0 ? "forward" : "back";
+      applyWheelFoldDelta(direction, event.deltaY);
     }
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       window.removeEventListener("wheel", onWheel);
+      finishWheelFold();
       document.body.classList.remove("overflow-y-hidden");
       document.documentElement.classList.remove("comic-horizon-reading");
     };
-  }, []);
+  }, [applyWheelFoldDelta, finishWheelFold]);
+
+  useEffect(() => {
+    const area = bookAreaRef.current;
+    if (!area || loading) return undefined;
+
+    function getDistElement() {
+      return area.querySelector<HTMLElement>(".stf__block");
+    }
+
+    function onMouseDown(event: MouseEvent) {
+      if (event.button !== 0) return;
+
+      const pageFlip = getPageFlip();
+      const distEl = getDistElement();
+      if (!pageFlip || !distEl || pageFlip.getState() === "flipping") return;
+      if (!distEl.contains(event.target as Node)) return;
+
+      const bounds = pageFlip.getBoundsRect();
+      const pos = getDistPos(event.clientX, event.clientY, distEl);
+      if (!isBookEdgeOrCorner(pos, bounds)) return;
+
+      finishWheelFold();
+      pageFlip.startUserTouch(pos);
+      cornerDragRef.current = { active: true, pos };
+      event.preventDefault();
+    }
+
+    function onMouseMove(event: MouseEvent) {
+      if (!cornerDragRef.current.active) return;
+
+      const pageFlip = getPageFlip();
+      const distEl = getDistElement();
+      if (!pageFlip || !distEl) return;
+
+      const pos = getDistPos(event.clientX, event.clientY, distEl);
+      cornerDragRef.current.pos = pos;
+      pageFlip.userMove(pos, false);
+    }
+
+    function onMouseUp(event: MouseEvent) {
+      if (!cornerDragRef.current.active) return;
+
+      const pageFlip = getPageFlip();
+      const distEl = getDistElement();
+      if (!pageFlip || !distEl) return;
+
+      const pos = getDistPos(event.clientX, event.clientY, distEl);
+      pageFlip.userStop(pos);
+      cornerDragRef.current.active = false;
+    }
+
+    area.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+
+    return () => {
+      area.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      cornerDragRef.current.active = false;
+    };
+  }, [finishWheelFold, getPageFlip, loading]);
 
   useEffect(() => {
     if (!autoScroll || animating) return undefined;
 
     const timer = window.setInterval(() => {
-      if (wheelLockedRef.current) return;
+      if (animating) return;
       const current = spreadIndexRef.current;
       if (current >= spreads.length - 1) return;
       turnPageRef.current("forward");
@@ -274,9 +520,15 @@ export default function HorizonReader({
     [syncSpreadFromFlip],
   );
 
-  const onChangeState = useCallback((event: { data: string }) => {
-    setAnimating(event.data === "flipping");
-  }, []);
+  const onChangeState = useCallback(
+    (event: { data: string }) => {
+      setAnimating(event.data === "flipping");
+      if (event.data === "read") {
+        resetWheelFoldSession();
+      }
+    },
+    [resetWheelFoldSession],
+  );
 
   const onInit = useCallback(
     (event: { data: { page: number } }) => {
@@ -317,9 +569,9 @@ export default function HorizonReader({
             drawShadow
             flippingTime={FLIP_DURATION_MS}
             maxShadowOpacity={0.55}
-            showPageCorners
+            showPageCorners={false}
             disableFlipByClick
-            useMouseEvents
+            useMouseEvents={false}
             mobileScrollSupport={false}
             startPage={firstElePosition}
             startZIndex={0}
