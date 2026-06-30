@@ -1,64 +1,35 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
   type MouseEvent,
 } from "react";
 import classNames from "classnames";
-import { IComic, IImgList } from "@shared/type";
+import { IComic } from "@shared/type";
 import { flattenImgList } from "@shared/flattenImgList";
-import { getComicReadProgressPercent } from "@shared/comicReadProgress";
 import { getIPC } from "@client/ipc";
 import styles from "./index.module.css";
 
-const PREVIEW_COUNT = 10;
 const CAROUSEL_INTERVAL_MS = 520;
 const CAROUSEL_FADE_MS = 480;
+const HOVER_PREVIEW_COUNT = 10;
+const SWEEP_DURATION_MS = 900;
+const CARD_TILT_MAX_DEG = 4;
+const CARD_HOVER_LIFT_PX = 3;
+const CARD_HOVER_SCALE = 1.02;
 
-const previewCache = new Map<string, string[]>();
-const imgListCache = new Map<string, IImgList>();
-const progressCache = new Map<string, number>();
-const pendingFetches = new Map<string, Promise<string[]>>();
-const pendingImgListFetches = new Map<string, Promise<IImgList>>();
-
-async function loadComicImgList(comicId: string): Promise<IImgList> {
-  const cached = imgListCache.get(comicId);
-  if (cached) {
-    return cached;
-  }
-
-  let pending = pendingImgListFetches.get(comicId);
-  if (!pending) {
-    pending = (async () => {
-      const ipc = await getIPC();
-      const imgList = await ipc.fetchImgList(comicId);
-      imgListCache.set(comicId, imgList);
-      pendingImgListFetches.delete(comicId);
-      return imgList;
-    })();
-    pendingImgListFetches.set(comicId, pending);
-  }
-
-  return pending;
+function clampTilt(value: number, maxDeg: number) {
+  return Math.max(-maxDeg, Math.min(maxDeg, value));
 }
 
-function getProgressCacheKey(comic: IComic) {
-  return `${comic.id}:${comic.tag || ""}:${comic.position ?? 0}`;
-}
-
-async function loadComicProgress(comic: IComic): Promise<number> {
-  const cacheKey = getProgressCacheKey(comic);
-  const cached = progressCache.get(cacheKey);
-  if (cached != null) {
-    return cached;
-  }
-
-  const imgList = await loadComicImgList(comic.id);
-  const percent = getComicReadProgressPercent(comic, imgList);
-  progressCache.set(cacheKey, percent);
-  return percent;
+function tiltFromPointerOffset(offset: number, maxDeg: number) {
+  const normalized = offset * 2;
+  const curved =
+    Math.sign(normalized) * Math.pow(Math.abs(normalized), 1.45);
+  return clampTilt(curved * maxDeg, maxDeg);
 }
 
 async function preloadImages(urls: string[]) {
@@ -75,27 +46,6 @@ async function preloadImages(urls: string[]) {
   );
 }
 
-async function loadPreviewImages(comicId: string): Promise<string[]> {
-  const cached = previewCache.get(comicId);
-  if (cached) {
-    return cached;
-  }
-
-  let pending = pendingFetches.get(comicId);
-  if (!pending) {
-    pending = (async () => {
-      const imgList = await loadComicImgList(comicId);
-      const urls = flattenImgList(imgList).slice(0, PREVIEW_COUNT);
-      previewCache.set(comicId, urls);
-      pendingFetches.delete(comicId);
-      return urls;
-    })();
-    pendingFetches.set(comicId, pending);
-  }
-
-  return pending;
-}
-
 interface ComicWallCardProps {
   comic: IComic;
   onClick: (e: MouseEvent<HTMLDivElement>) => void;
@@ -108,14 +58,24 @@ export default function ComicWallCard({
   onContextMenu,
 }: ComicWallCardProps) {
   const mountedRef = useRef(true);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardMatRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
-  const [previewUrls, setPreviewUrls] = useState<string[] | null>(() =>
-    previewCache.get(comic.id) ?? null,
-  );
   const [frameIndex, setFrameIndex] = useState(0);
   const [imagesReady, setImagesReady] = useState(false);
-  const [progressPercent, setProgressPercent] = useState<number | null>(null);
+  const [fetchedPreviewUrls, setFetchedPreviewUrls] = useState<string[]>([]);
+  const [sweepDone, setSweepDone] = useState(false);
+  const [sweepKey, setSweepKey] = useState(0);
+
+  const storedPreviewUrls = useMemo(
+    () => comic.previewUrls?.filter(Boolean) ?? [],
+    [comic.previewUrls],
+  );
+  const progressPercent = comic.readProgressPercent ?? 0;
+  const previewUrls = useMemo(
+    () =>
+      storedPreviewUrls.length >= 2 ? storedPreviewUrls : fetchedPreviewUrls,
+    [fetchedPreviewUrls, storedPreviewUrls],
+  );
 
   useEffect(() => {
     mountedRef.current = true;
@@ -125,51 +85,41 @@ export default function ComicWallCard({
   }, []);
 
   useEffect(() => {
-    const card = cardRef.current;
-    if (!card) {
+    if (!hovered || storedPreviewUrls.length >= 2) {
+      setFetchedPreviewUrls([]);
       return undefined;
     }
 
     let cancelled = false;
 
-    const loadProgress = () => {
-      void loadComicProgress(comic).then((percent) => {
-        if (!cancelled && mountedRef.current) {
-          setProgressPercent(percent);
+    void (async () => {
+      try {
+        const ipc = await getIPC();
+        const imgList = await ipc.fetchImgList(comic.id);
+        const urls = flattenImgList(imgList)
+          .filter(Boolean)
+          .slice(0, HOVER_PREVIEW_COUNT);
+
+        if (!cancelled && mountedRef.current && urls.length >= 2) {
+          setFetchedPreviewUrls(urls);
         }
-      });
-    };
-
-    if (typeof IntersectionObserver === "undefined") {
-      loadProgress();
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries[0]?.isIntersecting) {
-          return;
-        }
-        observer.disconnect();
-        loadProgress();
-      },
-      { rootMargin: "120px" },
-    );
-
-    observer.observe(card);
+      } catch (error) {
+        console.warn("hover preview fetch failed:", comic.id, error);
+      }
+    })();
 
     return () => {
       cancelled = true;
-      observer.disconnect();
     };
-  }, [comic.id, comic.tag, comic.position]);
+  }, [comic.id, hovered, storedPreviewUrls.length]);
 
-  const carouselUrls =
-    hovered && previewUrls && previewUrls.length >= 2 ? previewUrls : null;
+  const carouselUrls = useMemo(
+    () => (hovered && previewUrls.length >= 2 ? previewUrls : null),
+    [hovered, previewUrls],
+  );
   const carouselActive =
-    Boolean(carouselUrls && imagesReady) && carouselUrls!.length >= 2;
+    Boolean(carouselUrls && imagesReady && sweepDone) &&
+    carouselUrls!.length >= 2;
   const activeIndex = carouselActive
     ? frameIndex % carouselUrls!.length
     : 0;
@@ -209,50 +159,116 @@ export default function ComicWallCard({
     };
   }, [carouselActive, carouselUrls]);
 
-  const onPointerEnter = useCallback(() => {
-    setHovered(true);
-    setFrameIndex(0);
-
-    const cached = previewCache.get(comic.id);
-    if (cached) {
-      setPreviewUrls(cached);
-      return;
+  useEffect(() => {
+    if (!hovered) {
+      return undefined;
     }
 
-    loadPreviewImages(comic.id).then((urls) => {
-      if (!mountedRef.current) {
+    const timer = window.setTimeout(() => {
+      if (mountedRef.current) {
+        setSweepDone(true);
+      }
+    }, SWEEP_DURATION_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [hovered, sweepKey]);
+
+  const getTiltTarget = useCallback(() => {
+    return cardMatRef.current?.parentElement ?? null;
+  }, []);
+
+  const updateCardTilt = useCallback(
+    (clientX: number, clientY: number) => {
+      const target = getTiltTarget();
+      if (!target) {
         return;
       }
-      setPreviewUrls(urls);
-    });
-  }, [comic.id]);
+
+      const rect = target.getBoundingClientRect();
+      if (!rect.width || !rect.height) {
+        return;
+      }
+
+      const px = (clientX - rect.left) / rect.width - 0.5;
+      const py = (clientY - rect.top) / rect.height - 0.5;
+      const rotateY = tiltFromPointerOffset(px, CARD_TILT_MAX_DEG);
+      const rotateX = tiltFromPointerOffset(-py, CARD_TILT_MAX_DEG);
+
+      target.style.transform = `perspective(2000px) translate3d(0, -${CARD_HOVER_LIFT_PX}px, 0) scale(${CARD_HOVER_SCALE}) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+    },
+    [getTiltTarget],
+  );
+
+  const resetCardTilt = useCallback(() => {
+    const target = getTiltTarget();
+    if (!target) {
+      return;
+    }
+    target.style.transform = "";
+  }, [getTiltTarget]);
+
+  const onPointerEnter = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      setHovered(true);
+      setSweepDone(false);
+      setSweepKey((key) => key + 1);
+      setFrameIndex(0);
+      updateCardTilt(event.clientX, event.clientY);
+    },
+    [updateCardTilt],
+  );
+
+  const onPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      updateCardTilt(event.clientX, event.clientY);
+    },
+    [updateCardTilt],
+  );
 
   const onPointerLeave = useCallback(() => {
     setHovered(false);
+    setSweepDone(false);
     setFrameIndex(0);
     setImagesReady(false);
+    setFetchedPreviewUrls([]);
+    resetCardTilt();
+  }, [resetCardTilt]);
+
+  const onSweepEnd = useCallback(() => {
+    setSweepDone(true);
   }, []);
 
   const contentStyle = {
     "--carousel-fade-ms": `${CAROUSEL_FADE_MS}ms`,
   } as CSSProperties;
 
+  const sweepStyle = {
+    "--card-sweep-ms": `${SWEEP_DURATION_MS}ms`,
+  } as CSSProperties;
+
   return (
-    <div ref={cardRef} className={styles.cardMat}>
+    <div
+      ref={cardMatRef}
+      className={styles.cardMat}
+      onPointerEnter={onPointerEnter}
+      onPointerMove={onPointerMove}
+      onPointerLeave={onPointerLeave}
+    >
       <div
         className={styles.cardInner}
         data-id={comic.id}
         data-cover={comic.cover}
+        data-inner-page={storedPreviewUrls[1] ?? ""}
         onClick={onClick}
         onContextMenu={onContextMenu}
-        onPointerEnter={onPointerEnter}
-        onPointerLeave={onPointerLeave}
       >
         <div className={styles["card-content"]} style={contentStyle}>
           {carouselActive
             ? carouselUrls!.map((url, index) => (
                 <img
-                  key={url}
+                  key={`${url}-${index}`}
                   src={url}
                   alt={comic.name}
                   loading="lazy"
@@ -276,12 +292,20 @@ export default function ComicWallCard({
               />
             )}
         </div>
-        <div className={styles.cardShade} />
-        {progressPercent != null ? (
-          <div className={styles.cardProgress} aria-label={`阅读进度 ${progressPercent}`}>
-            {progressPercent}
+        {hovered ? (
+          <div
+            className={styles.cardSweep}
+            key={sweepKey}
+            style={sweepStyle}
+            aria-hidden
+          >
+            <span className={styles.cardSweepBeam} onAnimationEnd={onSweepEnd} />
           </div>
         ) : null}
+        <div className={styles.cardShade} />
+        <div className={styles.cardProgress} aria-label={`阅读进度 ${progressPercent}`}>
+          {progressPercent}
+        </div>
         <div className={styles.cardTitle} title={comic.name}>
           {comic.name}
         </div>

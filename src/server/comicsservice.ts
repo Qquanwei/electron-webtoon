@@ -16,7 +16,9 @@ import {
 } from "../shared/shortcuts";
 import { IDecompressProgress, IDLE_DECOMPRESS_PROGRESS } from "../shared/type";
 import { emitAppEvent } from "../shared/ipc/events";
-import { makeComicFileUrl } from "./comic-file-protocol";
+import { getComicReadProgressPercent } from "../shared/comicReadProgress";
+import { flattenImgList } from "../shared/flattenImgList";
+import { makeComicFileUrl, COMIC_FILE_SCHEME } from "./comic-file-protocol";
 
 function isDirectory(fullpath: string) {
   return fs.lstatSync(fullpath).isDirectory();
@@ -165,11 +167,17 @@ async function getCoverUrl(comicPath: string, makeUrl: IMakeUrl) {
   }
 }
 
+const PREVIEW_COUNT = 10;
+
 interface ILibraryComic {
   // 只有新版本会有这个字段
   coverFileName?: string;
   // 压缩文件地址
   compressFilePath?: string;
+  /** 首页轮播预览图本地路径 */
+  previewFileNames?: string[];
+  /** 阅读进度 0–100 */
+  readProgressPercent?: number;
   name: string;
   path: string;
   id: string;
@@ -213,22 +221,158 @@ export default class ComicService {
     this.makeUrl = makeUrl || makeComicFileUrl;
   }
 
+  private resolveFileRef(fileRef: string): string {
+    if (!fileRef) {
+      return fileRef;
+    }
+
+    if (fileRef.startsWith(`${COMIC_FILE_SCHEME}://`)) {
+      try {
+        const url = new URL(fileRef);
+        return decodeURIComponent(url.searchParams.get("path") ?? fileRef);
+      } catch {
+        return fileRef;
+      }
+    }
+
+    return fileRef;
+  }
+
+  private toPreviewUrls(previewFileNames?: string[]) {
+    if (!previewFileNames?.length) {
+      return undefined;
+    }
+
+    const previewUrls = previewFileNames
+      .map((fileName) => this.makeUrl(this.resolveFileRef(fileName)))
+      .filter(Boolean);
+
+    return previewUrls.length ? previewUrls : undefined;
+  }
+
+  private async ensurePreviewFileNames(
+    comic: ILibraryComic,
+  ): Promise<string[] | undefined> {
+    const normalized = comic.previewFileNames?.map((fileName) =>
+      this.resolveFileRef(fileName),
+    );
+    const hasStoredPreview = Boolean(normalized?.length);
+    const needsMigration = comic.previewFileNames?.some((fileName) =>
+      fileName.startsWith(`${COMIC_FILE_SCHEME}://`),
+    );
+
+    if (hasStoredPreview && !needsMigration) {
+      return normalized;
+    }
+
+    let previewFileNames = normalized;
+
+    if (!previewFileNames?.length) {
+      try {
+        const imgList = sortImgListByName(
+          await buildComicImgList(comic.path, 100, (filename) => filename),
+        );
+        const flatPages = flattenImgList(imgList);
+        if (flatPages.length) {
+          previewFileNames = flatPages
+            .slice(0, PREVIEW_COUNT)
+            .map((page) => this.resolveFileRef(page));
+        }
+      } catch (error) {
+        console.warn("preview backfill failed:", comic.id, error);
+      }
+    }
+
+    if (!previewFileNames?.length) {
+      return undefined;
+    }
+
+    if (
+      needsMigration ||
+      !hasStoredPreview ||
+      comic.previewFileNames?.some(
+        (fileName, index) => fileName !== previewFileNames![index],
+      )
+    ) {
+      comic.previewFileNames = previewFileNames;
+      const library = this.store.get("library");
+      const target = library.find((item) => item.id === comic.id);
+      if (target) {
+        target.previewFileNames = previewFileNames;
+        this.store.set("library", library);
+      }
+    }
+
+    return previewFileNames;
+  }
+
   async getComicList(): Promise<IComic[]> {
     const library = this.store.get("library");
-    return Promise.all(
-      library.map(async (comic: ILibraryComic) => {
-        if (comic.coverFileName) {
-          return {
-            ...comic,
-            cover: this.makeUrl(comic.coverFileName),
-          };
-        }
-        return {
-          ...comic,
-          cover: (await getCoverUrl(comic.path, this.makeUrl)) || "",
-        };
-      }),
-    );
+    return Promise.all(library.map((comic) => this.toPublicComic(comic)));
+  }
+
+  private async toPublicComic(comic: ILibraryComic): Promise<IComic> {
+    let cover = "";
+    if (comic.coverFileName) {
+      cover = this.makeUrl(this.resolveFileRef(comic.coverFileName));
+    } else {
+      cover = (await getCoverUrl(comic.path, this.makeUrl)) || "";
+    }
+
+    const previewFileNames = await this.ensurePreviewFileNames(comic);
+    const previewUrls = this.toPreviewUrls(previewFileNames);
+
+    return {
+      ...comic,
+      cover,
+      previewUrls,
+    };
+  }
+
+  private syncComicLibraryMetadata(
+    comic: ILibraryComic,
+    imgList: ReturnType<typeof sortImgListByName>,
+  ) {
+    const flatPages = flattenImgList(imgList);
+    let changed = false;
+
+    if (!comic.previewFileNames?.length && flatPages.length) {
+      comic.previewFileNames = flatPages
+        .slice(0, PREVIEW_COUNT)
+        .map((page) => this.resolveFileRef(page));
+      changed = true;
+    }
+
+    const hasBookmark =
+      (comic.tag && comic.tag.trim() !== "") ||
+      (comic.position != null &&
+        String(comic.position) !== "" &&
+        Number(comic.position) > 0);
+
+    if (comic.readProgressPercent == null && hasBookmark) {
+      comic.readProgressPercent = getComicReadProgressPercent(
+        { tag: comic.tag, position: comic.position },
+        imgList,
+      );
+      changed = true;
+    }
+
+    return changed;
+  }
+
+  private persistLibraryMetadata(
+    id: string,
+    imgList: ReturnType<typeof sortImgListByName>,
+  ) {
+    const library = this.store.get("library");
+    const comic = library.find((item) => item.id === id);
+    if (!comic) {
+      return;
+    }
+
+    if (this.syncComicLibraryMetadata(comic, imgList)) {
+      this.store.set("library", library);
+    }
   }
 
   async getComicImgList(id: string) {
@@ -247,15 +391,20 @@ export default class ComicService {
     const comic = comics[0];
     const img = await buildComicImgList(comic.path, 100, this.makeUrl);
     const newimg = sortImgListByName(img);
+    this.persistLibraryMetadata(id, newimg);
     return newimg;
   }
 
   // 生成一个新的漫画书，包括id，预览图
   async buildNewComic(pathstr: string): Promise<ILibraryComic> {
     const ps = pathstr.split(path.sep);
-    const coverUrl = await getCoverUrl(pathstr, (filename: string) => {
-      return filename;
-    });
+    const imgList = sortImgListByName(
+      await buildComicImgList(pathstr, 100, (filename: string) => filename),
+    );
+    const flatPages = flattenImgList(imgList);
+    const coverUrl = flatPages[0] || flatPages[1] || null;
+    const previewFileNames = flatPages.slice(0, PREVIEW_COUNT);
+
     return await new Promise((resolve, reject) => {
       imageSize(
         coverUrl || "",
@@ -270,6 +419,10 @@ export default class ComicService {
             width: dimen.width,
             height: dimen.height,
             coverFileName: coverUrl || undefined,
+            previewFileNames: previewFileNames.length
+              ? previewFileNames
+              : undefined,
+            readProgressPercent: 0,
             name: ps[ps.length - 1],
             id: uuidv4(),
           });
@@ -637,6 +790,22 @@ export default class ComicService {
     if (comics.length) {
       comics[0].tag = tag;
       comics[0].position = position;
+
+      try {
+        const img = await buildComicImgList(comics[0].path, 100, this.makeUrl);
+        const imgList = sortImgListByName(img);
+        comics[0].readProgressPercent = getComicReadProgressPercent(
+          { tag, position },
+          imgList,
+        );
+        if (!comics[0].previewFileNames?.length) {
+          comics[0].previewFileNames = flattenImgList(imgList)
+            .slice(0, PREVIEW_COUNT)
+            .map((page) => this.resolveFileRef(page));
+        }
+      } catch (error) {
+        console.warn("saveComicTag progress update failed:", error);
+      }
 
       library = library
         .map((item, index) => {

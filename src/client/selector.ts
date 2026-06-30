@@ -37,7 +37,37 @@ export const comicDetail = selectorFamily({
   },
 });
 
-export const nextOpenComicInfo = atom<Partial<IComic> | null>({
+export interface ComicOpenInfo {
+  cover: string;
+  comicId?: string;
+  /** 翻开封面后露出的内页（通常为第 2 页） */
+  innerPage?: string;
+  originRect?: {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  };
+}
+
+export type ComicOpenPhase =
+  | "idle"
+  | "fly-start"
+  | "fly-active"
+  | "open-active"
+  | "loading";
+
+export const nextOpenComicInfo = atom<ComicOpenInfo | null>({
   key: "next open comic info",
   default: null,
+});
+
+export const comicOpenPhase = atom<ComicOpenPhase>({
+  key: "comic open phase",
+  default: "idle",
+});
+
+export const comicReaderLoading = atom<boolean>({
+  key: "comic reader loading",
+  default: false,
 });

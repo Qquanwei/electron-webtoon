@@ -3,13 +3,181 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   grid-auto-rows: 150px;
   grid-auto-flow: row dense;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 0 0 16px;
+  padding: 0 10px 16px;
+}
+
+.pageRoot {
+  --manga-paper: #f7f7f5;
+
+  position: relative;
+  isolation: isolate;
+  min-height: 100%;
+  width: 100%;
+  scroll-behavior: smooth;
+  color: #121212;
+  background-color: var(--manga-paper);
+}
+
+.pageRoot::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--manga-paper);
+  background-image:
+    radial-gradient(ellipse 130% 55% at 50% -8%, rgb(255 255 255 / 0.72), transparent 58%),
+    radial-gradient(ellipse 95% 70% at 50% 108%, rgb(0 0 0 / 0.04), transparent 62%),
+    repeating-linear-gradient(
+      90deg,
+      rgb(0 0 0 / 0.014) 0,
+      rgb(0 0 0 / 0.014) 1px,
+      transparent 1px,
+      transparent 48px
+    ),
+    radial-gradient(circle, rgb(0 0 0 / 0.038) 0.65px, transparent 0.65px);
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    11px 11px;
+  background-position:
+    center top,
+    center bottom,
+    center,
+    0 0;
+}
+
+.pageExpanded {
+  padding-top: calc(60px + 22px + 6px);
+}
+
+.pageCollapsed {
+  padding-top: 0;
+}
+
+.libraryHeader {
+  position: relative;
+  z-index: 1;
+  padding: 12px;
+}
+
+.libraryHeaderCollapsed {
+  padding: 8px 12px 10px;
+}
+
+.libraryTitle {
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #8f8f8f;
+}
+
+@media screen and (min-width: 640px) {
+  .libraryTitle {
+    font-size: 1.5rem;
+  }
+
+  .libraryMeta {
+    font-size: 1rem;
+  }
+}
+
+.libraryMeta {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #8f8f8f;
+}
+
+.librarySearchHint {
+  color: #121212;
+}
+
+.navShell {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  height: 60px;
+  overflow: hidden;
+  border-bottom: 1px solid rgb(18 18 18 / 0.07);
+  box-shadow: 0 2px 10px rgb(18 18 18 / 0.05);
+  transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.navShellCollapsed {
+  transform: translateY(-100%);
+  border-bottom-color: transparent;
+  box-shadow: none;
+}
+
+.pageCollapsed::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 35;
+  height: 0;
+  pointer-events: none;
+  border-bottom: 1px solid rgb(18 18 18 / 0.08);
+  box-shadow: 0 4px 14px rgb(18 18 18 / 0.06);
+}
+
+.bookmarkTab {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgb(18 18 18 / 0.14);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  background: rgb(247 247 245 / 0.92);
+  backdrop-filter: blur(6px);
+  color: #8f8f8f;
+  cursor: pointer;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 8px rgb(18 18 18 / 0.06);
+  transition:
+    top 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.bookmarkTabExpanded {
+  top: 60px;
+}
+
+.bookmarkTab:hover {
+  background: #121212;
+  color: #fff;
+}
+
+.bookmarkTab:active {
+  transform: translateX(-50%) translateY(1px);
+}
+
+.bookmarkIcon {
+  opacity: 1;
 }
 
 /* ── 基础卡片 / 画芯 ── */
 .card {
+  --card-shadow: 0 2px 10px rgb(18 18 18 / 0.08);
+  --card-shadow-hover: 0 6px 18px rgb(18 18 18 / 0.11);
+
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
@@ -17,26 +185,444 @@
   flex-direction: column;
   cursor: pointer;
   transform-origin: center center;
+  transform-style: preserve-3d;
+  box-shadow: var(--card-shadow);
+  border: 1px solid #b8b8b4;
+  border-radius: 4px;
   transition:
-    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.22s ease-out,
     box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   flex-shrink: 0;
   flex-grow: 1;
+  isolation: isolate;
 }
 
 .card:hover {
-  transform: translateY(-5px) scale(1.04);
   z-index: 20;
+  box-shadow: var(--card-shadow-hover);
 }
 
 .cardMat {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding: 8px;
+  padding: 0;
+  background: transparent;
+  z-index: 1;
+}
+
+/* 漫画常用色 */
+.frame_walnut {
+  --frame-accent: #e8324a;
+  --frame-accent-soft: rgb(232 50 74 / 0.35);
+}
+
+.frame_goldOrnate {
+  --frame-accent: #f0a500;
+  --frame-accent-deep: #c87800;
+  --frame-accent-soft: rgb(240 165 0 / 0.28);
+}
+
+.frame_blackThin {
+  --frame-accent: #56b4f8;
+  --frame-accent-soft: rgb(86 180 248 / 0.32);
+}
+
+.frame_blackBevel {
+  --frame-accent: #6ec8ff;
+  --frame-accent-alt: #c8d0dc;
+  --frame-accent-soft: rgb(110 200 255 / 0.24);
+}
+
+.frame_naturalWood {
+  --frame-accent: #b8c0cc;
+  --frame-accent-soft: rgb(184 192 204 / 0.42);
+}
+
+.frame_silverAccent {
+  --frame-accent: #4a90e2;
+  --frame-accent-soft: rgb(74 144 226 / 0.35);
+}
+
+.frame_champagne {
+  --frame-accent: #e8324a;
+  --frame-accent-alt: #ffc800;
+  --frame-accent-soft: rgb(232 50 74 / 0.35);
+}
+
+.frame_charcoal {
+  --frame-accent: #7c5cff;
+  --frame-accent-soft: rgb(124 92 255 / 0.32);
+}
+
+/* ── 1. 墨块厚框：赤色硬阴影 ── */
+.frame_walnut {
+  padding: 11px;
+  background: linear-gradient(145deg, #1a1a1a 0%, #121212 55%, #1f1214 100%);
+  box-shadow:
+    5px 5px 0 var(--frame-accent),
+    0 2px 10px rgb(18 18 18 / 0.08);
+}
+
+.frame_walnut::before {
+  inset: 5px;
+  border: 2px solid rgb(255 255 255 / 0.92);
+  box-shadow: inset 0 0 0 1px var(--frame-accent);
+}
+
+.frame_walnut::after {
+  inset: 10px;
+  border: 1px dashed var(--frame-accent-soft);
+}
+
+.frame_walnut .frameOrnament::before {
+  inset: 2px;
+  background:
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 0 0 / 14px 3px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 0 0 / 3px 14px no-repeat,
+    linear-gradient(#fff, #fff) 100% 0 / 14px 3px no-repeat,
+    linear-gradient(#fff, #fff) 100% 0 / 3px 14px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 0 100% / 14px 3px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 0 100% / 3px 14px no-repeat,
+    linear-gradient(#fff, #fff) 100% 100% / 14px 3px no-repeat,
+    linear-gradient(#fff, #fff) 100% 100% / 3px 14px no-repeat;
+}
+
+/* ── 2. 分镜叠框：金黄双线 ── */
+.frame_goldOrnate {
+  padding: 9px;
+  background: #fffef8;
+  border: 4px solid var(--frame-accent);
+  outline: 3px solid #121212;
+  outline-offset: 5px;
+  box-shadow: 7px 7px 0 var(--frame-accent-deep);
+}
+
+.frame_goldOrnate::before {
+  inset: 7px;
+  border: 2px solid var(--frame-accent-deep);
+}
+
+.frame_goldOrnate::after {
+  inset: 13px;
+  border: 1px solid var(--frame-accent-soft);
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    rgb(240 165 0 / 0.07) 5px 6px
+  );
+}
+
+.frame_goldOrnate .frameOrnament::before {
+  inset: 0;
+  background:
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 6px 6px / 18px 4px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 6px 6px / 4px 18px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 6px) 6px / 18px 4px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 10px) 6px / 4px 18px no-repeat,
+    linear-gradient(var(--frame-accent-deep), var(--frame-accent-deep)) 6px calc(100% - 10px) / 18px 4px no-repeat,
+    linear-gradient(var(--frame-accent-deep), var(--frame-accent-deep)) 6px calc(100% - 24px) / 4px 18px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 6px) calc(100% - 10px) / 18px 4px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 10px) calc(100% - 24px) / 4px 18px no-repeat;
+}
+
+/* ── 3. 聚焦线稿：天蓝角标 ── */
+.frame_blackThin {
+  padding: 3px;
   background: #fff;
+  border: 1px solid var(--frame-accent);
+}
+
+.frame_blackThin::before {
+  inset: 0;
+  background:
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 4px 4px / 26px 4px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 4px 4px / 4px 26px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 4px) 4px / 26px 4px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 8px) 4px / 4px 26px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 4px calc(100% - 8px) / 26px 4px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 4px calc(100% - 30px) / 4px 26px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 4px) calc(100% - 8px) / 26px 4px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 8px) calc(100% - 30px) / 4px 26px no-repeat;
+}
+
+.frame_blackThin::after {
+  display: none;
+}
+
+.frame_blackThin .frameOrnament::before {
+  inset: 12px;
+  border: 1px dashed var(--frame-accent-soft);
+}
+
+/* ── 4. 速度线镜头：天蓝银速度感 ── */
+.frame_blackBevel {
+  padding: 10px;
+  background:
+    repeating-linear-gradient(
+      -28deg,
+      transparent 0 7px,
+      rgb(110 200 255 / 0.16) 7px 8px
+    ),
+    repeating-linear-gradient(
+      28deg,
+      transparent 0 11px,
+      rgb(200 208 220 / 0.16) 11px 12px
+    ),
+    linear-gradient(155deg, #1a2433 0%, #121212 52%, #1c2028 100%);
+  border: 3px solid var(--frame-accent);
+  box-shadow: inset 0 0 0 2px #121212;
+}
+
+.frame_blackBevel::before {
+  inset: 4px;
+  border: 1px solid rgb(255 255 255 / 0.35);
+  background:
+    conic-gradient(from -45deg at 0 0, var(--frame-accent) 0 22deg, transparent 22deg 360deg),
+    conic-gradient(from 135deg at 100% 0, var(--frame-accent-alt) 0 22deg, transparent 22deg 360deg),
+    conic-gradient(from 45deg at 0 100%, var(--frame-accent-alt) 0 22deg, transparent 22deg 360deg),
+    conic-gradient(from -135deg at 100% 100%, var(--frame-accent) 0 22deg, transparent 22deg 360deg);
+  background-size: 34% 34%;
+  background-repeat: no-repeat;
+  background-position: 0 0, 100% 0, 0 100%, 100% 100%;
+}
+
+.frame_blackBevel::after {
+  inset: 9px;
+  border: 1px solid var(--frame-accent-soft);
+}
+
+.frame_blackBevel .frameOrnament::before {
+  inset: 14px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 10px,
+    rgb(110 200 255 / 0.3) 10px 11px
+  );
+  mask-image: linear-gradient(90deg, #000, transparent 85%);
+}
+
+/* ── 5. 网点爆框：银色网点 ── */
+.frame_naturalWood {
+  padding: 10px;
+  background-color: #f2f4f7;
+  background-image: radial-gradient(
+    circle,
+    rgb(184 192 204 / 0.55) 0.55px,
+    transparent 0.55px
+  );
+  background-size: 5px 5px;
+  border: 4px solid var(--frame-accent);
+  box-shadow: 4px 4px 0 rgb(184 192 204 / 0.55);
+}
+
+.frame_naturalWood::before {
+  inset: 6px;
+  border: 2px solid rgb(184 192 204 / 0.75);
+  background:
+    radial-gradient(circle at 0 0, rgb(184 192 204 / 0.4) 0, transparent 52%),
+    radial-gradient(circle at 100% 0, rgb(184 192 204 / 0.4) 0, transparent 52%),
+    radial-gradient(circle at 0 100%, rgb(184 192 204 / 0.4) 0, transparent 52%),
+    radial-gradient(circle at 100% 100%, rgb(184 192 204 / 0.4) 0, transparent 52%);
+}
+
+.frame_naturalWood::after {
+  inset: 11px;
+  border: 1px solid var(--frame-accent-soft);
+  background: rgb(255 255 255 / 0.5);
+}
+
+.frame_naturalWood .frameOrnament::after {
+  inset: 3px;
+  border: none;
+  background:
+    radial-gradient(circle, var(--frame-accent) 1px, transparent 1px),
+    radial-gradient(circle, var(--frame-accent) 1px, transparent 1px),
+    radial-gradient(circle, var(--frame-accent) 1px, transparent 1px),
+    radial-gradient(circle, var(--frame-accent) 1px, transparent 1px);
+  background-size: 6px 6px;
+  background-position: 0 0, 100% 0, 0 100%, 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0.7;
+}
+
+/* ── 6. 裁切不对称：蓝色定位线 ── */
+.frame_silverAccent {
+  padding: 14px 9px 9px 14px;
+  background: #f8fbff;
+  border: 2px solid #121212;
+  border-top: 6px solid var(--frame-accent);
+  border-left: 6px solid var(--frame-accent);
+  box-shadow: 6px 4px 0 rgb(74 144 226 / 0.35);
+}
+
+.frame_silverAccent::before {
+  inset: auto auto 5px 5px;
+  width: 22px;
+  height: 22px;
+  border-left: 2px solid var(--frame-accent);
+  border-bottom: 2px solid var(--frame-accent);
+}
+
+.frame_silverAccent::after {
+  inset: auto 5px 5px auto;
+  width: 22px;
+  height: 22px;
+  border-right: 2px solid #ff7a2f;
+  border-bottom: 2px solid #ff7a2f;
+}
+
+.frame_silverAccent .frameOrnament::before {
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background:
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 50% 0 / 1px 100% no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 0 50% / 100% 1px no-repeat;
+  opacity: 0.85;
+}
+
+.frame_silverAccent .frameOrnament::after {
+  inset: 10px;
+  border: 1px solid var(--frame-accent-soft);
+  border-right: 3px solid #ff7a2f;
+  border-bottom: 3px solid rgb(255 122 47 / 0.45);
+}
+
+/* ── 7. 冲击角标：赤黄撞色 ── */
+.frame_champagne {
+  padding: 9px;
+  background:
+    conic-gradient(from 45deg at 0 0, var(--frame-accent) 0 24deg, #fff 24deg 360deg),
+    conic-gradient(from 225deg at 100% 0, var(--frame-accent-alt) 0 24deg, #fff 24deg 360deg),
+    conic-gradient(from 135deg at 100% 100%, var(--frame-accent) 0 24deg, #fff 24deg 360deg),
+    conic-gradient(from 315deg at 0 100%, var(--frame-accent-alt) 0 24deg, #fff 24deg 360deg),
+    #fff;
+  background-size: 30% 30%, 30% 30%, 30% 30%, 30% 30%, auto;
+  background-position: 0 0, 100% 0, 100% 100%, 0 100%, center;
+  background-repeat: no-repeat;
+  border: 3px solid #121212;
+  box-shadow: 5px 5px 0 var(--frame-accent);
+}
+
+.frame_champagne::before {
+  inset: 6px;
+  border: 2px solid #121212;
+}
+
+.frame_champagne::after {
+  inset: 12px;
+  background:
+    linear-gradient(135deg, transparent 48%, var(--frame-accent-soft) 48%, var(--frame-accent-soft) 52%, transparent 52%),
+    linear-gradient(-135deg, transparent 48%, rgb(255 200 0 / 0.35) 48%, rgb(255 200 0 / 0.35) 52%, transparent 52%);
+}
+
+.frame_champagne .frameOrnament::before {
+  inset: 2px;
+  background:
+    radial-gradient(circle at 0 0, var(--frame-accent) 0 2px, transparent 2px 100%),
+    radial-gradient(circle at 100% 0, var(--frame-accent-alt) 0 2px, transparent 2px 100%),
+    radial-gradient(circle at 0 100%, var(--frame-accent-alt) 0 2px, transparent 2px 100%),
+    radial-gradient(circle at 100% 100%, var(--frame-accent) 0 2px, transparent 2px 100%);
+  background-size: 18px 18px;
+  background-repeat: no-repeat;
+}
+
+.frame_champagne .frameOrnament::after {
+  inset: 16px;
+  border: 1px solid rgb(232 50 74 / 0.28);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    0 100%
+  );
+}
+
+/* ── 8. 交叉排线：紫色排线 ── */
+.frame_charcoal {
+  padding: 11px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 3px,
+      rgb(124 92 255 / 0.14) 3px 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 3px,
+      rgb(124 92 255 / 0.1) 3px 4px
+    ),
+    #f3f0ff;
+  border: 4px double var(--frame-accent);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.65);
+}
+
+.frame_charcoal::before {
+  inset: 7px;
+  border: 3px solid var(--frame-accent);
+  border-style: solid none none solid;
+}
+
+.frame_charcoal::after {
+  inset: 7px;
+  border: 3px solid #121212;
+  border-style: none solid solid none;
+}
+
+.frame_charcoal .frameOrnament::before {
+  inset: 13px;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0 8px,
+    rgb(124 92 255 / 0.22) 8px 9px
+  );
+}
+
+.frame_charcoal .frameOrnament::after {
+  inset: 13px;
+  border: 1px dashed var(--frame-accent-soft);
+}
+
+.frame_walnut:hover {
+  box-shadow:
+    7px 7px 0 var(--frame-accent),
+    0 10px 24px rgb(232 50 74 / 0.2);
+}
+
+.frame_goldOrnate:hover {
+  box-shadow:
+    9px 9px 0 var(--frame-accent-deep),
+    0 10px 24px rgb(240 165 0 / 0.22);
+}
+
+.frame_naturalWood:hover {
+  box-shadow:
+    6px 6px 0 rgb(184 192 204 / 0.62),
+    0 10px 24px rgb(184 192 204 / 0.22);
+}
+
+.frame_champagne:hover {
+  box-shadow:
+    7px 7px 0 var(--frame-accent),
+    0 10px 24px rgb(255 200 0 / 0.22);
+}
+
+.frame_blackBevel:hover {
+  box-shadow:
+    0 0 0 2px var(--frame-accent),
+    0 10px 28px rgb(86 180 248 / 0.22);
+}
+
+.frame_charcoal:hover {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.65),
+    0 10px 24px rgb(124 92 255 / 0.2);
 }
 
 .cardInner {
@@ -75,14 +661,64 @@
   z-index: 1;
 }
 
-.cardShade {
+.cardSweep {
   position: absolute;
   inset: 0;
   z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.cardSweepBeam {
+  position: absolute;
+  top: -45%;
+  left: -70%;
+  width: 42%;
+  height: 190%;
+  background: linear-gradient(
+    108deg,
+    transparent 0%,
+    rgb(255 255 255 / 0) 38%,
+    rgb(255 255 255 / 0.72) 50%,
+    rgb(255 255 255 / 0) 62%,
+    transparent 100%
+  );
+  transform: skewX(-18deg) translateX(-130%);
+  opacity: 0;
+  filter: blur(0.4px);
+  animation: cardSweepShine var(--card-sweep-ms, 900ms)
+    cubic-bezier(0.33, 1, 0.68, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes cardSweepShine {
+  0% {
+    transform: skewX(-18deg) translateX(-130%);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 0.95;
+  }
+
+  88% {
+    opacity: 0.85;
+  }
+
+  100% {
+    transform: skewX(-18deg) translateX(360%);
+    opacity: 0;
+  }
+}
+
+.cardShade {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
   background: linear-gradient(
     180deg,
-    rgb(15 23 42 / 0) 50%,
-    rgb(15 23 42 / 0.5) 100%
+    rgb(0 0 0 / 0) 52%,
+    rgb(0 0 0 / 0.62) 100%
   );
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -97,7 +733,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 3;
+  z-index: 4;
   padding: 20px 8px 7px;
   color: #fff;
   font-size: 12px;
@@ -115,11 +751,12 @@
   position: absolute;
   top: 6px;
   right: 6px;
-  z-index: 4;
+  z-index: 5;
   min-width: 28px;
   padding: 2px 6px;
-  border-radius: 999px;
-  background: rgb(15 23 42 / 0.72);
+  border: 1px solid #fff;
+  border-radius: 2px;
+  background: #121212;
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -128,190 +765,7 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   pointer-events: none;
-  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
-}
-
-/* ── 1. 深色胡桃木 + 白卡纸 ── */
-.frame_walnut {
-  padding: 11px;
-  background:
-    repeating-linear-gradient(
-      92deg,
-      rgb(0 0 0 / 0.06) 0 1px,
-      transparent 1px 5px
-    ),
-    linear-gradient(
-      180deg,
-      #5c3d28 0%,
-      #3d2817 35%,
-      #4a3020 65%,
-      #2e1e12 100%
-    );
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.12),
-    inset 0 -2px 6px rgb(0 0 0 / 0.35),
-    0 3px 10px rgb(0 0 0 / 0.28),
-    0 8px 20px rgb(0 0 0 / 0.12);
-}
-
-.frame_walnut:hover {
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.14),
-    0 6px 16px rgb(0 0 0 / 0.32),
-    0 14px 28px rgb(0 0 0 / 0.16);
-}
-
-/* ── 2. 欧式雕花金框 + 米白卡纸 ── */
-.frame_goldOrnate {
-  padding: 13px;
-  background:
-    repeating-linear-gradient(
-      45deg,
-      rgb(255 255 255 / 0.06) 0 2px,
-      transparent 2px 6px
-    ),
-    linear-gradient(
-      160deg,
-      #fff0a8 0%,
-      #d4af37 22%,
-      #a67c00 48%,
-      #f0d060 72%,
-      #c9a227 100%
-    );
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.45),
-    inset 0 0 0 3px rgb(120 90 10 / 0.35),
-    inset 0 -3px 8px rgb(0 0 0 / 0.2),
-    0 4px 14px rgb(0 0 0 / 0.3);
-}
-
-.frame_goldOrnate:hover {
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.5),
-    0 8px 22px rgb(0 0 0 / 0.35),
-    0 0 20px rgb(212 175 55 / 0.18);
-}
-
-/* ── 3. 极简细黑框 ── */
-.frame_blackThin {
-  padding: 3px;
-  background: #111;
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.06),
-    0 2px 8px rgb(0 0 0 / 0.22);
-}
-
-.frame_blackThin:hover {
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.08),
-    0 6px 18px rgb(0 0 0 / 0.3);
-}
-
-/* ── 4. 斜切黑框 + 白卡纸 ── */
-.frame_blackBevel {
-  padding: 9px;
-  background: linear-gradient(145deg, #444 0%, #1a1a1a 45%, #0a0a0a 100%);
-  box-shadow:
-    inset 2px 2px 0 rgb(255 255 255 / 0.1),
-    inset -2px -2px 0 rgb(0 0 0 / 0.5),
-    0 3px 12px rgb(0 0 0 / 0.28);
-}
-
-.frame_blackBevel:hover {
-  box-shadow:
-    inset 2px 2px 0 rgb(255 255 255 / 0.12),
-    0 8px 20px rgb(0 0 0 / 0.32);
-}
-
-/* ── 5. 浅色原木 ── */
-.frame_naturalWood {
-  padding: 10px;
-  background:
-    repeating-linear-gradient(
-      88deg,
-      rgb(0 0 0 / 0.04) 0 1px,
-      transparent 1px 7px
-    ),
-    linear-gradient(180deg, #d4b896 0%, #b8956a 50%, #a07850 100%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.25),
-    inset 0 -1px 3px rgb(0 0 0 / 0.15),
-    0 3px 10px rgb(0 0 0 / 0.2);
-}
-
-.frame_naturalWood:hover {
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.3),
-    0 6px 16px rgb(0 0 0 / 0.26);
-}
-
-/* ── 6. 深框 + 银色内衬 + 卡纸 ── */
-.frame_silverAccent {
-  padding: 10px;
-  background: linear-gradient(180deg, #3a3a3a 0%, #1e1e1e 100%);
-  box-shadow:
-    inset 0 0 0 2px #888,
-    inset 0 0 0 4px #222,
-    inset 0 0 0 5px #bbb,
-    0 3px 12px rgb(0 0 0 / 0.3);
-}
-
-.frame_silverAccent:hover {
-  box-shadow:
-    inset 0 0 0 2px #999,
-    inset 0 0 0 4px #222,
-    inset 0 0 0 5px #ccc,
-    0 8px 20px rgb(0 0 0 / 0.34);
-}
-
-/* ── 7. 香槟金细框 ── */
-.frame_champagne {
-  padding: 6px;
-  background: linear-gradient(
-    135deg,
-    #f5e6c8 0%,
-    #d4c4a0 40%,
-    #e8dcc4 70%,
-    #c9b896 100%
-  );
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.55),
-    inset 0 0 0 2px rgb(180 160 120 / 0.4),
-    0 2px 10px rgb(0 0 0 / 0.18);
-}
-
-.frame_champagne:hover {
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.6),
-    0 6px 16px rgb(0 0 0 / 0.24);
-}
-
-/* ── 8. 深灰纹理 + 银边 ── */
-.frame_charcoal {
-  padding: 9px;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgb(255 255 255 / 0.03) 0 1px,
-      transparent 1px 3px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      rgb(255 255 255 / 0.02) 0 1px,
-      transparent 1px 3px
-    ),
-    linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 100%);
-  box-shadow:
-    inset 0 0 0 1px #777,
-    inset 0 0 0 3px #1a1a1a,
-    0 3px 12px rgb(0 0 0 / 0.3);
-}
-
-.frame_charcoal:hover {
-  box-shadow:
-    inset 0 0 0 1px #888,
-    inset 0 0 0 3px #1a1a1a,
-    0 8px 20px rgb(0 0 0 / 0.34);
+  box-shadow: var(--card-shadow);
 }
 
 .emptyState {
@@ -322,11 +776,45 @@
   justify-content: center;
   min-height: 280px;
   padding: 48px 24px;
-  border-radius: 20px;
-  border: 1px dashed rgb(148 163 184 / 0.45);
-  background: rgb(255 255 255 / 0.65);
-  color: rgb(100 116 139);
+  border-radius: 4px;
+  border: 2px dashed #d8d8d4;
+  background: #fff;
+  color: #8f8f8f;
   text-align: center;
+}
+
+.emptyStateTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #121212;
+}
+
+.emptyStateHint {
+  margin-top: 8px;
+  max-width: 24rem;
+  font-size: 0.875rem;
+  line-height: 1.625;
+}
+
+.pageFooter {
+  border-top: 1px solid #d8d8d4;
+  padding: 24px 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #8f8f8f;
+}
+
+.pageFooterLink {
+  margin-left: 8px;
+  font-weight: 600;
+  color: #121212;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s ease;
+}
+
+.pageFooterLink:hover {
+  color: #8f8f8f;
 }
 
 @media screen and (max-width: 600px) {

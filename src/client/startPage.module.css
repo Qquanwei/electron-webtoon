@@ -1,0 +1,339 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+  animation: overlayIn 320ms ease-out;
+}
+
+.overlayTransition {
+  animation: overlayIn 180ms ease-out;
+}
+
+.overlayOut {
+  animation: overlayOut 420ms ease-in forwards;
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlayOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.ambient {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 50% -10%,
+      rgb(58 52 46 / 0.55) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 90% 70% at 50% 110%,
+      rgb(0 0 0 / 0.65) 0%,
+      transparent 60%
+    ),
+    linear-gradient(180deg, #1c1916 0%, #12100e 42%, #0a0a0a 100%);
+}
+
+.ambient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 120px rgb(0 0 0 / 0.45);
+  pointer-events: none;
+}
+
+.backdrop {
+  position: absolute;
+  inset: -12%;
+  z-index: 0;
+  width: 124%;
+  height: 124%;
+  object-fit: cover;
+  filter: blur(28px) saturate(1.08) brightness(0.42);
+  opacity: 0;
+  transform: scale(1.05);
+  transition: opacity 480ms ease;
+  pointer-events: none;
+}
+
+.backdropVisible {
+  opacity: 0.85;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 50% -10%,
+      rgb(0 0 0 / 0.38) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 90% 70% at 50% 110%,
+      rgb(0 0 0 / 0.52) 0%,
+      transparent 60%
+    );
+  box-shadow: inset 0 0 120px rgb(0 0 0 / 0.4);
+}
+
+.coverFly {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  transform: translate(-50%, -50%) translate(var(--fly-x), var(--fly-y))
+    scale(var(--fly-scale));
+  transition: transform 720ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.coverFlyArrived {
+  transform: translate(-50%, -50%);
+}
+
+.bookSpread {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  perspective: 1400px;
+}
+
+.pageReveal {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, #faf6ee 0%, #ebe3d6 55%, #ddd2c0 100%);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.06),
+    inset 0 -12px 24px rgb(0 0 0 / 0.06);
+}
+
+.pageRevealImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+.coverLeaf {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: transform 1100ms cubic-bezier(0.45, 0, 0.15, 1);
+}
+
+.coverLeafOpen {
+  transform: rotateY(-112deg);
+}
+
+.coverEdge {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 8px;
+  background: linear-gradient(
+    90deg,
+    rgb(0 0 0 / 0.28) 0%,
+    rgb(255 255 255 / 0.08) 40%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.coverFrame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1a1816;
+  box-shadow:
+    0 24px 60px rgb(0 0 0 / 0.55),
+    0 0 0 1px rgb(255 255 255 / 0.08),
+    inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+
+.coverImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brandStage {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.pageStack {
+  position: relative;
+  width: 88px;
+  height: 112px;
+}
+
+.page {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px 8px 8px 4px;
+  background: linear-gradient(145deg, #faf6ee 0%, #e8dfd0 100%);
+  box-shadow:
+    0 10px 28px rgb(0 0 0 / 0.35),
+    inset 0 0 0 1px rgb(255 255 255 / 0.35);
+  transform-origin: left center;
+}
+
+.page:nth-child(1) {
+  animation: pageFlip 2.4s ease-in-out infinite;
+}
+
+.page:nth-child(2) {
+  transform: rotate(-4deg) translateX(4px);
+  opacity: 0.72;
+}
+
+.page:nth-child(3) {
+  transform: rotate(-8deg) translateX(8px);
+  opacity: 0.45;
+}
+
+@keyframes pageFlip {
+  0%,
+  100% {
+    transform: rotateY(0deg);
+  }
+
+  40% {
+    transform: rotateY(-28deg);
+  }
+
+  60% {
+    transform: rotateY(-28deg);
+  }
+}
+
+.footer {
+  position: absolute;
+  left: 50%;
+  bottom: 48px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(280px, 72vw);
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 420ms ease;
+}
+
+.footerVisible {
+  opacity: 1;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.12);
+}
+
+.progressBar {
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #c9a96e 0%, #f0ddb0 50%, #c9a96e 100%);
+  background-size: 200% 100%;
+  animation: progressSlide 1.4s ease-in-out infinite;
+}
+
+@keyframes progressSlide {
+  0% {
+    transform: translateX(-120%);
+    background-position: 0% 50%;
+  }
+
+  100% {
+    transform: translateX(320%);
+    background-position: 100% 50%;
+  }
+}
+
+.caption {
+  margin: 0;
+  color: rgb(255 255 255 / 0.72);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-indent: 0.24em;
+  text-transform: uppercase;
+}
+
+.dots {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 2px;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.55);
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes dotPulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
