@@ -38,4 +38,4 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.AUTO_DISCOVERY }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: pnpm exec electron-builder --win --publish always
+        run: pnpm exec electron-builder --win --publish
