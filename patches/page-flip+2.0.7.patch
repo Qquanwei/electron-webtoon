@@ -34,6 +34,37 @@ index 6ff9134..cf5d266 100644
          } else {
              throw new Error('Invalid page');
          }
+diff --git a/node_modules/page-flip/src/Page/HTMLPage.ts b/node_modules/page-flip/src/Page/HTMLPage.ts
+index f077a84..87f41af 100644
+--- a/node_modules/page-flip/src/Page/HTMLPage.ts
++++ b/node_modules/page-flip/src/Page/HTMLPage.ts
+@@ -63,6 +63,8 @@ export class HTMLPage extends Page {
+ 
+         this.element.classList.remove('--simple');
+ 
++        const pageBackground = this.element.dataset.flipBg ?? '#faf6ee';
++
+         const commonStyle = `
+             display: block;
+             z-index: ${this.element.style.zIndex};
+@@ -70,6 +72,8 @@ export class HTMLPage extends Page {
+             top: 0;
+             width: ${pageWidth}px;
+             height: ${pageHeight}px;
++            background-color: ${pageBackground};
++            opacity: 1;
+         `;
+ 
+         density === PageDensity.HARD
+@@ -85,8 +89,6 @@ export class HTMLPage extends Page {
+         const newStyle =
+             commonStyle +
+             `
+-                backface-visibility: hidden;
+-                -webkit-backface-visibility: hidden;
+                 clip-path: none;
+                 -webkit-clip-path: none;
+             ` +
 diff --git a/node_modules/page-flip/src/Render/Render.ts b/node_modules/page-flip/src/Render/Render.ts
 index 927ee52..e084fb7 100644
 --- a/node_modules/page-flip/src/Render/Render.ts

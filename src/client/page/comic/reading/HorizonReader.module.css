@@ -62,7 +62,6 @@
   overflow: hidden;
   background: #f3ecdf;
   box-sizing: border-box;
-  contain: layout style paint;
 }
 
 .flipPageSheetEdge {
@@ -126,9 +125,6 @@
   object-fit: contain;
   object-position: center center;
   background: #faf6ee;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform: translateZ(0);
 }
 
 .progressPreview {

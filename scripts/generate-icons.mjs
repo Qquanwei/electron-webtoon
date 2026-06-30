@@ -1,6 +1,6 @@
 /**
  * 从项目根目录 icon.png 生成安装包与运行时使用的图标资源。
- * 输出：正方形、圆角、轻阴影，与首页纸白漫画风一致。
+ * 输出：正方形、圆角、透明底（桌面图标无白边）。
  */
 import { execSync } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
@@ -16,7 +16,7 @@ const ICONS_DIR = join(ASSETS, "icons");
 const MASTER_SIZE = 1024;
 const CONTENT_RATIO = 0.8;
 const CORNER_RATIO = 0.185;
-const PAPER = { r: 247, g: 247, b: 245, alpha: 1 };
+const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 
 const PNG_SIZES = [16, 24, 32, 48, 64, 96, 128, 256, 512, 1024];
 
@@ -59,10 +59,22 @@ async function buildRoundedArtwork(size) {
     .png()
     .toBuffer();
 
-  const shadow = await sharp(rounded)
+  const shadowAlpha = await sharp(rounded)
     .ensureAlpha()
+    .extractChannel("alpha")
     .blur(shadowBlur)
-    .linear(0.72, -(shadowBlur * 0.08))
+    .linear(0.28, 0)
+    .toBuffer();
+
+  const shadow = await sharp({
+    create: {
+      width: content,
+      height: content,
+      channels: 3,
+      background: { r: 0, g: 0, b: 0 },
+    },
+  })
+    .joinChannel(shadowAlpha)
     .png()
     .toBuffer();
 
@@ -71,7 +83,7 @@ async function buildRoundedArtwork(size) {
       width: size,
       height: size,
       channels: 4,
-      background: PAPER,
+      background: TRANSPARENT,
     },
   })
     .composite([
@@ -79,7 +91,7 @@ async function buildRoundedArtwork(size) {
         input: shadow,
         left: offset + shadowOffset,
         top: offset + shadowOffset,
-        blend: "multiply",
+        blend: "over",
       },
       {
         input: rounded,

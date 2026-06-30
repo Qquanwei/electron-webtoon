@@ -128,7 +128,12 @@ function renderBlurFlipPage(
   filter: number | undefined,
 ) {
     return (
-      <div ref={ref} className={styles.flipPageBlurTail} aria-hidden>
+      <div
+        ref={ref}
+        className={styles.flipPageBlurTail}
+        data-flip-bg="#1a1410"
+        aria-hidden
+      >
         <img
           src={src}
           alt=""
@@ -146,7 +151,14 @@ function renderBlurFlipPage(
 const ComicFlipPage = forwardRef<HTMLDivElement, ComicFlipPageProps>(
   function ComicFlipPage({ src, pageIndex, filter }, ref) {
     if (isHorizonFlipPadPage(pageIndex)) {
-      return <div ref={ref} className={styles.flipPageBlank} aria-hidden />;
+      return (
+        <div
+          ref={ref}
+          className={styles.flipPageBlank}
+          data-flip-bg="#1a1410"
+          aria-hidden
+        />
+      );
     }
 
     if (pageIndex === HORIZON_FLIP_BLUR_OPENING) {
@@ -161,6 +173,7 @@ const ComicFlipPage = forwardRef<HTMLDivElement, ComicFlipPageProps>(
       <div
         ref={ref}
         className={classNames(styles.flipPage, getFlipPageEdgeClass(pageIndex))}
+        data-flip-bg="#f3ecdf"
       >
         <img
           src={src}
