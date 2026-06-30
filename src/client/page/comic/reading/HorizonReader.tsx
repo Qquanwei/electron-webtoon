@@ -117,8 +117,8 @@ function getFlipPageImageAlignClass(pageIndex: number) {
   }
 
   return pageIndex % 2 === 1
-    ? styles.flipPageImageSlotRight
-    : styles.flipPageImageSlotLeft;
+    ? styles.flipPageImageSlotLeft
+    : styles.flipPageImageSlotRight;
 }
 
 interface ComicFlipPageProps {

@@ -7,8 +7,9 @@ import {
   type MouseEvent,
 } from "react";
 import classNames from "classnames";
-import { IComic } from "@shared/type";
+import { IComic, IImgList } from "@shared/type";
 import { flattenImgList } from "@shared/flattenImgList";
+import { getComicReadProgressPercent } from "@shared/comicReadProgress";
 import { getIPC } from "@client/ipc";
 import styles from "./index.module.css";
 
@@ -17,7 +18,48 @@ const CAROUSEL_INTERVAL_MS = 520;
 const CAROUSEL_FADE_MS = 480;
 
 const previewCache = new Map<string, string[]>();
+const imgListCache = new Map<string, IImgList>();
+const progressCache = new Map<string, number>();
 const pendingFetches = new Map<string, Promise<string[]>>();
+const pendingImgListFetches = new Map<string, Promise<IImgList>>();
+
+async function loadComicImgList(comicId: string): Promise<IImgList> {
+  const cached = imgListCache.get(comicId);
+  if (cached) {
+    return cached;
+  }
+
+  let pending = pendingImgListFetches.get(comicId);
+  if (!pending) {
+    pending = (async () => {
+      const ipc = await getIPC();
+      const imgList = await ipc.fetchImgList(comicId);
+      imgListCache.set(comicId, imgList);
+      pendingImgListFetches.delete(comicId);
+      return imgList;
+    })();
+    pendingImgListFetches.set(comicId, pending);
+  }
+
+  return pending;
+}
+
+function getProgressCacheKey(comic: IComic) {
+  return `${comic.id}:${comic.tag || ""}:${comic.position ?? 0}`;
+}
+
+async function loadComicProgress(comic: IComic): Promise<number> {
+  const cacheKey = getProgressCacheKey(comic);
+  const cached = progressCache.get(cacheKey);
+  if (cached != null) {
+    return cached;
+  }
+
+  const imgList = await loadComicImgList(comic.id);
+  const percent = getComicReadProgressPercent(comic, imgList);
+  progressCache.set(cacheKey, percent);
+  return percent;
+}
 
 async function preloadImages(urls: string[]) {
   await Promise.all(
@@ -42,8 +84,7 @@ async function loadPreviewImages(comicId: string): Promise<string[]> {
   let pending = pendingFetches.get(comicId);
   if (!pending) {
     pending = (async () => {
-      const ipc = await getIPC();
-      const imgList = await ipc.fetchImgList(comicId);
+      const imgList = await loadComicImgList(comicId);
       const urls = flattenImgList(imgList).slice(0, PREVIEW_COUNT);
       previewCache.set(comicId, urls);
       pendingFetches.delete(comicId);
@@ -67,12 +108,14 @@ export default function ComicWallCard({
   onContextMenu,
 }: ComicWallCardProps) {
   const mountedRef = useRef(true);
+  const cardRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
   const [previewUrls, setPreviewUrls] = useState<string[] | null>(() =>
     previewCache.get(comic.id) ?? null,
   );
   const [frameIndex, setFrameIndex] = useState(0);
   const [imagesReady, setImagesReady] = useState(false);
+  const [progressPercent, setProgressPercent] = useState<number | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -80,6 +123,48 @@ export default function ComicWallCard({
       mountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    const loadProgress = () => {
+      void loadComicProgress(comic).then((percent) => {
+        if (!cancelled && mountedRef.current) {
+          setProgressPercent(percent);
+        }
+      });
+    };
+
+    if (typeof IntersectionObserver === "undefined") {
+      loadProgress();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) {
+          return;
+        }
+        observer.disconnect();
+        loadProgress();
+      },
+      { rootMargin: "120px" },
+    );
+
+    observer.observe(card);
+
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
+  }, [comic.id, comic.tag, comic.position]);
 
   const carouselUrls =
     hovered && previewUrls && previewUrls.length >= 2 ? previewUrls : null;
@@ -153,7 +238,7 @@ export default function ComicWallCard({
   } as CSSProperties;
 
   return (
-    <div className={styles.cardMat}>
+    <div ref={cardRef} className={styles.cardMat}>
       <div
         className={styles.cardInner}
         data-id={comic.id}
@@ -192,6 +277,11 @@ export default function ComicWallCard({
             )}
         </div>
         <div className={styles.cardShade} />
+        {progressPercent != null ? (
+          <div className={styles.cardProgress} aria-label={`阅读进度 ${progressPercent}`}>
+            {progressPercent}
+          </div>
+        ) : null}
         <div className={styles.cardTitle} title={comic.name}>
           {comic.name}
         </div>
