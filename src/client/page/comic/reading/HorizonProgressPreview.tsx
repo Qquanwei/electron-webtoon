@@ -89,7 +89,10 @@ export default function HorizonProgressPreview({
                         alt=""
                         loading="lazy"
                         decoding="async"
-                        className={styles.progressPageThumb}
+                        className={classNames(
+                          styles.progressPageThumb,
+                          styles.progressPageThumbLeft,
+                        )}
                       />
                     ) : (
                       <span className={styles.progressPageBlank} />
@@ -99,7 +102,10 @@ export default function HorizonProgressPreview({
                       alt=""
                       loading="lazy"
                       decoding="async"
-                      className={styles.progressPageThumb}
+                      className={classNames(
+                        styles.progressPageThumb,
+                        styles.progressPageThumbRight,
+                      )}
                     />
                   </>
                 )}

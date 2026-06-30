@@ -111,6 +111,16 @@ function getClickTurnDirection(
   return getBookHalf(distPos, bounds);
 }
 
+function getFlipPageImageAlignClass(pageIndex: number) {
+  if (pageIndex === 0) {
+    return styles.flipPageImageCover;
+  }
+
+  return pageIndex % 2 === 1
+    ? styles.flipPageImageSlotRight
+    : styles.flipPageImageSlotLeft;
+}
+
 interface ComicFlipPageProps {
   src: string;
   pageIndex: number;
@@ -120,8 +130,13 @@ interface ComicFlipPageProps {
 
 const ComicFlipPage = forwardRef<HTMLDivElement, ComicFlipPageProps>(
   function ComicFlipPage({ src, pageIndex, filter, onLoad }, ref) {
+    const isCover = pageIndex === 0;
+
     return (
-      <div ref={ref} className={styles.flipPage}>
+      <div
+        ref={ref}
+        className={classNames(styles.flipPage, isCover && styles.flipPageCover)}
+      >
         <img
           src={src}
           alt=""
@@ -129,7 +144,11 @@ const ComicFlipPage = forwardRef<HTMLDivElement, ComicFlipPageProps>(
           decoding="async"
           data-index={pageIndex}
           onLoad={onLoad}
-          className={getComicImageClassName(filter, styles.flipPageImage)}
+          className={classNames(
+            getComicImageClassName(filter, styles.flipPageImage),
+            getFlipPageImageAlignClass(pageIndex),
+            isCover && styles.flipPageImageBoard,
+          )}
         />
       </div>
     );
