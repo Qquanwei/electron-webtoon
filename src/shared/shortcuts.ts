@@ -17,9 +17,9 @@ export const SHORTCUT_ACTION_LABELS: Record<
   ShortcutAction,
   { label: string; description: string }
 > = {
-  scrollDown: { label: "向下滚动", description: "默认 j" },
-  scrollUp: { label: "向上滚动", description: "默认 k" },
-  nextChapter: { label: "按住向下滚动", description: "默认 n，按住平滑滚动" },
+  scrollDown: { label: "按住向下滚动", description: "默认 j，竖屏平滑滚动；双页模式向前翻页" },
+  scrollUp: { label: "按住向上滚动", description: "默认 k，竖屏平滑滚动；双页模式向后翻页" },
+  nextChapter: { label: "下一章节", description: "默认 n" },
   prevChapter: { label: "上一章节", description: "默认 p" },
 };
 

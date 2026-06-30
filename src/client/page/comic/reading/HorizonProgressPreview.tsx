@@ -21,15 +21,18 @@ export default function HorizonProgressPreview({
 }: HorizonProgressPreviewProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const trackWidth = spreads.length * PREVIEW_SEGMENT_MIN_WIDTH;
-  const indicatorLeft =
-    (spreads.length - 1 - spreadIndex) * PREVIEW_SEGMENT_MIN_WIDTH;
 
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
-    const segmentStart = indicatorLeft;
-    const segmentEnd = segmentStart + PREVIEW_SEGMENT_MIN_WIDTH;
+    const activeButton = scroller.querySelector<HTMLElement>(
+      '[aria-current="true"]',
+    );
+    if (!activeButton) return;
+
+    const segmentStart = activeButton.offsetLeft;
+    const segmentEnd = segmentStart + activeButton.offsetWidth;
     const viewStart = scroller.scrollLeft;
     const viewEnd = viewStart + scroller.clientWidth;
 
@@ -40,7 +43,7 @@ export default function HorizonProgressPreview({
     if (segmentEnd > viewEnd) {
       scroller.scrollLeft = segmentEnd - scroller.clientWidth;
     }
-  }, [indicatorLeft]);
+  }, [spreadIndex]);
 
   if (spreads.length <= 1) {
     return null;
@@ -103,14 +106,6 @@ export default function HorizonProgressPreview({
               </span>
             </button>
           ))}
-          <div
-            className={styles.progressIndicator}
-            style={{
-              width: `${PREVIEW_SEGMENT_MIN_WIDTH}px`,
-              left: `${indicatorLeft}px`,
-            }}
-            aria-hidden
-          />
         </div>
       </div>
     </div>
