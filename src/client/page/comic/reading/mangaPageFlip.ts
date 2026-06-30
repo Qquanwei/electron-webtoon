@@ -16,24 +16,13 @@ export function flipMangaSpread(
   }
 
   const corner: FlipCorner = forward ? "bottom" : "top";
-  const spreadCount = collection.getSpread().length;
 
   if (targetSpread > currentSpread) {
-    if (targetSpread + 1 < spreadCount) {
-      collection.setCurrentSpreadIndex(targetSpread + 1);
-      pageFlip.flipPrev(corner);
-    } else {
-      collection.setCurrentSpreadIndex(targetSpread - 1);
-      pageFlip.flipNext(corner);
-    }
+    collection.setCurrentSpreadIndex(targetSpread + 1);
+    pageFlip.flipPrev(corner);
     return;
   }
 
-  if (targetSpread - 1 >= 0) {
-    collection.setCurrentSpreadIndex(targetSpread - 1);
-    pageFlip.flipNext(corner);
-  } else {
-    collection.setCurrentSpreadIndex(targetSpread + 1);
-    pageFlip.flipPrev(corner);
-  }
+  collection.setCurrentSpreadIndex(targetSpread - 1);
+  pageFlip.flipNext(corner);
 }

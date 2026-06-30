@@ -53,16 +53,56 @@ export function getSpreadProgressIndex(spread: HorizonSpread) {
   return spread.leftIndex ?? spread.rightIndex;
 }
 
-/** page-flip DOM 页序：0, 2,1, 4,3, … 使书脊两侧与 preview 一致 */
+/** 首页右侧：最后一页模糊图 */
+export const HORIZON_FLIP_BLUR_OPENING = -1;
+
+/** 末页左侧：封面（第 0 页）模糊图 */
+export const HORIZON_FLIP_BLUR_CLOSING = -2;
+
+/** 首尾缓冲页，仅用于 flip 动画预置，不对应逻辑 spread */
+export const HORIZON_FLIP_PAD_PAGE = -3;
+
+export function isHorizonFlipBlurSlot(pageIndex: number) {
+  return (
+    pageIndex === HORIZON_FLIP_BLUR_OPENING ||
+    pageIndex === HORIZON_FLIP_BLUR_CLOSING
+  );
+}
+
+export function isHorizonFlipPadPage(pageIndex: number) {
+  return pageIndex === HORIZON_FLIP_PAD_PAGE;
+}
+
+/**
+ * page-flip DOM 页序：
+ * - 缓冲 [pad, pad]
+ * - 首页 [0, 末页模糊]
+ * - 中间 [2,1] [4,3] …
+ * - 末页（落单时） [0模糊, 末页清晰]
+ * - 缓冲 [pad, pad]
+ */
 export function buildMangaFlipOrder(pageCount: number): number[] {
-  const order: number[] = [0];
+  if (pageCount <= 0) {
+    return [];
+  }
+
+  const last = pageCount - 1;
+  const order: number[] = [
+    HORIZON_FLIP_PAD_PAGE,
+    HORIZON_FLIP_PAD_PAGE,
+    0,
+    HORIZON_FLIP_BLUR_OPENING,
+  ];
+
   for (let i = 1; i < pageCount; i += 2) {
     if (i + 1 < pageCount) {
       order.push(i + 1, i);
-    } else {
-      order.push(i);
+    } else if (i === last) {
+      order.push(HORIZON_FLIP_BLUR_CLOSING, last);
     }
   }
+
+  order.push(HORIZON_FLIP_PAD_PAGE, HORIZON_FLIP_PAD_PAGE);
   return order;
 }
 
@@ -71,17 +111,46 @@ export function spreadToFlipIndex(
   spreads: HorizonSpread[],
   flipOrder: number[],
 ): number {
-  if (spreadIndex <= 0) return 0;
+  if (spreadIndex <= 0) {
+    const coverIdx = flipOrder.indexOf(0);
+    return coverIdx >= 0 ? coverIdx : 0;
+  }
   const spread = spreads[spreadIndex];
   if (!spread) return 0;
+
+  if (spread.leftIndex === null && spread.rightIndex > 0) {
+    const closingIdx = flipOrder.indexOf(HORIZON_FLIP_BLUR_CLOSING);
+    if (closingIdx >= 0) {
+      return closingIdx;
+    }
+  }
+
   const page = spread.leftIndex ?? spread.rightIndex;
-  return flipOrder.indexOf(page);
+  const idx = flipOrder.indexOf(page);
+  return idx >= 0 ? idx : 0;
 }
 
 export function flipIndexToSpreadIndex(
   flipIndex: number,
   flipOrder: number[],
+  pageCount: number,
 ): number {
   const page = flipOrder[flipIndex] ?? 0;
+  const last = pageCount - 1;
+  const coverFlipIndex = flipOrder.indexOf(0);
+
+  if (page === HORIZON_FLIP_PAD_PAGE) {
+    if (coverFlipIndex >= 0 && flipIndex < coverFlipIndex) {
+      return 0;
+    }
+    return pageIndexToSpreadIndex(last);
+  }
+
+  if (page === 0 || page === HORIZON_FLIP_BLUR_OPENING) {
+    return 0;
+  }
+  if (page === HORIZON_FLIP_BLUR_CLOSING || page === last) {
+    return pageIndexToSpreadIndex(last);
+  }
   return pageIndexToSpreadIndex(page);
 }

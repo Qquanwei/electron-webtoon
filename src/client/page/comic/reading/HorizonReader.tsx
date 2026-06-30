@@ -21,6 +21,11 @@ import {
   flipIndexToSpreadIndex,
   getSpreadIndexForPage,
   getSpreadProgressIndex,
+  HORIZON_FLIP_BLUR_CLOSING,
+  HORIZON_FLIP_BLUR_OPENING,
+  HORIZON_FLIP_PAD_PAGE,
+  isHorizonFlipBlurSlot,
+  isHorizonFlipPadPage,
   spreadToFlipIndex,
 } from "./horizonSpreads";
 import { flipMangaSpread } from "./mangaPageFlip";
@@ -94,10 +99,6 @@ function constrainCornerDragPos(
 }
 
 function getFlipPageImageAlignClass(pageIndex: number) {
-  if (pageIndex === 0) {
-    return styles.flipPageImageCover;
-  }
-
   return pageIndex % 2 === 1
     ? styles.flipPageImageSlotRight
     : styles.flipPageImageSlotLeft;
@@ -109,25 +110,63 @@ interface ComicFlipPageProps {
   filter?: number;
 }
 
+function renderBlurFlipPage(
+  ref: React.Ref<HTMLDivElement>,
+  src: string,
+  filter: number | undefined,
+  alignClass: string,
+) {
+  return (
+    <div ref={ref} className={styles.flipPageBlurTail} aria-hidden>
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className={classNames(
+          getComicImageClassName(filter, styles.flipPageBlurTailImage),
+          alignClass,
+        )}
+      />
+    </div>
+  );
+}
+
 const ComicFlipPage = forwardRef<HTMLDivElement, ComicFlipPageProps>(
   function ComicFlipPage({ src, pageIndex, filter }, ref) {
-    const isCover = pageIndex === 0;
+    if (isHorizonFlipPadPage(pageIndex)) {
+      return <div ref={ref} className={styles.flipPageBlank} aria-hidden />;
+    }
+
+    if (pageIndex === HORIZON_FLIP_BLUR_OPENING) {
+      return renderBlurFlipPage(
+        ref,
+        src,
+        filter,
+        styles.flipPageImageSlotRight,
+      );
+    }
+
+    if (pageIndex === HORIZON_FLIP_BLUR_CLOSING) {
+      return renderBlurFlipPage(
+        ref,
+        src,
+        filter,
+        styles.flipPageImageSlotLeft,
+      );
+    }
 
     return (
-      <div
-        ref={ref}
-        className={classNames(styles.flipPage, isCover && styles.flipPageCover)}
-      >
+      <div ref={ref} className={styles.flipPage}>
         <img
           src={src}
           alt=""
-          loading="eager"
+          loading={pageIndex === 0 ? "eager" : "lazy"}
           decoding="async"
           data-index={pageIndex}
           className={classNames(
             getComicImageClassName(filter, styles.flipPageImage),
             getFlipPageImageAlignClass(pageIndex),
-            isCover && styles.flipPageImageBoard,
           )}
         />
       </div>
@@ -287,9 +326,11 @@ export default function HorizonReader({
 
   const syncSpreadFromFlip = useCallback(
     (flipPageIndex: number) => {
-      setSpreadIndex(flipIndexToSpreadIndex(flipPageIndex, flipOrder));
+      setSpreadIndex(
+        flipIndexToSpreadIndex(flipPageIndex, flipOrder, imgList.length),
+      );
     },
-    [flipOrder],
+    [flipOrder, imgList.length],
   );
 
   const turnPage = useCallback(
@@ -621,18 +662,37 @@ export default function HorizonReader({
     [getPageFlip, syncSpreadFromFlip],
   );
 
-  const flipBookPages = useMemo(
-    () =>
-      flipOrder.map((pageIndex) => (
+  const flipBookPages = useMemo(() => {
+    const coverSrc = imgList[0] ?? "";
+    const lastPageSrc = imgList[imgList.length - 1] ?? "";
+
+    return flipOrder.map((pageIndex, flipDomIndex) => {
+      const src = isHorizonFlipBlurSlot(pageIndex)
+        ? pageIndex === HORIZON_FLIP_BLUR_OPENING
+          ? lastPageSrc
+          : coverSrc
+        : isHorizonFlipPadPage(pageIndex)
+          ? ""
+          : imgList[pageIndex];
+
+      return (
         <ComicFlipPage
-          key={`${tag}-${pageIndex}-${imgList[pageIndex]}`}
-          src={imgList[pageIndex]}
+          key={
+            isHorizonFlipPadPage(pageIndex)
+              ? `${tag}-pad-${flipDomIndex}`
+              : pageIndex === HORIZON_FLIP_BLUR_OPENING
+                ? `${tag}-blur-opening`
+                : pageIndex === HORIZON_FLIP_BLUR_CLOSING
+                  ? `${tag}-blur-closing`
+                  : `${tag}-${pageIndex}-${imgList[pageIndex]}`
+          }
+          src={src}
           pageIndex={pageIndex}
           filter={filter}
         />
-      )),
-    [flipOrder, imgList, tag, filter],
-  );
+      );
+    });
+  }, [flipOrder, imgList, tag, filter]);
 
   const onInit = useCallback(
     (event: { data: { page: number } }) => {
@@ -667,7 +727,6 @@ export default function HorizonReader({
               maxWidth={bookSize.pageWidth}
               minHeight={320}
               maxHeight={bookSize.pageHeight}
-              showCover
               usePortrait={false}
               drawShadow
               flippingTime={FLIP_DURATION_MS}

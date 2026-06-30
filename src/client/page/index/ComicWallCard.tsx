@@ -17,7 +17,20 @@ const CAROUSEL_INTERVAL_MS = 520;
 const CAROUSEL_FADE_MS = 480;
 const HOVER_PREVIEW_COUNT = 10;
 const SWEEP_DURATION_MS = 900;
-const CARD_TILT_MAX_DEG = 11;
+const CARD_TILT_MAX_DEG = 4;
+const CARD_HOVER_LIFT_PX = 3;
+const CARD_HOVER_SCALE = 1.02;
+
+function clampTilt(value: number, maxDeg: number) {
+  return Math.max(-maxDeg, Math.min(maxDeg, value));
+}
+
+function tiltFromPointerOffset(offset: number, maxDeg: number) {
+  const normalized = offset * 2;
+  const curved =
+    Math.sign(normalized) * Math.pow(Math.abs(normalized), 1.45);
+  return clampTilt(curved * maxDeg, maxDeg);
+}
 
 async function preloadImages(urls: string[]) {
   await Promise.all(
@@ -180,10 +193,10 @@ export default function ComicWallCard({
 
       const px = (clientX - rect.left) / rect.width - 0.5;
       const py = (clientY - rect.top) / rect.height - 0.5;
-      const rotateY = px * CARD_TILT_MAX_DEG;
-      const rotateX = -py * CARD_TILT_MAX_DEG;
+      const rotateY = tiltFromPointerOffset(px, CARD_TILT_MAX_DEG);
+      const rotateX = tiltFromPointerOffset(-py, CARD_TILT_MAX_DEG);
 
-      target.style.transform = `translate3d(0, -5px, 0) scale(1.04) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+      target.style.transform = `perspective(2000px) translate3d(0, -${CARD_HOVER_LIFT_PX}px, 0) scale(${CARD_HOVER_SCALE}) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
     },
     [getTiltTarget],
   );

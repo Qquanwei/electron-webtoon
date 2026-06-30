@@ -60,28 +60,31 @@
   box-sizing: border-box;
 }
 
-.flipPageCover {
-  padding: 10px 12px 12px;
-  background:
-    linear-gradient(165deg, #ebe0cc 0%, #d8c8aa 42%, #c9b896 100%);
-  border: 5px solid #120e0a;
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.28),
-    inset 0 0 0 3px rgb(0 0 0 / 0.12),
-    inset 0 3px 10px rgb(255 255 255 / 0.18),
-    inset 0 -4px 14px rgb(0 0 0 / 0.22),
-    6px 0 14px rgb(0 0 0 / 0.35);
+.flipPageBlank {
+  width: 100%;
+  height: 100%;
+  background: #1a1410;
+  border: 2px solid #080706;
+  box-sizing: border-box;
 }
 
-.flipPageCover::before {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border: 1px solid rgb(0 0 0 / 0.14);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.35),
-    inset 0 -2px 6px rgb(0 0 0 / 0.08);
-  pointer-events: none;
+.flipPageBlurTail {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #1a1410;
+  border: 2px solid #080706;
+  box-sizing: border-box;
+}
+
+.flipPageBlurTailImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(14px) saturate(0.85) brightness(0.72);
+  transform: scale(1.12);
 }
 
 .flipPageImage {
@@ -90,18 +93,6 @@
   height: 100%;
   object-fit: contain;
   background: #faf6ee;
-}
-
-.flipPageImageBoard {
-  border: 2px solid rgb(0 0 0 / 0.28);
-  box-shadow:
-    0 2px 6px rgb(0 0 0 / 0.18),
-    inset 0 1px 0 rgb(255 255 255 / 0.12);
-  background: #f5efe3;
-}
-
-.flipPageImageCover {
-  object-position: center center;
 }
 
 .flipPageImageSlotRight {
