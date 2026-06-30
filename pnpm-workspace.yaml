@@ -1,0 +1,5 @@
+allowBuilds:
+  core-js-pure: true
+  electron: true
+  esbuild: true
+  sharp: true

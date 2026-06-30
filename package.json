@@ -10,7 +10,7 @@
     "preview": "electron-vite preview",
     "package": "electron-vite build && electron-builder --publish never",
     "icons": "node scripts/generate-icons.mjs",
-    "postinstall": "electron-builder install-app-deps && patch-package",
+    "postinstall": "electron-builder install-app-deps",
     "lint": "echo skip",
     "test": "jest"
   },
@@ -116,7 +116,6 @@
     "eslint-plugin-react": "^7.34.1",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^26.1.0",
-    "patch-package": "^8.0.1",
     "postcss": "^8.4.49",
     "sharp": "^0.33.5",
     "tailwindcss": "^3.4.17",

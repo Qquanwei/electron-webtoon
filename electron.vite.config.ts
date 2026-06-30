@@ -26,7 +26,6 @@ export default defineConfig({
       alias: {
         ...sharedAlias,
         electron: resolve('src/shared-electron/electron-runtime.ts'),
-        'page-flip': resolve('node_modules/page-flip/src/PageFlip.ts'),
       },
     },
     plugins: [react()],

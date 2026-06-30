@@ -39,6 +39,9 @@ export const comicDetail = selectorFamily({
 
 export interface ComicOpenInfo {
   cover: string;
+  comicId?: string;
+  /** 翻开封面后露出的内页（通常为第 2 页） */
+  innerPage?: string;
   originRect?: {
     top: number;
     left: number;

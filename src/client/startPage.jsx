@@ -5,6 +5,8 @@ import {
   useRecoilValue,
   useSetRecoilState,
 } from "recoil";
+import { flattenImgList } from "@shared/flattenImgList";
+import { getIPC } from "./ipc";
 import * as selector from "./selector";
 import styles from "./startPage.module.css";
 
@@ -61,7 +63,12 @@ function StartUpPage({ className = "", visible = true }) {
   const [openPhase, setOpenPhase] = useRecoilState(selector.comicOpenPhase);
   const setNextOpenComicInfo = useSetRecoilState(selector.nextOpenComicInfo);
   const cover = nextOpenComicInfo?.cover;
+  const comicId = nextOpenComicInfo?.comicId;
   const originRect = nextOpenComicInfo?.originRect;
+  const innerPageFromInfo = nextOpenComicInfo?.innerPage;
+
+  const [resolvedInnerPage, setResolvedInnerPage] = useState("");
+  const innerPage = innerPageFromInfo || resolvedInnerPage;
 
   const [mounted, setMounted] = useState(visible);
   const [exiting, setExiting] = useState(false);
@@ -74,6 +81,45 @@ function StartUpPage({ className = "", visible = true }) {
     }
     return getFlyVars(originRect);
   }, [originRect]);
+
+  useEffect(() => {
+    setResolvedInnerPage("");
+  }, [comicId, innerPageFromInfo]);
+
+  useEffect(() => {
+    if (innerPageFromInfo || !comicId) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const ipc = await getIPC();
+        const imgList = await ipc.fetchImgList(comicId);
+        const pages = flattenImgList(imgList);
+        if (!cancelled && pages[1]) {
+          setResolvedInnerPage(pages[1]);
+        }
+      } catch (error) {
+        console.warn("open transition inner page fetch failed:", comicId, error);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [comicId, innerPageFromInfo]);
+
+  useEffect(() => {
+    if (!innerPage) {
+      return undefined;
+    }
+
+    const img = new Image();
+    img.src = innerPage;
+    return undefined;
+  }, [innerPage]);
 
   const isTransitioning =
     openPhase === "fly-start" ||
@@ -121,6 +167,8 @@ function StartUpPage({ className = "", visible = true }) {
           prev
             ? {
                 cover: prev.cover,
+                innerPage: prev.innerPage,
+                comicId: prev.comicId,
               }
             : null,
         );
@@ -223,7 +271,16 @@ function StartUpPage({ className = "", visible = true }) {
           }}
         >
           <div className={styles.bookSpread}>
-            <div className={styles.pageReveal} aria-hidden />
+            <div className={styles.pageReveal} aria-hidden>
+              {innerPage ? (
+                <img
+                  src={innerPage}
+                  alt=""
+                  className={styles.pageRevealImage}
+                  decoding="async"
+                />
+              ) : null}
+            </div>
             <div
               className={classNames(styles.coverLeaf, {
                 [styles.coverLeafOpen]: coverOpening,

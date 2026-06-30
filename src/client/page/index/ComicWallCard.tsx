@@ -256,11 +256,11 @@ export default function ComicWallCard({
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
     >
-      <div className={styles.frameOrnament} aria-hidden />
       <div
         className={styles.cardInner}
         data-id={comic.id}
         data-cover={comic.cover}
+        data-inner-page={storedPreviewUrls[1] ?? ""}
         onClick={onClick}
         onContextMenu={onContextMenu}
       >

@@ -12,7 +12,6 @@ import { useRecoilValueMemo } from "../../utils";
 import * as selector from "../../selector";
 import { getIPC } from "@client/ipc";
 import ComicWallCard from "./ComicWallCard";
-import { getFrameVariant } from "./frameVariant";
 
 import "../../App.global.css";
 
@@ -131,9 +130,12 @@ function IndexPage() {
       const rect = target.getBoundingClientRect();
 
       if (target.dataset.cover && target.dataset.id) {
+        const innerPage = target.dataset.innerPage;
         setComicOpenPhase("fly-start");
         setNextOpenComicInfo({
           cover: target.dataset.cover,
+          comicId: target.dataset.id,
+          innerPage: innerPage || undefined,
           originRect: {
             top: rect.top,
             left: rect.left,
@@ -247,14 +249,12 @@ function IndexPage() {
               const height = comic.height || 1;
               const cardStyle = getCardGridStyle(width, height);
 
-              const variant = getFrameVariant(comic.id);
-
               return (
                 <Popup
                   key={comic.id}
                   position="center"
                   style={cardStyle}
-                  className={classNames(styles.card, styles[`frame_${variant}`])}
+                  className={styles.card}
                   visibleChange={() => setContextComicId(null)}
                   visible={contextComicId === comic.id}
                   tooltip={
