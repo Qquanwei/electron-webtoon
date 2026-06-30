@@ -16,6 +16,7 @@ import {
 } from "../shared/shortcuts";
 import { IDecompressProgress, IDLE_DECOMPRESS_PROGRESS } from "../shared/type";
 import { emitAppEvent } from "../shared/ipc/events";
+import { makeComicFileUrl } from "./comic-file-protocol";
 
 function isDirectory(fullpath: string) {
   return fs.lstatSync(fullpath).isDirectory();

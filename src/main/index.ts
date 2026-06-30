@@ -56,6 +56,8 @@ const createWindow = async () => {
   });
   mainWindow.setMenuBarVisibility(false);
 
+  initIpc(app, mainWindow);
+
   if (process.env.ELECTRON_RENDERER_URL) {
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
@@ -89,7 +91,6 @@ const createWindow = async () => {
   });
 
   new AppUpdater();
-  initIpc(app, mainWindow);
 };
 
 app.on('window-all-closed', () => {
