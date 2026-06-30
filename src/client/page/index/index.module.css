@@ -3,9 +3,9 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   grid-auto-rows: 150px;
   grid-auto-flow: row dense;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 0 0 16px;
+  padding: 0 10px 16px;
 }
 
 .pageRoot {
@@ -51,11 +51,11 @@
 }
 
 .pageExpanded {
-  padding-top: calc(60px + 32px + 6px);
+  padding-top: calc(60px + 22px + 6px);
 }
 
 .pageCollapsed {
-  padding-top: 32px;
+  padding-top: 0;
 }
 
 .libraryHeader {
@@ -66,7 +66,7 @@
 }
 
 .libraryHeaderCollapsed {
-  padding: 0 12px 10px;
+  padding: 8px 12px 10px;
 }
 
 .libraryTitle {
@@ -104,12 +104,29 @@
   z-index: 30;
   height: 60px;
   overflow: hidden;
+  border-bottom: 1px solid rgb(18 18 18 / 0.07);
+  box-shadow: 0 2px 10px rgb(18 18 18 / 0.05);
   transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
 
 .navShellCollapsed {
   transform: translateY(-100%);
+  border-bottom-color: transparent;
+  box-shadow: none;
+}
+
+.pageCollapsed::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 35;
+  height: 0;
+  pointer-events: none;
+  border-bottom: 1px solid rgb(18 18 18 / 0.08);
+  box-shadow: 0 4px 14px rgb(18 18 18 / 0.06);
 }
 
 .bookmarkTab {
@@ -120,17 +137,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 34px;
+  width: 48px;
+  height: 22px;
   margin: 0;
   padding: 0;
-  border: 2px solid #121212;
+  border: 1px solid rgb(18 18 18 / 0.14);
   border-top: none;
   border-radius: 0 0 4px 4px;
-  background: #f7f7f5;
+  background: rgb(247 247 245 / 0.92);
+  backdrop-filter: blur(6px);
   color: #8f8f8f;
   cursor: pointer;
   transform: translateX(-50%);
+  box-shadow: 0 2px 8px rgb(18 18 18 / 0.06);
   transition:
     top 0.38s cubic-bezier(0.22, 1, 0.36, 1),
     background 0.2s ease,
@@ -162,7 +181,7 @@
 
   box-sizing: border-box;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   cursor: pointer;
@@ -177,45 +196,26 @@
   isolation: isolate;
 }
 
-.card[class*="frame_"]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 1;
-  --manga-bracket-tl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M2 18V2h16' fill='none' stroke='%23121212' stroke-width='2.4' stroke-linecap='square'/%3E%3C/svg%3E");
-  --manga-bracket-tr: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M18 18V2H2' fill='none' stroke='%23121212' stroke-width='2.4' stroke-linecap='square'/%3E%3C/svg%3E");
-  --manga-bracket-bl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M2 2v16h16' fill='none' stroke='%23121212' stroke-width='2.4' stroke-linecap='square'/%3E%3C/svg%3E");
-  --manga-bracket-br: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M18 2v16H2' fill='none' stroke='%23121212' stroke-width='2.4' stroke-linecap='square'/%3E%3C/svg%3E");
-  background-image:
-    var(--manga-bracket-tl),
-    var(--manga-bracket-tr),
-    var(--manga-bracket-bl),
-    var(--manga-bracket-br);
-  background-size: 18px 18px;
-  background-position:
-    3px 3px,
-    calc(100% - 3px) 3px,
-    3px calc(100% - 3px),
-    calc(100% - 3px) calc(100% - 3px);
-  background-repeat: no-repeat;
-}
-
+.card[class*="frame_"]::before,
 .card[class*="frame_"]::after {
   content: "";
   position: absolute;
-  inset: 6px;
-  z-index: 0;
   pointer-events: none;
-  border: 1px solid rgb(18 18 18 / 0.16);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.65);
-  background: radial-gradient(
-    circle,
-    rgb(0 0 0 / 0.03) 0.45px,
-    transparent 0.45px
-  );
-  background-size: 7px 7px;
+  z-index: 0;
+}
+
+.frameOrnament {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.frameOrnament::before,
+.frameOrnament::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
 }
 
 .card:hover {
@@ -235,89 +235,415 @@
   z-index: 1;
 }
 
-.frameOrnament {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
-  --ornament: #121212;
+/* 漫画常用色 */
+.frame_walnut {
+  --frame-accent: #e8324a;
+  --frame-accent-soft: rgb(232 50 74 / 0.35);
 }
 
-.frameOrnament::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border: none;
-  box-shadow: none;
+.frame_goldOrnate {
+  --frame-accent: #f0a500;
+  --frame-accent-deep: #c87800;
+  --frame-accent-soft: rgb(240 165 0 / 0.28);
+}
+
+.frame_blackThin {
+  --frame-accent: #56b4f8;
+  --frame-accent-soft: rgb(86 180 248 / 0.32);
+}
+
+.frame_blackBevel {
+  --frame-accent: #6ec8ff;
+  --frame-accent-alt: #c8d0dc;
+  --frame-accent-soft: rgb(110 200 255 / 0.24);
+}
+
+.frame_naturalWood {
+  --frame-accent: #b8c0cc;
+  --frame-accent-soft: rgb(184 192 204 / 0.42);
+}
+
+.frame_silverAccent {
+  --frame-accent: #4a90e2;
+  --frame-accent-soft: rgb(74 144 226 / 0.35);
+}
+
+.frame_champagne {
+  --frame-accent: #e8324a;
+  --frame-accent-alt: #ffc800;
+  --frame-accent-soft: rgb(232 50 74 / 0.35);
+}
+
+.frame_charcoal {
+  --frame-accent: #7c5cff;
+  --frame-accent-soft: rgb(124 92 255 / 0.32);
+}
+
+/* ── 1. 墨块厚框：赤色硬阴影 ── */
+.frame_walnut {
+  padding: 11px;
+  background: linear-gradient(145deg, #1a1a1a 0%, #121212 55%, #1f1214 100%);
+  box-shadow:
+    5px 5px 0 var(--frame-accent),
+    0 2px 10px rgb(18 18 18 / 0.08);
+}
+
+.frame_walnut::before {
+  inset: 5px;
+  border: 2px solid rgb(255 255 255 / 0.92);
+  box-shadow: inset 0 0 0 1px var(--frame-accent);
+}
+
+.frame_walnut::after {
+  inset: 10px;
+  border: 1px dashed var(--frame-accent-soft);
+}
+
+.frame_walnut .frameOrnament::before {
+  inset: 2px;
+  background:
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 0 0 / 14px 3px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 0 0 / 3px 14px no-repeat,
+    linear-gradient(#fff, #fff) 100% 0 / 14px 3px no-repeat,
+    linear-gradient(#fff, #fff) 100% 0 / 3px 14px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 0 100% / 14px 3px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 0 100% / 3px 14px no-repeat,
+    linear-gradient(#fff, #fff) 100% 100% / 14px 3px no-repeat,
+    linear-gradient(#fff, #fff) 100% 100% / 3px 14px no-repeat;
+}
+
+/* ── 2. 分镜叠框：金黄双线 ── */
+.frame_goldOrnate {
+  padding: 9px;
+  background: #fffef8;
+  border: 4px solid var(--frame-accent);
+  outline: 3px solid #121212;
+  outline-offset: 5px;
+  box-shadow: 7px 7px 0 var(--frame-accent-deep);
+}
+
+.frame_goldOrnate::before {
+  inset: 7px;
+  border: 2px solid var(--frame-accent-deep);
+}
+
+.frame_goldOrnate::after {
+  inset: 13px;
+  border: 1px solid var(--frame-accent-soft);
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    rgb(240 165 0 / 0.07) 5px 6px
+  );
+}
+
+.frame_goldOrnate .frameOrnament::before {
+  inset: 0;
+  background:
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 6px 6px / 18px 4px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 6px 6px / 4px 18px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 6px) 6px / 18px 4px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 10px) 6px / 4px 18px no-repeat,
+    linear-gradient(var(--frame-accent-deep), var(--frame-accent-deep)) 6px calc(100% - 10px) / 18px 4px no-repeat,
+    linear-gradient(var(--frame-accent-deep), var(--frame-accent-deep)) 6px calc(100% - 24px) / 4px 18px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 6px) calc(100% - 10px) / 18px 4px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 10px) calc(100% - 24px) / 4px 18px no-repeat;
+}
+
+/* ── 3. 聚焦线稿：天蓝角标 ── */
+.frame_blackThin {
+  padding: 3px;
+  background: #fff;
+  border: 1px solid var(--frame-accent);
+}
+
+.frame_blackThin::before {
+  inset: 0;
+  background:
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 4px 4px / 26px 4px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 4px 4px / 4px 26px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 4px) 4px / 26px 4px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 8px) 4px / 4px 26px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 4px calc(100% - 8px) / 26px 4px no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 4px calc(100% - 30px) / 4px 26px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 4px) calc(100% - 8px) / 26px 4px no-repeat,
+    linear-gradient(#121212, #121212) calc(100% - 8px) calc(100% - 30px) / 4px 26px no-repeat;
+}
+
+.frame_blackThin::after {
+  display: none;
+}
+
+.frame_blackThin .frameOrnament::before {
+  inset: 12px;
+  border: 1px dashed var(--frame-accent-soft);
+}
+
+/* ── 4. 速度线镜头：天蓝银速度感 ── */
+.frame_blackBevel {
+  padding: 10px;
   background:
     repeating-linear-gradient(
-      90deg,
-      transparent 0 11px,
-      rgb(18 18 18 / 0.05) 11px 12px
+      -28deg,
+      transparent 0 7px,
+      rgb(110 200 255 / 0.16) 7px 8px
     ),
     repeating-linear-gradient(
-      0deg,
+      28deg,
       transparent 0 11px,
-      rgb(18 18 18 / 0.05) 11px 12px
-    );
+      rgb(200 208 220 / 0.16) 11px 12px
+    ),
+    linear-gradient(155deg, #1a2433 0%, #121212 52%, #1c2028 100%);
+  border: 3px solid var(--frame-accent);
+  box-shadow: inset 0 0 0 2px #121212;
 }
 
-.frameOrnament::after {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  border: 1px dashed rgb(18 18 18 / 0.14);
-  background-image:
-    linear-gradient(var(--ornament), var(--ornament)),
-    linear-gradient(var(--ornament), var(--ornament)),
-    linear-gradient(var(--ornament), var(--ornament)),
-    linear-gradient(var(--ornament), var(--ornament));
-  background-size: 8px 2px, 2px 8px, 8px 2px, 2px 8px;
-  background-repeat: no-repeat;
-  background-position:
-    0 0,
-    100% 0,
-    0 100%,
-    100% 100%;
-}
-
-.card.frame_walnut .frameOrnament,
-.card.frame_goldOrnate .frameOrnament,
-.card.frame_blackThin .frameOrnament,
-.card.frame_blackBevel .frameOrnament,
-.card.frame_naturalWood .frameOrnament,
-.card.frame_silverAccent .frameOrnament,
-.card.frame_champagne .frameOrnament,
-.card.frame_charcoal .frameOrnament {
-  --ornament: #121212;
-}
-
-.card.frame_naturalWood .frameOrnament::before,
-.card.frame_charcoal .frameOrnament::before {
+.frame_blackBevel::before {
+  inset: 4px;
+  border: 1px solid rgb(255 255 255 / 0.35);
   background:
-    radial-gradient(circle, rgb(0 0 0 / 0.06) 0.45px, transparent 0.45px),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0 11px,
-      rgb(18 18 18 / 0.04) 11px 12px
-    );
-  background-size: 5px 5px, auto;
+    conic-gradient(from -45deg at 0 0, var(--frame-accent) 0 22deg, transparent 22deg 360deg),
+    conic-gradient(from 135deg at 100% 0, var(--frame-accent-alt) 0 22deg, transparent 22deg 360deg),
+    conic-gradient(from 45deg at 0 100%, var(--frame-accent-alt) 0 22deg, transparent 22deg 360deg),
+    conic-gradient(from -135deg at 100% 100%, var(--frame-accent) 0 22deg, transparent 22deg 360deg);
+  background-size: 34% 34%;
+  background-repeat: no-repeat;
+  background-position: 0 0, 100% 0, 0 100%, 100% 100%;
 }
 
-.card.frame_champagne .frameOrnament::after {
-  border-style: solid;
-  border-color: rgb(18 18 18 / 0.22);
-  background-image:
-    linear-gradient(135deg, transparent 46%, var(--ornament) 46%, var(--ornament) 54%, transparent 54%),
-    linear-gradient(-135deg, transparent 46%, var(--ornament) 46%, var(--ornament) 54%, transparent 54%),
-    linear-gradient(45deg, transparent 46%, var(--ornament) 46%, var(--ornament) 54%, transparent 54%),
-    linear-gradient(-45deg, transparent 46%, var(--ornament) 46%, var(--ornament) 54%, transparent 54%);
-  background-size: 14px 14px;
-  background-position:
+.frame_blackBevel::after {
+  inset: 9px;
+  border: 1px solid var(--frame-accent-soft);
+}
+
+.frame_blackBevel .frameOrnament::before {
+  inset: 14px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 10px,
+    rgb(110 200 255 / 0.3) 10px 11px
+  );
+  mask-image: linear-gradient(90deg, #000, transparent 85%);
+}
+
+/* ── 5. 网点爆框：银色网点 ── */
+.frame_naturalWood {
+  padding: 10px;
+  background-color: #f2f4f7;
+  background-image: radial-gradient(
+    circle,
+    rgb(184 192 204 / 0.55) 0.55px,
+    transparent 0.55px
+  );
+  background-size: 5px 5px;
+  border: 4px solid var(--frame-accent);
+  box-shadow: 4px 4px 0 rgb(184 192 204 / 0.55);
+}
+
+.frame_naturalWood::before {
+  inset: 6px;
+  border: 2px solid rgb(184 192 204 / 0.75);
+  background:
+    radial-gradient(circle at 0 0, rgb(184 192 204 / 0.4) 0, transparent 52%),
+    radial-gradient(circle at 100% 0, rgb(184 192 204 / 0.4) 0, transparent 52%),
+    radial-gradient(circle at 0 100%, rgb(184 192 204 / 0.4) 0, transparent 52%),
+    radial-gradient(circle at 100% 100%, rgb(184 192 204 / 0.4) 0, transparent 52%);
+}
+
+.frame_naturalWood::after {
+  inset: 11px;
+  border: 1px solid var(--frame-accent-soft);
+  background: rgb(255 255 255 / 0.5);
+}
+
+.frame_naturalWood .frameOrnament::after {
+  inset: 3px;
+  border: none;
+  background:
+    radial-gradient(circle, var(--frame-accent) 1px, transparent 1px),
+    radial-gradient(circle, var(--frame-accent) 1px, transparent 1px),
+    radial-gradient(circle, var(--frame-accent) 1px, transparent 1px),
+    radial-gradient(circle, var(--frame-accent) 1px, transparent 1px);
+  background-size: 6px 6px;
+  background-position: 0 0, 100% 0, 0 100%, 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0.7;
+}
+
+/* ── 6. 裁切不对称：蓝色定位线 ── */
+.frame_silverAccent {
+  padding: 14px 9px 9px 14px;
+  background: #f8fbff;
+  border: 2px solid #121212;
+  border-top: 6px solid var(--frame-accent);
+  border-left: 6px solid var(--frame-accent);
+  box-shadow: 6px 4px 0 rgb(74 144 226 / 0.35);
+}
+
+.frame_silverAccent::before {
+  inset: auto auto 5px 5px;
+  width: 22px;
+  height: 22px;
+  border-left: 2px solid var(--frame-accent);
+  border-bottom: 2px solid var(--frame-accent);
+}
+
+.frame_silverAccent::after {
+  inset: auto 5px 5px auto;
+  width: 22px;
+  height: 22px;
+  border-right: 2px solid #ff7a2f;
+  border-bottom: 2px solid #ff7a2f;
+}
+
+.frame_silverAccent .frameOrnament::before {
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background:
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 50% 0 / 1px 100% no-repeat,
+    linear-gradient(var(--frame-accent), var(--frame-accent)) 0 50% / 100% 1px no-repeat;
+  opacity: 0.85;
+}
+
+.frame_silverAccent .frameOrnament::after {
+  inset: 10px;
+  border: 1px solid var(--frame-accent-soft);
+  border-right: 3px solid #ff7a2f;
+  border-bottom: 3px solid rgb(255 122 47 / 0.45);
+}
+
+/* ── 7. 冲击角标：赤黄撞色 ── */
+.frame_champagne {
+  padding: 9px;
+  background:
+    conic-gradient(from 45deg at 0 0, var(--frame-accent) 0 24deg, #fff 24deg 360deg),
+    conic-gradient(from 225deg at 100% 0, var(--frame-accent-alt) 0 24deg, #fff 24deg 360deg),
+    conic-gradient(from 135deg at 100% 100%, var(--frame-accent) 0 24deg, #fff 24deg 360deg),
+    conic-gradient(from 315deg at 0 100%, var(--frame-accent-alt) 0 24deg, #fff 24deg 360deg),
+    #fff;
+  background-size: 30% 30%, 30% 30%, 30% 30%, 30% 30%, auto;
+  background-position: 0 0, 100% 0, 100% 100%, 0 100%, center;
+  background-repeat: no-repeat;
+  border: 3px solid #121212;
+  box-shadow: 5px 5px 0 var(--frame-accent);
+}
+
+.frame_champagne::before {
+  inset: 6px;
+  border: 2px solid #121212;
+}
+
+.frame_champagne::after {
+  inset: 12px;
+  background:
+    linear-gradient(135deg, transparent 48%, var(--frame-accent-soft) 48%, var(--frame-accent-soft) 52%, transparent 52%),
+    linear-gradient(-135deg, transparent 48%, rgb(255 200 0 / 0.35) 48%, rgb(255 200 0 / 0.35) 52%, transparent 52%);
+}
+
+.frame_champagne .frameOrnament::before {
+  inset: 2px;
+  background:
+    radial-gradient(circle at 0 0, var(--frame-accent) 0 2px, transparent 2px 100%),
+    radial-gradient(circle at 100% 0, var(--frame-accent-alt) 0 2px, transparent 2px 100%),
+    radial-gradient(circle at 0 100%, var(--frame-accent-alt) 0 2px, transparent 2px 100%),
+    radial-gradient(circle at 100% 100%, var(--frame-accent) 0 2px, transparent 2px 100%);
+  background-size: 18px 18px;
+  background-repeat: no-repeat;
+}
+
+.frame_champagne .frameOrnament::after {
+  inset: 16px;
+  border: 1px solid rgb(232 50 74 / 0.28);
+  clip-path: polygon(
     0 0,
     100% 0,
-    0 100%,
-    100% 100%;
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    0 100%
+  );
+}
+
+/* ── 8. 交叉排线：紫色排线 ── */
+.frame_charcoal {
+  padding: 11px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 3px,
+      rgb(124 92 255 / 0.14) 3px 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 3px,
+      rgb(124 92 255 / 0.1) 3px 4px
+    ),
+    #f3f0ff;
+  border: 4px double var(--frame-accent);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.65);
+}
+
+.frame_charcoal::before {
+  inset: 7px;
+  border: 3px solid var(--frame-accent);
+  border-style: solid none none solid;
+}
+
+.frame_charcoal::after {
+  inset: 7px;
+  border: 3px solid #121212;
+  border-style: none solid solid none;
+}
+
+.frame_charcoal .frameOrnament::before {
+  inset: 13px;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0 8px,
+    rgb(124 92 255 / 0.22) 8px 9px
+  );
+}
+
+.frame_charcoal .frameOrnament::after {
+  inset: 13px;
+  border: 1px dashed var(--frame-accent-soft);
+}
+
+.frame_walnut:hover {
+  box-shadow:
+    7px 7px 0 var(--frame-accent),
+    0 10px 24px rgb(232 50 74 / 0.2);
+}
+
+.frame_goldOrnate:hover {
+  box-shadow:
+    9px 9px 0 var(--frame-accent-deep),
+    0 10px 24px rgb(240 165 0 / 0.22);
+}
+
+.frame_naturalWood:hover {
+  box-shadow:
+    6px 6px 0 rgb(184 192 204 / 0.62),
+    0 10px 24px rgb(184 192 204 / 0.22);
+}
+
+.frame_champagne:hover {
+  box-shadow:
+    7px 7px 0 var(--frame-accent),
+    0 10px 24px rgb(255 200 0 / 0.22);
+}
+
+.frame_blackBevel:hover {
+  box-shadow:
+    0 0 0 2px var(--frame-accent),
+    0 10px 28px rgb(86 180 248 / 0.22);
+}
+
+.frame_charcoal:hover {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.65),
+    0 10px 24px rgb(124 92 255 / 0.2);
 }
 
 .cardInner {
@@ -461,138 +787,6 @@
   letter-spacing: 0.02em;
   pointer-events: none;
   box-shadow: var(--card-shadow);
-}
-
-/* ── 1. 墨线粗框 ── */
-.frame_walnut {
-  padding: 9px;
-  background: #121212;
-}
-
-.frame_walnut::before {
-  opacity: 1;
-}
-
-/* ── 2. 双线分镜 ── */
-.frame_goldOrnate {
-  padding: 10px;
-  background: #fff;
-  border: 2px solid #121212;
-  outline: 2px solid #121212;
-  outline-offset: 4px;
-}
-
-.frame_goldOrnate::after {
-  inset: 8px;
-  border-color: rgb(18 18 18 / 0.1);
-  background: none;
-}
-
-/* ── 3. 极细线稿 ── */
-.frame_blackThin {
-  padding: 3px;
-  background: #121212;
-}
-
-.frame_blackThin::before,
-.frame_blackThin::after {
-  opacity: 0;
-}
-
-/* ── 4. 倾斜镜头 ── */
-.frame_blackBevel {
-  padding: 8px;
-  background:
-    repeating-linear-gradient(
-      -24deg,
-      transparent 0 6px,
-      rgb(255 255 255 / 0.08) 6px 7px
-    ),
-    linear-gradient(145deg, #2a2a2a 0%, #121212 55%, #3a3a3a 100%);
-}
-
-.frame_blackBevel::before {
-  --manga-bracket-tl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M2 20V2l12 4' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='square'/%3E%3C/svg%3E");
-  opacity: 0.9;
-}
-
-/* ── 5. 灰网边框 ── */
-.frame_naturalWood {
-  padding: 9px;
-  background-color: #ecece8;
-  background-image: radial-gradient(
-    circle,
-    rgb(0 0 0 / 0.09) 0.5px,
-    transparent 0.5px
-  );
-  background-size: 6px 6px;
-  border: 2px solid #121212;
-}
-
-.frame_naturalWood::after {
-  border-color: rgb(18 18 18 / 0.22);
-  background: rgb(255 255 255 / 0.35);
-}
-
-/* ── 6. 留白裁切 ── */
-.frame_silverAccent {
-  padding: 11px;
-  background: #fff;
-  border: 1px solid #121212;
-  outline: 1px solid #8f8f8f;
-  outline-offset: 7px;
-}
-
-/* ── 7. 冲击角标 ── */
-.frame_champagne {
-  padding: 7px;
-  background:
-    conic-gradient(
-      from 45deg at 0 0,
-      #121212 0 18deg,
-      #fff 18deg 360deg
-    ),
-    conic-gradient(
-      from 225deg at 100% 100%,
-      #121212 0 18deg,
-      #fff 18deg 360deg
-    ),
-    #fff;
-  background-size: 28% 28%, 28% 28%, auto;
-  background-position: 0 0, 100% 100%, center;
-  background-repeat: no-repeat;
-  border: 2px solid #121212;
-}
-
-.frame_champagne::before {
-  opacity: 0.75;
-}
-
-.frame_champagne::after {
-  border: 1px solid rgb(18 18 18 / 0.2);
-  background: none;
-}
-
-/* ── 8. 排线底色 ── */
-.frame_charcoal {
-  padding: 9px;
-  background:
-    repeating-linear-gradient(
-      45deg,
-      transparent 0 4px,
-      rgb(18 18 18 / 0.07) 4px 5px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      transparent 0 4px,
-      rgb(18 18 18 / 0.07) 4px 5px
-    ),
-    #e4e4e0;
-  border: 2px solid #121212;
-}
-
-.frame_charcoal::after {
-  background: rgb(255 255 255 / 0.5);
 }
 
 .emptyState {
