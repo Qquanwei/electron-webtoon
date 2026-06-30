@@ -143,15 +143,15 @@ function IndexPage() {
 
       <div className="w-full">
         <header className="px-3 py-3">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-            漫画库
+          <h1 className="flex flex-wrap items-baseline gap-x-2 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+            <span>漫画库</span>
+            <span className="text-sm font-normal text-slate-500 sm:text-base">
+              {comicList!.length} 部作品
+              {searchKey ? (
+                <span className="text-sky-600"> · 搜索「{searchKey}」</span>
+              ) : null}
+            </span>
           </h1>
-          <p className="mt-0.5 text-sm text-slate-500">
-            {comicList!.length} 部作品
-            {searchKey ? (
-              <span className="text-sky-600"> · 搜索「{searchKey}」</span>
-            ) : null}
-          </p>
         </header>
 
         <div className={styles.gridlist}>
