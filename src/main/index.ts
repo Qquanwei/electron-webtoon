@@ -15,6 +15,14 @@ app.setName('electron-webtoon');
 
 registerComicFileScheme();
 
+if (process.platform === 'win32') {
+  // 启用 clip-path / canvas 合成加速，减轻 Windows 上翻页 clip-path 动画卡顿
+  app.commandLine.appendSwitch(
+    'enable-features',
+    'CanvasOopRasterization,CompositeClipPath',
+  );
+}
+
 class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';

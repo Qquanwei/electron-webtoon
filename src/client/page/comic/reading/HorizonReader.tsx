@@ -29,11 +29,19 @@ import {
   spreadToFlipIndex,
 } from "./horizonSpreads";
 import { flipMangaSpread } from "./mangaPageFlip";
+import {
+  computeHorizonPageSize,
+  loadHorizonPageAspectRatio,
+} from "./horizonPageSize";
 import type { ImgListProps } from "./types";
 import { getComicImageClassName } from "./utils";
 import styles from "./HorizonReader.module.css";
 
-const FLIP_DURATION_MS = 750;
+import {
+  getHorizonFlipBookSettings,
+  HORIZON_FLIP_DURATION_MS,
+} from "./horizonFlipSettings";
+
 const CLICK_TURN_THRESHOLD = 8;
 
 type TurnDirection = "forward" | "back";
@@ -98,10 +106,14 @@ function constrainCornerDragPos(
   return { x, y: startPos.y };
 }
 
-function getFlipPageImageAlignClass(pageIndex: number) {
+function getFlipPageEdgeClass(pageIndex: number) {
+  if (pageIndex === 0) {
+    return styles.flipPageEdgeCover;
+  }
+
   return pageIndex % 2 === 1
-    ? styles.flipPageImageSlotRight
-    : styles.flipPageImageSlotLeft;
+    ? styles.flipPageEdgeRight
+    : styles.flipPageEdgeLeft;
 }
 
 interface ComicFlipPageProps {
@@ -114,22 +126,21 @@ function renderBlurFlipPage(
   ref: React.Ref<HTMLDivElement>,
   src: string,
   filter: number | undefined,
-  alignClass: string,
 ) {
-  return (
-    <div ref={ref} className={styles.flipPageBlurTail} aria-hidden>
-      <img
-        src={src}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        className={classNames(
-          getComicImageClassName(filter, styles.flipPageBlurTailImage),
-          alignClass,
-        )}
-      />
-    </div>
-  );
+    return (
+      <div ref={ref} className={styles.flipPageBlurTail} aria-hidden>
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className={classNames(
+            getComicImageClassName(filter, styles.flipPageBlurTailImage),
+            styles.flipPageSheetEdge,
+          )}
+        />
+      </div>
+    );
 }
 
 const ComicFlipPage = forwardRef<HTMLDivElement, ComicFlipPageProps>(
@@ -139,25 +150,18 @@ const ComicFlipPage = forwardRef<HTMLDivElement, ComicFlipPageProps>(
     }
 
     if (pageIndex === HORIZON_FLIP_BLUR_OPENING) {
-      return renderBlurFlipPage(
-        ref,
-        src,
-        filter,
-        styles.flipPageImageSlotRight,
-      );
+      return renderBlurFlipPage(ref, src, filter);
     }
 
     if (pageIndex === HORIZON_FLIP_BLUR_CLOSING) {
-      return renderBlurFlipPage(
-        ref,
-        src,
-        filter,
-        styles.flipPageImageSlotLeft,
-      );
+      return renderBlurFlipPage(ref, src, filter);
     }
 
     return (
-      <div ref={ref} className={styles.flipPage}>
+      <div
+        ref={ref}
+        className={classNames(styles.flipPage, getFlipPageEdgeClass(pageIndex))}
+      >
         <img
           src={src}
           alt=""
@@ -166,7 +170,7 @@ const ComicFlipPage = forwardRef<HTMLDivElement, ComicFlipPageProps>(
           data-index={pageIndex}
           className={classNames(
             getComicImageClassName(filter, styles.flipPageImage),
-            getFlipPageImageAlignClass(pageIndex),
+            styles.flipPageSheetEdge,
           )}
         />
       </div>
@@ -216,6 +220,9 @@ export default function HorizonReader({
     pageWidth: number;
     pageHeight: number;
   } | null>(null);
+  const [pageAspectRatio, setPageAspectRatio] = useState<number | null>(null);
+
+  const flipBookSettings = useMemo(() => getHorizonFlipBookSettings(), []);
 
   spreadIndexRef.current = spreadIndex;
 
@@ -235,7 +242,7 @@ export default function HorizonReader({
 
   useLayoutEffect(() => {
     const area = bookAreaRef.current;
-    if (!area) return undefined;
+    if (!area || pageAspectRatio === null) return undefined;
 
     let resizeTimer: number | undefined;
 
@@ -243,8 +250,11 @@ export default function HorizonReader({
       const { width, height } = area.getBoundingClientRect();
       if (width < 120 || height < 120) return;
 
-      const pageWidth = Math.max(240, Math.floor(width / 2));
-      const pageHeight = Math.max(320, Math.floor(height - 8));
+      const { pageWidth, pageHeight } = computeHorizonPageSize(
+        width,
+        height,
+        pageAspectRatio,
+      );
       setBookSize((prev) => {
         if (
           prev?.pageWidth === pageWidth &&
@@ -275,7 +285,31 @@ export default function HorizonReader({
         window.clearTimeout(resizeTimer);
       }
     };
-  }, []);
+  }, [pageAspectRatio]);
+
+  useEffect(() => {
+    if (!imgList.length) {
+      setPageAspectRatio(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    loadHorizonPageAspectRatio(imgList)
+      .then((aspectRatio) => {
+        if (!cancelled) {
+          setPageAspectRatio(aspectRatio);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPageAspectRatio(0.7);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [imgList]);
 
   useEffect(() => {
     setSpreadIndex(getSpreadIndexForPage(spreads, firstElePosition));
@@ -421,6 +455,7 @@ export default function HorizonReader({
     return () => {
       document.body.classList.remove("overflow-y-hidden");
       document.documentElement.classList.remove("comic-horizon-reading");
+      document.documentElement.classList.remove("comic-horizon-flip-animating");
     };
   }, []);
 
@@ -626,7 +661,7 @@ export default function HorizonReader({
       const current = spreadIndexRef.current;
       if (current >= spreads.length - 1) return;
       turnPageRef.current("forward");
-    }, FLIP_DURATION_MS + 900);
+    }, HORIZON_FLIP_DURATION_MS + 900);
 
     return () => window.clearInterval(timer);
   }, [autoScroll, animating, spreads.length]);
@@ -635,10 +670,20 @@ export default function HorizonReader({
     pendingPageIndexRef.current = event.data;
   }, []);
 
+  const syncFlipMotionClass = useCallback((state: string) => {
+    const active =
+      state === "flipping" || state === "user_fold" || state === "fold_corner";
+    document.documentElement.classList.toggle(
+      "comic-horizon-flip-animating",
+      active,
+    );
+  }, []);
+
   const onChangeState = useCallback(
     (event: { data: string }) => {
       const prevState = prevFlipStateRef.current;
       prevFlipStateRef.current = event.data;
+      syncFlipMotionClass(event.data);
 
       if (event.data === "read" && prevState === "flipping") {
         // 等翻页动画完全收尾后再更新 React，避免 updateFromHtml 打断 99%→100%
@@ -659,7 +704,7 @@ export default function HorizonReader({
 
       setAnimating(event.data === "flipping");
     },
-    [getPageFlip, syncSpreadFromFlip],
+    [getPageFlip, syncSpreadFromFlip, syncFlipMotionClass],
   );
 
   const flipBookPages = useMemo(() => {
@@ -701,10 +746,12 @@ export default function HorizonReader({
     [syncSpreadFromFlip],
   );
 
-  const bookShellStyle = {
+  const flipBookZoomStyle = {
     transform: `scale(${zoomScale})`,
     transformOrigin: "center center",
   } as CSSProperties;
+
+  const coverSrc = imgList[0] ?? "";
 
   if (!imgList.length) {
     return <div className={styles.stage} />;
@@ -712,9 +759,19 @@ export default function HorizonReader({
 
   return (
     <div className={classNames(styles.stage, "comic-horizon-scroll")}>
+      <div className={styles.coverBackdrop} aria-hidden>
+        <img
+          src={coverSrc}
+          alt=""
+          className={styles.coverBackdropImage}
+          loading="eager"
+          decoding="async"
+        />
+        <div className={styles.coverBackdropDim} />
+      </div>
       <div ref={bookAreaRef} className={styles.bookArea}>
-        <div className={styles.flipBookShell} style={bookShellStyle}>
-          {bookSize && !loading ? (
+        <div className={styles.flipBookZoom} style={flipBookZoomStyle}>
+          {bookSize && pageAspectRatio !== null && !loading ? (
             <HorizonFlipBook
               key={`${tag}-${imgList.length}-${bookSize.pageWidth}-${bookSize.pageHeight}`}
               ref={bookRef}
@@ -722,15 +779,15 @@ export default function HorizonReader({
               style={{}}
               width={bookSize.pageWidth}
               height={bookSize.pageHeight}
-              size="stretch"
+              size="fixed"
               minWidth={240}
               maxWidth={bookSize.pageWidth}
               minHeight={320}
               maxHeight={bookSize.pageHeight}
               usePortrait={false}
-              drawShadow
-              flippingTime={FLIP_DURATION_MS}
-              maxShadowOpacity={0.55}
+              drawShadow={flipBookSettings.drawShadow}
+              flippingTime={flipBookSettings.flippingTime}
+              maxShadowOpacity={flipBookSettings.maxShadowOpacity}
               showPageCorners={false}
               disableFlipByClick
               useMouseEvents={false}

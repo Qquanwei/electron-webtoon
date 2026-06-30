@@ -19,6 +19,29 @@
   html.comic-horizon-reading body {
     background-color: #0a0908;
   }
+
+  html.comic-horizon-reading .stf__parent {
+    transform: translateZ(0);
+  }
+
+  html.comic-horizon-reading .stf__block {
+    transform: translateZ(0);
+  }
+
+  html.comic-horizon-reading .stf__item {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  html.comic-horizon-flip-animating .stf__item.--soft {
+    will-change: transform, clip-path;
+  }
+
+  html.comic-horizon-flip-animating .stf__outerShadow,
+  html.comic-horizon-flip-animating .stf__innerShadow {
+    will-change: transform, clip-path, opacity;
+  }
 }
 
 
