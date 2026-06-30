@@ -14,6 +14,3 @@ declare module "tiny-event-manager" {
     unsubscribe: () => void;
   };
 }
-
-declare module "*.css";
-declare const VERSION: string;

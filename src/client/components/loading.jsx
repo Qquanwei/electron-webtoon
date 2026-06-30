@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import classNames from "classnames";
 import shuffle from "lodash.shuffle";
 import { LOADING_COVERLIST_KEY } from "../../config";
-import styles from "./loading.css";
+import styles from "./loading.module.css";
 import { getIPC } from "@client/ipc";
 /* eslint-disable @typescript-eslint/no-shadow */
 // 自动从所有图片中选一张作为loading图。

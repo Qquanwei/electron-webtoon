@@ -2,15 +2,20 @@
 /* eslint-disable no-param-reassign */
 import electron, { app } from "electron";
 import imageSize from "image-size";
-import URL from "url";
 import { v4 as uuidv4 } from "uuid";
 import * as R from "ramda";
 import path from "path";
 import fs from "fs";
-import fsPromisese from "fs.promises";
+import fsPromisese from "fs/promises";
 import Store from "electron-store";
 import decompress from "./compress";
 import sortImgListByName from "./sortImgListByName";
+import {
+  DEFAULT_SHORTCUT_BINDINGS,
+  serializeShortcutBindings,
+} from "../shared/shortcuts";
+import { IDecompressProgress, IDLE_DECOMPRESS_PROGRESS } from "../shared/type";
+import { emitAppEvent } from "../shared/ipc/events";
 
 function isDirectory(fullpath: string) {
   return fs.lstatSync(fullpath).isDirectory();
@@ -41,6 +46,7 @@ const supportCompressExts = [
 interface IStoreKeys {
   decompressPath: string;
   archivePath: string;
+  shortcuts: string;
 }
 
 function extNameLegal(file: string) {
@@ -198,6 +204,7 @@ export default class ComicService {
         library: [] as ILibraryComic[],
         decompressPath: app.getPath("appData"),
         archivePath: "",
+        shortcuts: serializeShortcutBindings(DEFAULT_SHORTCUT_BINDINGS),
       },
     });
     // old version config file
@@ -219,11 +226,7 @@ export default class ComicService {
       console.log("migrate old config file error:", e);
     }
 
-    this.makeUrl =
-      makeUrl ||
-      ((filename: string) => {
-        return URL.pathToFileURL(filename).href;
-      });
+    this.makeUrl = makeUrl || makeComicFileUrl;
   }
 
   async getComicList(): Promise<IComic[]> {
@@ -342,22 +345,105 @@ export default class ComicService {
       properties: ["openFile", "multiSelections"],
       filters: [{ name: "compress", extensions: supportCompressExts }],
     });
-    const cachePath = this.store.get("decompressPath");
 
-    const onEntry = (data) => {
-      this.mainWindow.webContents.send("decompress", data);
-    };
+    if (!selectFile.canceled && selectFile.filePaths.length) {
+      const cachePath = this.store.get("decompressPath");
+      await this.processArchiveFiles(selectFile.filePaths, cachePath);
+    }
+  }
 
-    if (!selectFile.canceled) {
-      for (let i = 0; i < selectFile.filePaths.length; ++i) {
-        const currentFile = selectFile.filePaths[i];
-        decompress(currentFile, cachePath, onEntry, async (data) => {
-          const { pathname } = data;
-          await this.addComicToLibrary2(pathname, currentFile);
-          this.mainWindow.webContents.send("decompress-done", data);
-        });
+  private lastProgressSentAt = 0;
+
+  private sendDecompressProgress(payload: IDecompressProgress) {
+    const now = Date.now();
+    if (
+      payload.active &&
+      now - this.lastProgressSentAt < 80 &&
+      payload.percent < 100
+    ) {
+      return;
+    }
+    this.lastProgressSentAt = now;
+    emitAppEvent(this.mainWindow, {
+      type: "decompress-progress",
+      payload,
+    });
+  }
+
+  private async processArchiveFiles(
+    files: string[],
+    cachePath: string,
+  ): Promise<void> {
+    const archiveTotal = files.length;
+
+    this.sendDecompressProgress({
+      active: true,
+      archiveIndex: 0,
+      archiveTotal,
+      archiveName: path.basename(files[0]),
+      entryProcessed: 0,
+      entryTotal: 0,
+      percent: 0,
+    });
+
+    for (let archiveIndex = 0; archiveIndex < files.length; archiveIndex += 1) {
+      const currentFile = files[archiveIndex];
+      const archiveName = path.basename(currentFile);
+
+      try {
+        await decompress(
+          currentFile,
+          cachePath,
+          (message) => {
+            emitAppEvent(this.mainWindow, {
+              type: "decompress",
+              payload: message,
+            });
+          },
+          async (data) => {
+            const { pathname } = data;
+            await this.addComicToLibrary2(pathname, currentFile);
+            emitAppEvent(this.mainWindow, {
+              type: "decompress-done",
+              payload: data,
+            });
+          },
+          ({ processed, total }) => {
+            const archiveFraction = total > 0 ? processed / total : 0;
+            const percent = Math.min(
+              100,
+              ((archiveIndex + archiveFraction) / archiveTotal) * 100,
+            );
+
+            this.sendDecompressProgress({
+              active: true,
+              archiveIndex,
+              archiveTotal,
+              archiveName,
+              entryProcessed: processed,
+              entryTotal: total,
+              percent,
+            });
+          },
+        );
+      } catch (error) {
+        console.error("processArchiveFiles error:", error);
       }
     }
+
+    this.sendDecompressProgress({
+      active: true,
+      archiveIndex: archiveTotal - 1,
+      archiveTotal,
+      archiveName: "",
+      entryProcessed: 0,
+      entryTotal: 0,
+      percent: 100,
+    });
+
+    setTimeout(() => {
+      this.sendDecompressProgress(IDLE_DECOMPRESS_PROGRESS);
+    }, 800);
   }
 
   /**
@@ -368,45 +454,34 @@ export default class ComicService {
   async handleDroppedFiles(paths: string[]) {
     if (!paths || !paths.length) return;
     const cachePath = this.store.get("decompressPath");
+    const compressFiles: string[] = [];
 
-    const onEntry = (data) => {
-      this.mainWindow.webContents.send("decompress", data);
-    };
-
-    for (let i = 0; i < paths.length; ++i) {
+    for (let i = 0; i < paths.length; i += 1) {
       const p = paths[i];
       try {
         if (isDirectory(p)) {
           await this.addComicToLibrary(p);
-          this.mainWindow.webContents.send("decompress-done", { pathname: p });
-        } else {
-          // for files, try to detect compress ext by extension
-          const lower = p.toLowerCase();
-          const isCompress = supportCompressExts.some((s) =>
-            lower.endsWith(`.${s}`),
-          );
-          if (isCompress) {
-            // decompress and add
-            // decompress will call onDone with pathname
-            // reuse same flow as takeCompressAndAddToComic
-            // eslint-disable-next-line no-loop-func
-            await new Promise((resolve) => {
-              decompress(p, cachePath, onEntry, async (data) => {
-                const { pathname } = data;
-                await this.addComicToLibrary2(pathname, p);
-                this.mainWindow.webContents.send("decompress-done", data);
-                resolve(null);
-              });
-            });
-          } else {
-            // unknown file type — ignore or try to add as a single-file comic?
-            // For now ignore
-          }
+          emitAppEvent(this.mainWindow, {
+            type: "decompress-done",
+            payload: { pathname: p },
+          });
+          continue;
+        }
+
+        const lower = p.toLowerCase();
+        const isCompress = supportCompressExts.some((s) =>
+          lower.endsWith(`.${s}`),
+        );
+        if (isCompress) {
+          compressFiles.push(p);
         }
       } catch (e) {
-        // ignore single file errors and continue
         console.error("handleDroppedFiles error:", e);
       }
+    }
+
+    if (compressFiles.length) {
+      await this.processArchiveFiles(compressFiles, cachePath);
     }
   }
 
@@ -420,7 +495,10 @@ export default class ComicService {
     if (comic.compressFilePath) {
       try {
         await fsPromisese.rmdir(comic.path, { recursive: true });
-        this.mainWindow.webContents.send("msg", "已清理临时目录");
+        emitAppEvent(this.mainWindow, {
+          type: "msg",
+          payload: "已清理临时目录",
+        });
       } catch (e) {
         // pass
       }
@@ -526,7 +604,10 @@ export default class ComicService {
         }
       }
 
-      this.mainWindow.webContents.send("msg", `已归档至：${finalTargetPath}`);
+      emitAppEvent(this.mainWindow, {
+        type: "msg",
+        payload: `已归档至：${finalTargetPath}`,
+      });
     } catch (e) {
       console.error("Archive comic error:", e);
       throw new Error(`归档失败：${(e as any).message}`);
@@ -554,6 +635,12 @@ export default class ComicService {
     }
     if (key === "archivePath") {
       return this.store.set("archivePath", "");
+    }
+    if (key === "shortcuts") {
+      return this.store.set(
+        "shortcuts",
+        serializeShortcutBindings(DEFAULT_SHORTCUT_BINDINGS),
+      );
     }
   }
 

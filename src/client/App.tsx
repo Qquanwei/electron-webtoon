@@ -7,15 +7,17 @@ import Settings from "./page/settings";
 import * as selector from "./selector";
 import StartUpPage from "./startPage";
 import "./App.global.css";
-import { getIPC } from "./ipc";
+import { ipc } from "./ipc";
 import { useMessage } from "@components/useMessage";
-import { Snackbar } from "@material-ui/core";
-import Alert from "@material-ui/lab/Alert";
+import DecompressProgressBar from "@components/DecompressProgressBar";
+import { useDecompressProgress } from "@components/useDecompressProgress";
+import { Snackbar, Alert } from "@mui/material";
 import { useRecoilRefresher_UNSTABLE } from "recoil";
 
 export default function App() {
   const [dragActive, setDragActive] = useState(false);
   const { pushMessage, messages } = useMessage();
+  const { progress, setProgress } = useDecompressProgress();
   const refreshComicList = useRecoilRefresher_UNSTABLE(selector.comicList);
 
   const onDragEnter = useCallback((e: React.DragEvent) => {
@@ -46,14 +48,7 @@ export default function App() {
       const paths = files
         .map((f) => webUtils.getPathForFile(f))
         .filter(Boolean);
-      paths.forEach((filePath) => {
-        pushMessage(
-          `已检测到文件拖入[${filePath}]，正在导入漫画，请稍候……`,
-          1000,
-        );
-      });
       if (paths.length) {
-        const ipc = await getIPC();
         await ipc.handleDroppedFiles(paths);
       }
     } catch (err) {
@@ -63,21 +58,16 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    async function work() {
-      const ipc = await getIPC();
-      ipc.onMsg((msg) => {
-        pushMessage(msg, 3000);
-      });
-      ipc.onCompressFile((msg) => {
-        pushMessage(msg, 3000);
-      });
-      ipc.onCompressDone(() => {
-        pushMessage("处理完毕", 3000);
-        refreshComicList();
-      });
-    }
-    work();
-  }, []);
+    const unsubscribers = [
+      ipc.onEvent("msg", (msg) => pushMessage(msg, 3000)),
+      ipc.onEvent("decompress-progress", setProgress),
+      ipc.onEvent("decompress-done", () => refreshComicList()),
+    ];
+
+    return () => {
+      unsubscribers.forEach((unsubscribe) => unsubscribe());
+    };
+  }, [pushMessage, refreshComicList, setProgress]);
 
   // TODO: loading 时能自动从所有logo中选一张岂不是完美了。
   return (
@@ -118,9 +108,12 @@ export default function App() {
         </div>
       )}
 
+      <DecompressProgressBar />
+
       <Snackbar
         open={messages.length > 0}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        sx={{ bottom: progress.active ? 88 : 24 }}
       >
         <div>
           {messages

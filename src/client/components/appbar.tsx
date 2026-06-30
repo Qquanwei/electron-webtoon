@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useState } from "react";
-import Typography from "@material-ui/core/Typography";
-import SearchIcon from "@material-ui/icons/Search";
+import Typography from "@mui/material/Typography";
+import SearchIcon from "@mui/icons-material/Search";
 import { Link } from "react-router-dom";
 import { useRecoilRefresher_UNSTABLE } from "recoil";
 import * as selector from "../selector";

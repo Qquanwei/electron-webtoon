@@ -1,0 +1,93 @@
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 50% -10%,
+      rgb(58 52 46 / 0.55) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 90% 70% at 50% 110%,
+      rgb(0 0 0 / 0.65) 0%,
+      transparent 60%
+    ),
+    linear-gradient(180deg, #1c1916 0%, #12100e 42%, #0a0908 100%);
+}
+
+.ambient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgb(255 255 255 / 0.012) 2px,
+    rgb(255 255 255 / 0.012) 3px
+  );
+}
+
+.ambient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 120px rgb(0 0 0 / 0.45);
+}
+
+.reader {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 10px 0 48px;
+}
+
+.page {
+  width: 100%;
+  max-width: calc(720px * var(--comic-zoom, 1));
+  margin: 0 auto;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.pageFrame {
+  background: transparent;
+}
+
+.pageImage {
+  display: block;
+  width: 100%;
+}
+
+.nextChapter {
+  width: 100%;
+  max-width: calc(720px * var(--comic-zoom, 1));
+  margin: 0 auto;
+  padding: 28px 10px 12px;
+  box-sizing: border-box;
+  cursor: pointer;
+  text-align: center;
+  color: #8a8278;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.nextChapter:hover {
+  color: #d4cdc3;
+  border-top-color: rgb(255 255 255 / 0.14);
+}
+
+.nextChapterCount {
+  display: inline-block;
+  min-width: 1.25rem;
+  margin-left: 0.35rem;
+  color: #c4b9a8;
+  font-variant-numeric: tabular-nums;
+}

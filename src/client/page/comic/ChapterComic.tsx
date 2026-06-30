@@ -1,16 +1,17 @@
 /* eslint-disable */
-import React, { useCallback, useMemo, useState } from "react";
-import Typography from "@material-ui/core/Typography";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ImportContactsIcon from "@material-ui/icons/ImportContacts";
-import ListItemText from "@material-ui/core/ListItemText";
-import Breadcrumbs from "@material-ui/core/Breadcrumbs";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
+import Typography from "@mui/material/Typography";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ImportContactsIcon from "@mui/icons-material/ImportContacts";
+import ListItemText from "@mui/material/ListItemText";
+import Breadcrumbs from "@mui/material/Breadcrumbs";
 import classNames from "classnames";
 import { Link } from "react-router-dom";
-import Divider from "@material-ui/core/Divider";
-import List from "@material-ui/core/List";
-import AppIcon from "@material-ui/icons/Apps";
+import Divider from "@mui/material/Divider";
+import List from "@mui/material/List";
+import AppIcon from "@mui/icons-material/Apps";
 import ImgControl from "./ImgControl";
 import ImgList from "./imgList";
 import useComicContext from "./useComicContext";
@@ -20,6 +21,11 @@ import {
   IImgListForSingleChapter,
   UnaryFunction,
 } from "@shared/type";
+import {
+  getAdjacentChapter,
+  hasNextChapter,
+  hasPrevChapter,
+} from "./chapterUtils";
 import { getIPC } from "@client/ipc";
 
 const ChapterList: React.FC<{
@@ -40,7 +46,7 @@ const ChapterList: React.FC<{
         }
       }
     },
-    [onChange],
+    [comicId, onChange],
   );
 
   let deep = 0;
@@ -52,28 +58,44 @@ const ChapterList: React.FC<{
     }
 
     return list.map((item, index) => {
-      if (item.name) {
-        return (
-          <ListItem key={index}>
-            <ListItemIcon>
-              <ImportContactsIcon />
-            </ListItemIcon>
-            <ListItemText
-              className={classNames("cursor-pointer", {
-                ["text-sky-500"]: value === item,
-              })}
-            >
-              <div onClick={() => onClick(item)} title={item.name}>
-                {item.name}
-              </div>
-            </ListItemText>
-            <Divider />
-            {item.list.length && deep < 2 ? (
-              <List>{renderList(item.list as IImgListForMultipleChapter)}</List>
-            ) : null}
-          </ListItem>
-        );
+      if (!item.name) {
+        return null;
       }
+
+      const nested =
+        item.list.length && deep < 2 ? (
+          <List disablePadding className="pl-2">
+            {renderList(item.list as IImgListForMultipleChapter)}
+          </List>
+        ) : null;
+
+      return (
+        <React.Fragment key={`${item.name}-${index}`}>
+          <ListItem disablePadding className="text-slate-200">
+            <ListItemButton
+              selected={value === item}
+              onClick={() => onClick(item)}
+              title={item.name}
+              className="text-slate-200 hover:bg-white/5"
+            >
+              <ListItemIcon className="min-w-[36px] text-slate-400">
+                <ImportContactsIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary={item.name}
+                primaryTypographyProps={{
+                  className: classNames("text-slate-200", {
+                    "!text-sky-400": value === item,
+                  }),
+                  noWrap: true,
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+          {nested}
+          <Divider className="border-slate-700/80" />
+        </React.Fragment>
+      );
     });
   }
 
@@ -82,25 +104,19 @@ const ChapterList: React.FC<{
   }
 
   return (
-    <div className={"basis-[320px] shrink-0 grow-0"}>
-      <div
-        className={"fixed top-0 left-0 z-10 bg-gray-300/10 py-[20px] px-[20px]"}
-      >
+    <aside className="sticky top-0 z-40 flex h-screen w-[320px] shrink-0 flex-col border-r border-slate-700/60 bg-[#141210] text-slate-200">
+      <div className="shrink-0 border-b border-slate-700/60 px-5 py-5">
         <Breadcrumbs aria-label="breadcrumb">
-          <Link to="/" className={"text-[#333]"}>
+          <Link to="/" className="text-sky-400 hover:text-sky-300">
             Home
           </Link>
-          <Typography>{comic?.name}</Typography>
+          <Typography className="text-slate-300">{comic?.name}</Typography>
         </Breadcrumbs>
       </div>
-      <div
-        className={
-          "fixed border-box left-0 top-[50px] w-[300px] h-[calc(100%-100px)] overflow-auto"
-        }
-      >
-        {renderList(imgList)}
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
+        <List disablePadding>{renderList(imgList)}</List>
       </div>
-    </div>
+    </aside>
   );
 };
 
@@ -121,36 +137,62 @@ const ChapterComic: React.FC<{ chapterList: IImgListForMultipleChapter }> = ({
     setToggleChapter((v) => !v);
   }, []);
 
-  const hasNextPage = useMemo(() => {
-    let index = -1;
-    for (let i = 0; i < chapterList.length; ++i) {
-      if (chapterList[i].name === chapter.name) {
-        index = i;
-        break;
-      }
-    }
+  const hasNextPage = useMemo(
+    () => hasNextChapter(chapterList, chapter),
+    [chapter, chapterList],
+  );
 
-    return index < chapterList.length - 1;
-  }, [chapter, chapterList]);
+  const saveChapterTag = useCallback(
+    (nextChapter: IChapter) => {
+      getIPC().then((ipc) => {
+        ipc.saveComicTag(comic?.id || "", nextChapter.name, 0);
+      });
+    },
+    [comic?.id],
+  );
 
   const onNextPage = useCallback(() => {
-    setChapter((chapter) => {
-      let index = -1;
-      for (let i = 0; i < chapterList.length; ++i) {
-        if (chapterList[i].name === chapter.name) {
-          index = i;
-          break;
-        }
+    setChapter((current) => {
+      const nextChapter = getAdjacentChapter(chapterList, current, 1);
+      if (nextChapter === current) {
+        return current;
       }
-      const newChapter = chapterList[index + 1];
-
-      getIPC().then((ipc) => {
-        ipc.saveComicTag(comic?.id || "", newChapter.name, 0);
-      });
-
-      return newChapter;
+      saveChapterTag(nextChapter);
+      return nextChapter;
     });
-  }, [chapterList, comic]);
+  }, [chapterList, saveChapterTag]);
+
+  const onPrevPage = useCallback(() => {
+    setChapter((current) => {
+      const prevChapter = getAdjacentChapter(chapterList, current, -1);
+      if (prevChapter === current) {
+        return current;
+      }
+      saveChapterTag(prevChapter);
+      return prevChapter;
+    });
+  }, [chapterList, saveChapterTag]);
+
+  const { shortcutHandlersRef } = useComicContext();
+
+  useEffect(() => {
+    shortcutHandlersRef.current.nextChapter = hasNextPage ? onNextPage : undefined;
+    shortcutHandlersRef.current.prevChapter = hasPrevChapter(chapterList, chapter)
+      ? onPrevPage
+      : undefined;
+
+    return () => {
+      shortcutHandlersRef.current.nextChapter = undefined;
+      shortcutHandlersRef.current.prevChapter = undefined;
+    };
+  }, [
+    chapter,
+    chapterList,
+    hasNextPage,
+    onNextPage,
+    onPrevPage,
+    shortcutHandlersRef,
+  ]);
 
   const onVisitPositionChange = useCallback(
     async (position) => {
@@ -162,14 +204,14 @@ const ChapterComic: React.FC<{ chapterList: IImgListForMultipleChapter }> = ({
 
   return (
     <>
-      <div className="flex relative">
+      <div className="flex">
         <ChapterList
           toggleChapter={toggleChapter}
           imgList={chapterList}
           value={chapter}
           onChange={setChapter}
         />
-        <div className="grow relative flex w-[calc(100%-320px)]">
+        <div className="relative min-w-0 flex-1">
           <ImgList
             tag={chapter.name}
             onVisitPosition={onVisitPositionChange}

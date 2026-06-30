@@ -1,14 +1,14 @@
 /* eslint-disable */
 import { useCallback, useEffect } from "react";
 import classNames from "classnames";
-import Filter1Icon from "@material-ui/icons/Filter1";
-import Filter2Icon from "@material-ui/icons/Filter2";
-import Filter3Icon from "@material-ui/icons/Filter3";
-import Filter4Icon from "@material-ui/icons/Filter4";
-import ArrowCircleDown from "@material-ui/icons/ArrowDownward";
-import AddAPhotoIcon from "@material-ui/icons/AddAPhoto";
-import HomeIcon from "@material-ui/icons/Home";
-import { Tooltip } from "@material-ui/core";
+import Filter1Icon from "@mui/icons-material/Filter1";
+import Filter2Icon from "@mui/icons-material/Filter2";
+import Filter3Icon from "@mui/icons-material/Filter3";
+import Filter4Icon from "@mui/icons-material/Filter4";
+import ArrowCircleDown from "@mui/icons-material/ArrowDownward";
+import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
+import HomeIcon from "@mui/icons-material/Home";
+import { Tooltip } from "@mui/material";
 import { useHistory } from "react-router-dom";
 import useComicContext from "./useComicContext";
 import Icon from "@components/Icon";
@@ -58,7 +58,12 @@ const Control: React.FC<{}> = ({ children }) => {
   }, []);
 
   return (
-    <div className="fixed right-0 bottom-[20px] flex flex-col justify-end cursor-pointer px-[20px]">
+    <div
+      className={classNames(
+        "fixed right-0 z-50 flex flex-col justify-end cursor-pointer px-[20px]",
+        comic?.pageMode === "horizon" ? "bottom-[92px]" : "bottom-[20px]",
+      )}
+    >
       <Tooltip title="滤镜1" placement="top">
         <Filter1Icon
           className={classNames("bg-[#333] text-white", {

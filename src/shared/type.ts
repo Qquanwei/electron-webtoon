@@ -12,89 +12,27 @@ export interface Path {
   filePaths?: string[];
 }
 
-export interface IPC {
-  /**
-   * 订阅来自node的消息
-   */
-  onMsg: UnaryFunction<UnaryFunction<string, void>, void>;
-
-  /**
-   * 开始解压缩
-   */
-  onCompressFile: UnaryFunction<UnaryFunction<string, void>, void>;
-
-  /**
-   * 解压缩成功
-   */
-  onCompressDone: UnaryFunction<UnaryFunction<string, void>, void>;
-
-  /**
-   * 选择压缩包文件并添加到漫画列表中
-   */
-  takeCompressAndAddToComic: EmptyFunction;
-  /**
-   * 将该一个目录作为漫画，加到漫画列表中
-   */
-  addComicToLibrary: UnaryFunction<string, Promise<unknown>>;
-  /**
-   * 选择一个目录
-   */
-  takeDirectory: EmptyFunction<Promise<Path>>;
-
-  /**
-   * 添加日志
-   */
-  addLog: (type: "info", log: string) => Promise<unknown>;
-
-  /**
-   * 根据comicId 删除一个漫画
-   */
-  removeComic: UnaryFunction<string, Promise<unknown>>;
-
-  /**
-   * 根据comicId 归档一个漫画（移动到归档路径）
-   */
-  archiveComic: UnaryFunction<string, Promise<unknown>>;
-
-  /**
-   * get client config value by key
-   */
-  get: (key: string) => Promise<any>;
-
-  /**
-   * set client config value by key
-   */
-  set: (key: string, value: any) => Promise<unknown>;
-
-  /**
-   * reset client config value by key to default
-   */
-  reset: (key: string) => Promise<any>;
-
-  /**
-   * handle files/paths dropped into the app (folders or archive files)
-   */
-  handleDroppedFiles: (paths: string[]) => Promise<any>;
-
-  fetchComicList: EmptyFunction<Promise<IComic[]>>;
-
-  fetchComic: UnaryFunction<string, Promise<IComic>>;
-
-  fetchImgList: UnaryFunction<string, Promise<IImgList>>;
-
-  saveComicTag: (
-    id: string,
-    name: string,
-    position: string | number,
-  ) => unknown;
-
-  setComicProperty: (id: string, property: string, value: string) => unknown;
-
-  /**
-   * 收藏绝景
-   */
-  // saveUnbelieveView: EmptyFunction;
+export interface IDecompressProgress {
+  active: boolean;
+  archiveIndex: number;
+  archiveTotal: number;
+  archiveName: string;
+  entryProcessed: number;
+  entryTotal: number;
+  percent: number;
 }
+
+export const IDLE_DECOMPRESS_PROGRESS: IDecompressProgress = {
+  active: false,
+  archiveIndex: 0,
+  archiveTotal: 0,
+  archiveName: "",
+  entryProcessed: 0,
+  entryTotal: 0,
+  percent: 0,
+};
+
+export type { IpcClient } from "./ipc/contract";
 
 export interface IComic {
   id: string;
@@ -108,6 +46,10 @@ export interface IComic {
    * 横竖屏翻页模式
    */
   pageMode?: "horizon" | "vertical";
+  /**
+   * 阅读缩放比例
+   */
+  zoomScale?: number | string;
 }
 
 export interface IChapter {
