@@ -67,6 +67,7 @@ function dispatchRpc(service: ComicService, request: RpcRequest) {
 }
 
 export default function registerIpc(service: ComicService): void {
+  electron.ipcMain.removeHandler(IPC_RPC);
   electron.ipcMain.handle(IPC_RPC, (_event, request: RpcRequest) =>
     dispatchRpc(service, request),
   );

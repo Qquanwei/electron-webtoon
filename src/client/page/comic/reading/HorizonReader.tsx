@@ -26,13 +26,14 @@ import type { ImgListProps } from "./types";
 import { getComicImageClassName } from "./utils";
 import styles from "./HorizonReader.module.css";
 
-const FLIP_DURATION_MS = 800;
-const WHEEL_GESTURE_START_THRESHOLD = 6;
+const FLIP_DURATION_MS = 750;
+const WHEEL_GESTURE_START_THRESHOLD = 8;
 const WHEEL_GESTURE_GAP_MS = 260;
 const WHEEL_TURN_THROTTLE_MS = 520;
-const WHEEL_PROGRESS_SENSITIVITY = 0.55;
-const WHEEL_MAX_DELTA_Y = 36;
-const WHEEL_MAX_PROGRESS_STEP = 12;
+const WHEEL_FOLD_IDLE_MS = 100;
+const WHEEL_DRAG_SENSITIVITY = 2.4;
+const WHEEL_MAX_DELTA_Y = 48;
+const FLIP_COMMIT_PROGRESS = 32;
 
 type TurnDirection = "forward" | "back";
 
@@ -67,9 +68,10 @@ interface PageFlipSurface {
 interface WheelFoldSession {
   active: boolean;
   direction: TurnDirection | null;
-  targetProgress: number;
+  pendingDelta: number;
   startPos: BookPoint;
   pos: BookPoint;
+  idleTimer: number | null;
 }
 
 interface WheelGestureGate {
@@ -111,62 +113,38 @@ function clampWheelDelta(deltaY: number) {
   return Math.sign(deltaY) * Math.min(Math.abs(deltaY), WHEEL_MAX_DELTA_Y);
 }
 
-function clampProgressStep(step: number) {
-  return Math.sign(step) * Math.min(Math.abs(step), WHEEL_MAX_PROGRESS_STEP);
-}
-
 function readFlipProgress(pageFlip: PageFlipSurface) {
   return pageFlip.getFlipController().getCalculation()?.getFlippingProgress() ?? 0;
 }
 
-function syncWheelFoldToProgress(
-  pageFlip: PageFlipSurface,
-  session: WheelFoldSession,
+function constrainCornerDragPos(
+  pos: BookPoint,
+  startPos: BookPoint,
+  bounds: BookBounds,
+): BookPoint {
+  const edgeReach = bounds.pageWidth / 5;
+  const startBookX = startPos.x - bounds.left;
+  let x = pos.x;
+
+  if (startBookX <= edgeReach) {
+    x = Math.max(startPos.x, pos.x);
+  } else if (startBookX >= bounds.width - edgeReach) {
+    x = Math.min(startPos.x, pos.x);
+  }
+
+  return { x, y: startPos.y };
+}
+
+function getWheelDragBounds(
+  direction: TurnDirection,
+  start: BookPoint,
   bounds: BookBounds,
 ) {
-  if (!session.active || session.direction === null) return;
-
-  const target = session.targetProgress;
-  const start = session.startPos;
-  const direction = session.direction;
-  const dragRange = bounds.pageWidth * 1.85;
-
-  let lo: number;
-  let hi: number;
+  const span = bounds.pageWidth * 1.9;
   if (direction === "forward") {
-    lo = start.x;
-    hi = start.x + dragRange;
-  } else {
-    lo = start.x - dragRange;
-    hi = start.x;
+    return { minX: start.x, maxX: start.x + span };
   }
-
-  let bestPos = { x: start.x, y: start.y };
-  let bestGap = Number.POSITIVE_INFINITY;
-
-  for (let i = 0; i < 14; i += 1) {
-    const mid = (lo + hi) / 2;
-    const pos = { x: mid, y: start.y };
-    pageFlip.userMove(pos, false);
-    const current = readFlipProgress(pageFlip);
-    const gap = Math.abs(current - target);
-
-    if (gap < bestGap) {
-      bestGap = gap;
-      bestPos = pos;
-    }
-
-    if (current < target - 0.4) {
-      if (direction === "forward") lo = mid;
-      else hi = mid;
-    } else {
-      if (direction === "forward") hi = mid;
-      else lo = mid;
-    }
-  }
-
-  pageFlip.userMove(bestPos, false);
-  session.pos = bestPos;
+  return { minX: start.x - span, maxX: start.x };
 }
 
 interface ComicFlipPageProps {
@@ -210,11 +188,16 @@ export default function HorizonReader({
   const wheelFoldRef = useRef<WheelFoldSession>({
     active: false,
     direction: null,
-    targetProgress: 0,
+    pendingDelta: 0,
     startPos: { x: 0, y: 0 },
     pos: { x: 0, y: 0 },
+    idleTimer: null,
   });
-  const cornerDragRef = useRef({ active: false, pos: { x: 0, y: 0 } });
+  const cornerDragRef = useRef({
+    active: false,
+    pos: { x: 0, y: 0 },
+    startPos: { x: 0, y: 0 },
+  });
   const wheelGestureRef = useRef<WheelGestureGate>({
     lastEventAt: 0,
     hasTurnedPage: false,
@@ -239,7 +222,7 @@ export default function HorizonReader({
   const getWheelCornerStart = useCallback(
     (direction: TurnDirection, bounds: BookBounds): BookPoint => {
       if (direction === "forward") {
-        return { x: bounds.left + 10, y: bounds.top + 1 };
+        return { x: bounds.left + 10, y: bounds.top + bounds.height - 2 };
       }
       return { x: bounds.left + bounds.width - 10, y: bounds.top + 1 };
     },
@@ -250,21 +233,47 @@ export default function HorizonReader({
     wheelGestureRef.current.hasTurnedPage = true;
   }, []);
 
-  const resetWheelFoldSession = useCallback(() => {
+  const cancelWheelIdle = useCallback(() => {
     const session = wheelFoldRef.current;
-    session.active = false;
-    session.direction = null;
-    session.targetProgress = 0;
-    session.startPos = { x: 0, y: 0 };
-    session.pos = { x: 0, y: 0 };
+    if (session.idleTimer !== null) {
+      window.clearTimeout(session.idleTimer);
+      session.idleTimer = null;
+    }
   }, []);
 
-  const finishWheelFold = useCallback(
-    (force = false) => {
+  const resetWheelFoldSession = useCallback(() => {
+    const session = wheelFoldRef.current;
+    cancelWheelIdle();
+    session.active = false;
+    session.direction = null;
+    session.pendingDelta = 0;
+    session.startPos = { x: 0, y: 0 };
+    session.pos = { x: 0, y: 0 };
+  }, [cancelWheelIdle]);
+
+  /** 松手/停滚：同步最终位置后交给 StPageFlip 做完成/回弹动画 */
+  const releaseActiveFold = useCallback(
+    (pageFlip: PageFlipSurface, pos: BookPoint) => {
+      if (pageFlip.getState() !== "user_fold") return;
+
+      const progress = readFlipProgress(pageFlip);
+      if (progress >= FLIP_COMMIT_PROGRESS) {
+        markWheelPageTurn();
+      }
+
+      pageFlip.userMove(pos, false);
+      pageFlip.userStop(pos);
+    },
+    [markWheelPageTurn],
+  );
+
+  const releaseWheelFold = useCallback(
+    (options?: { cancel?: boolean }) => {
       const session = wheelFoldRef.current;
+      cancelWheelIdle();
+
       if (!session.active) {
-        session.targetProgress = 0;
-        session.direction = null;
+        session.pendingDelta = 0;
         return;
       }
 
@@ -274,43 +283,44 @@ export default function HorizonReader({
         return;
       }
 
-      if (session.targetProgress >= 100) {
-        markWheelPageTurn();
-        pageFlip.userStop(session.pos);
-        resetWheelFoldSession();
-        return;
-      }
-
-      if (force || session.targetProgress <= 0) {
+      if (options?.cancel) {
         pageFlip.userMove(session.startPos, false);
         pageFlip.userStop(session.startPos);
-        resetWheelFoldSession();
+      } else {
+        releaseActiveFold(pageFlip, session.pos);
       }
+
+      resetWheelFoldSession();
     },
-    [getPageFlip, markWheelPageTurn, resetWheelFoldSession],
+    [cancelWheelIdle, getPageFlip, releaseActiveFold, resetWheelFoldSession],
   );
+
+  const scheduleWheelRelease = useCallback(() => {
+    const session = wheelFoldRef.current;
+    cancelWheelIdle();
+    session.idleTimer = window.setTimeout(() => {
+      session.idleTimer = null;
+      releaseWheelFold();
+    }, WHEEL_FOLD_IDLE_MS);
+  }, [cancelWheelIdle, releaseWheelFold]);
 
   const applyWheelFoldDelta = useCallback(
     (direction: TurnDirection, deltaY: number) => {
       const pageFlip = getPageFlip();
-      const state = pageFlip?.getState();
-      if (!pageFlip || state === "flipping") {
+      if (!pageFlip || pageFlip.getState() === "flipping") {
         return;
       }
 
       const bounds = pageFlip.getBoundsRect();
       const session = wheelFoldRef.current;
-      let signedDelta = clampProgressStep(
+      const signedDelta =
         clampWheelDelta(deltaY) *
-          WHEEL_PROGRESS_SENSITIVITY *
-          (direction === "forward" ? 1 : -1),
-      );
+        WHEEL_DRAG_SENSITIVITY *
+        (direction === "forward" ? 1 : -1);
 
       if (session.active && session.direction !== direction) {
-        finishWheelFold(true);
-        if (pageFlip.getState() === "flipping") {
-          return;
-        }
+        releaseWheelFold({ cancel: true });
+        if (pageFlip.getState() === "flipping") return;
       }
 
       if (pageFlip.getState() !== "read" && !session.active) {
@@ -320,48 +330,58 @@ export default function HorizonReader({
       if (!session.active) {
         if (session.direction !== direction) {
           session.direction = direction;
-          session.targetProgress = 0;
+          session.pendingDelta = 0;
         }
 
-        session.targetProgress = Math.min(
-          100,
-          Math.max(0, session.targetProgress + signedDelta),
-        );
-
-        if (session.targetProgress < WHEEL_GESTURE_START_THRESHOLD) {
+        session.pendingDelta += signedDelta;
+        if (Math.abs(session.pendingDelta) < WHEEL_GESTURE_START_THRESHOLD) {
           return;
         }
 
         session.startPos = getWheelCornerStart(direction, bounds);
+        session.pos = { ...session.startPos };
         session.active = true;
-        pageFlip.startUserTouch(session.startPos);
-      } else {
-        const nextProgress = Math.min(
-          100,
-          Math.max(0, session.targetProgress + signedDelta),
-        );
-        if (nextProgress >= 100 && session.targetProgress < 100) {
-          signedDelta = 100 - session.targetProgress;
-        } else if (nextProgress <= 0 && session.targetProgress > 0) {
-          signedDelta = -session.targetProgress;
-        }
-        session.targetProgress = Math.min(
-          100,
-          Math.max(0, session.targetProgress + signedDelta),
-        );
-      }
+        pageFlip.startUserTouch(session.pos);
 
-      syncWheelFoldToProgress(pageFlip, session, bounds);
-
-      if (session.targetProgress <= 0 || session.targetProgress >= 100) {
-        finishWheelFold();
+        const dragBounds = getWheelDragBounds(
+          session.direction,
+          session.startPos,
+          bounds,
+        );
+        session.pos = {
+          x: Math.min(
+            dragBounds.maxX,
+            Math.max(dragBounds.minX, session.startPos.x + session.pendingDelta),
+          ),
+          y: session.startPos.y,
+        };
+        session.pendingDelta = 0;
+        pageFlip.userMove(session.pos, false);
+        scheduleWheelRelease();
         return;
       }
+
+      const dragBounds = getWheelDragBounds(
+        session.direction!,
+        session.startPos,
+        bounds,
+      );
+      session.pos = {
+        x: Math.min(
+          dragBounds.maxX,
+          Math.max(dragBounds.minX, session.pos.x + signedDelta),
+        ),
+        y: session.startPos.y,
+      };
+
+      pageFlip.userMove(session.pos, false);
+      scheduleWheelRelease();
     },
     [
-      finishWheelFold,
       getPageFlip,
       getWheelCornerStart,
+      releaseWheelFold,
+      scheduleWheelRelease,
     ],
   );
 
@@ -432,18 +452,18 @@ export default function HorizonReader({
     (direction: TurnDirection) => {
       if (animating) return;
 
-      finishWheelFold(true);
+      releaseWheelFold({ cancel: true });
 
       const pageFlip = getPageFlip();
       if (!pageFlip) return;
 
       if (direction === "forward") {
-        pageFlip.flipNext("top");
+        pageFlip.flipNext("bottom");
       } else {
         pageFlip.flipPrev("top");
       }
     },
-    [animating, finishWheelFold, getPageFlip],
+    [animating, releaseWheelFold, getPageFlip],
   );
 
   const goToSpread = useCallback(
@@ -452,7 +472,7 @@ export default function HorizonReader({
         return;
       }
 
-      finishWheelFold(true);
+      releaseWheelFold({ cancel: true });
 
       const pageFlip = getPageFlip();
       if (!pageFlip) return;
@@ -460,7 +480,7 @@ export default function HorizonReader({
       pageFlip.turnToPage(spreadIndexToPageIndex(index));
       syncSpreadFromFlip(spreadIndexToPageIndex(index));
     },
-    [animating, finishWheelFold, getPageFlip, syncSpreadFromFlip],
+    [animating, releaseWheelFold, getPageFlip, syncSpreadFromFlip],
   );
 
   const turnPageRef = useRef(turnPage);
@@ -521,11 +541,11 @@ export default function HorizonReader({
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       window.removeEventListener("wheel", onWheel);
-      finishWheelFold(true);
+      releaseWheelFold({ cancel: true });
       document.body.classList.remove("overflow-y-hidden");
       document.documentElement.classList.remove("comic-horizon-reading");
     };
-  }, [applyWheelFoldDelta, finishWheelFold]);
+  }, [applyWheelFoldDelta, releaseWheelFold]);
 
   useEffect(() => {
     const area = bookAreaRef.current;
@@ -535,59 +555,105 @@ export default function HorizonReader({
       return area.querySelector<HTMLElement>(".stf__block");
     }
 
-    function onMouseDown(event: MouseEvent) {
-      if (event.button !== 0) return;
-
+    function beginCornerDrag(clientX: number, clientY: number, target: EventTarget | null) {
       const pageFlip = getPageFlip();
       const distEl = getDistElement();
       if (!pageFlip || !distEl || pageFlip.getState() === "flipping") return;
-      if (!distEl.contains(event.target as Node)) return;
+      if (target && !distEl.contains(target as Node)) return;
 
       const bounds = pageFlip.getBoundsRect();
-      const pos = getDistPos(event.clientX, event.clientY, distEl);
+      const pos = getDistPos(clientX, clientY, distEl);
       if (!isBookEdgeOrCorner(pos, bounds)) return;
 
-      finishWheelFold(true);
+      releaseWheelFold({ cancel: true });
       pageFlip.startUserTouch(pos);
-      cornerDragRef.current = { active: true, pos };
-      event.preventDefault();
+      cornerDragRef.current = { active: true, pos, startPos: { ...pos } };
     }
 
-    function onMouseMove(event: MouseEvent) {
+    function moveCornerDrag(clientX: number, clientY: number) {
       if (!cornerDragRef.current.active) return;
 
       const pageFlip = getPageFlip();
       const distEl = getDistElement();
       if (!pageFlip || !distEl) return;
 
-      const pos = getDistPos(event.clientX, event.clientY, distEl);
+      const bounds = pageFlip.getBoundsRect();
+      const raw = getDistPos(clientX, clientY, distEl);
+      const pos = constrainCornerDragPos(
+        raw,
+        cornerDragRef.current.startPos,
+        bounds,
+      );
       cornerDragRef.current.pos = pos;
       pageFlip.userMove(pos, false);
     }
 
-    function onMouseUp(event: MouseEvent) {
+    function endCornerDrag() {
       if (!cornerDragRef.current.active) return;
 
       const pageFlip = getPageFlip();
-      const distEl = getDistElement();
-      if (!pageFlip || !distEl) return;
+      if (!pageFlip) return;
 
-      const pos = getDistPos(event.clientX, event.clientY, distEl);
-      pageFlip.userStop(pos);
+      const { pos } = cornerDragRef.current;
       cornerDragRef.current.active = false;
+      releaseActiveFold(pageFlip, pos);
+    }
+
+    function onMouseDown(event: MouseEvent) {
+      if (event.button !== 0) return;
+      beginCornerDrag(event.clientX, event.clientY, event.target);
+      if (cornerDragRef.current.active) {
+        event.preventDefault();
+      }
+    }
+
+    function onMouseMove(event: MouseEvent) {
+      moveCornerDrag(event.clientX, event.clientY);
+    }
+
+    function onMouseUp() {
+      endCornerDrag();
+    }
+
+    function onTouchStart(event: TouchEvent) {
+      if (event.changedTouches.length === 0) return;
+      const touch = event.changedTouches[0];
+      beginCornerDrag(touch.clientX, touch.clientY, event.target);
+      if (cornerDragRef.current.active) {
+        event.preventDefault();
+      }
+    }
+
+    function onTouchMove(event: TouchEvent) {
+      if (event.changedTouches.length === 0) return;
+      const touch = event.changedTouches[0];
+      moveCornerDrag(touch.clientX, touch.clientY);
+      if (cornerDragRef.current.active) {
+        event.preventDefault();
+      }
+    }
+
+    function onTouchEnd() {
+      endCornerDrag();
     }
 
     area.addEventListener("mousedown", onMouseDown);
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
+    area.addEventListener("touchstart", onTouchStart, { passive: false });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd);
 
     return () => {
       area.removeEventListener("mousedown", onMouseDown);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
+      area.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
       cornerDragRef.current.active = false;
     };
-  }, [finishWheelFold, getPageFlip, loading]);
+  }, [getPageFlip, loading, releaseActiveFold, releaseWheelFold]);
 
   useEffect(() => {
     if (!autoScroll || animating) return undefined;
