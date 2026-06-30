@@ -17,17 +17,25 @@ jobs:
       - name: Checkout git repo
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22.12.0
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
+
+      - name: Build app
+        run: pnpm run build
 
       - name: Publish releases
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.AUTO_DISCOVERY }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npm run package -- --publish always --win
+        run: pnpm exec electron-builder --win --publish always

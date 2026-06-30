@@ -201,6 +201,7 @@ export default class ComicService {
     this.mainWindow = mainWindow;
 
     this.store = new Store({
+      name: "config",
       defaults: {
         library: [] as ILibraryComic[],
         decompressPath: app.getPath("appData"),
@@ -208,24 +209,6 @@ export default class ComicService {
         shortcuts: serializeShortcutBindings(DEFAULT_SHORTCUT_BINDINGS),
       },
     });
-    // old version config file
-    // 这里最终将会废弃
-    try {
-      const basePath = app.getPath("userData");
-      const configPath = basePath;
-      const configFilename = ".electron-webtton-comic.json";
-      const configFileFullPath = path.resolve(configPath, configFilename);
-      if (fs.existsSync(configFileFullPath)) {
-        // migrate
-        const { library } = JSON.parse(
-          fs.readFileSync(configFileFullPath).toString(),
-        );
-        this.store.set("library", library);
-        fs.unlinkSync(configFileFullPath);
-      }
-    } catch (e) {
-      console.log("migrate old config file error:", e);
-    }
 
     this.makeUrl = makeUrl || makeComicFileUrl;
   }

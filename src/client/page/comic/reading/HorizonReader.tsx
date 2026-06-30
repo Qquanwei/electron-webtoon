@@ -33,7 +33,7 @@ const WHEEL_TURN_THROTTLE_MS = 520;
 const WHEEL_FOLD_IDLE_MS = 100;
 const WHEEL_DRAG_SENSITIVITY = 2.4;
 const WHEEL_MAX_DELTA_Y = 48;
-const FLIP_COMMIT_PROGRESS = 32;
+const FLIP_COMMIT_PROGRESS = 45;
 
 type TurnDirection = "forward" | "back";
 
@@ -57,6 +57,7 @@ interface PageFlipSurface {
   getCurrentPageIndex: () => number;
   getBoundsRect: () => BookBounds;
   getState: () => string;
+  update: () => void;
   getFlipController: () => {
     getCalculation: () => { getFlippingProgress: () => number } | null;
   };
@@ -135,6 +136,11 @@ function constrainCornerDragPos(
   return { x, y: startPos.y };
 }
 
+function getDragDirection(startPos: BookPoint, bounds: BookBounds): TurnDirection {
+  const startBookX = startPos.x - bounds.left;
+  return startBookX <= bounds.pageWidth / 5 ? "forward" : "back";
+}
+
 function getWheelDragBounds(
   direction: TurnDirection,
   start: BookPoint,
@@ -204,6 +210,7 @@ export default function HorizonReader({
     nextTurnAllowedAt: 0,
   });
   const prevFlipStateRef = useRef("read");
+  const pendingPageIndexRef = useRef<number | null>(null);
 
   const [spreadIndex, setSpreadIndex] = useState(() =>
     getSpreadIndexForPage(spreads, firstElePosition),
@@ -211,7 +218,10 @@ export default function HorizonReader({
   const [loading, setLoading] = useState(true);
   const [scrollingDone, setScrollingDone] = useState(false);
   const [animating, setAnimating] = useState(false);
-  const [bookSize, setBookSize] = useState({ pageWidth: 480, pageHeight: 680 });
+  const [bookSize, setBookSize] = useState<{
+    pageWidth: number;
+    pageHeight: number;
+  } | null>(null);
 
   spreadIndexRef.current = spreadIndex;
 
@@ -251,9 +261,13 @@ export default function HorizonReader({
     session.pos = { x: 0, y: 0 };
   }, [cancelWheelIdle]);
 
-  /** 松手/停滚：同步最终位置后交给 StPageFlip 做完成/回弹动画 */
+  /** 松手/停滚：交给 StPageFlip 完成/回弹，避免多余 userMove 造成帧间跳动 */
   const releaseActiveFold = useCallback(
-    (pageFlip: PageFlipSurface, pos: BookPoint) => {
+    (
+      pageFlip: PageFlipSurface,
+      pos: BookPoint,
+      _direction: TurnDirection,
+    ) => {
       if (pageFlip.getState() !== "user_fold") return;
 
       const progress = readFlipProgress(pageFlip);
@@ -261,7 +275,6 @@ export default function HorizonReader({
         markWheelPageTurn();
       }
 
-      pageFlip.userMove(pos, false);
       pageFlip.userStop(pos);
     },
     [markWheelPageTurn],
@@ -286,8 +299,8 @@ export default function HorizonReader({
       if (options?.cancel) {
         pageFlip.userMove(session.startPos, false);
         pageFlip.userStop(session.startPos);
-      } else {
-        releaseActiveFold(pageFlip, session.pos);
+      } else if (session.direction) {
+        releaseActiveFold(pageFlip, session.pos, session.direction);
       }
 
       resetWheelFoldSession();
@@ -391,6 +404,8 @@ export default function HorizonReader({
 
     const updateSize = () => {
       const { width, height } = area.getBoundingClientRect();
+      if (width < 120 || height < 120) return;
+
       const pageWidth = Math.max(240, Math.floor(width / 2));
       const pageHeight = Math.max(320, Math.floor(height - 8));
       setBookSize({ pageWidth, pageHeight });
@@ -502,12 +517,11 @@ export default function HorizonReader({
     onVisitPosition(getSpreadProgressIndex(spread));
   }, [spreadIndex, scrollingDone, spreads, onVisitPosition]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const pageFlip = getPageFlip();
-    if (!pageFlip) return;
-    pageFlip.turnToPage(firstElePosition);
-    syncSpreadFromFlip(firstElePosition);
-  }, [imgList, tag, firstElePosition, getPageFlip, syncSpreadFromFlip]);
+    if (!pageFlip || !bookSize) return;
+    pageFlip.update();
+  }, [bookSize, getPageFlip]);
 
   useEffect(() => {
     document.body.classList.add("overflow-y-hidden");
@@ -594,9 +608,11 @@ export default function HorizonReader({
       const pageFlip = getPageFlip();
       if (!pageFlip) return;
 
-      const { pos } = cornerDragRef.current;
+      const { pos, startPos } = cornerDragRef.current;
+      const bounds = pageFlip.getBoundsRect();
+      const direction = getDragDirection(startPos, bounds);
       cornerDragRef.current.active = false;
-      releaseActiveFold(pageFlip, pos);
+      releaseActiveFold(pageFlip, pos, direction);
     }
 
     function onMouseDown(event: MouseEvent) {
@@ -668,27 +684,52 @@ export default function HorizonReader({
     return () => window.clearInterval(timer);
   }, [autoScroll, animating, spreads.length]);
 
-  const onFlip = useCallback(
-    (event: { data: number }) => {
-      syncSpreadFromFlip(event.data);
-    },
-    [syncSpreadFromFlip],
-  );
+  const onFlip = useCallback((event: { data: number }) => {
+    pendingPageIndexRef.current = event.data;
+  }, []);
 
   const onChangeState = useCallback(
     (event: { data: string }) => {
       const prevState = prevFlipStateRef.current;
       prevFlipStateRef.current = event.data;
 
-      setAnimating(event.data === "flipping");
       if (event.data === "read" && prevState === "flipping") {
-        // 节流：动画结束时固定冷却点，不因后续 read 事件延长
         wheelGestureRef.current.nextTurnAllowedAt =
           Date.now() + WHEEL_TURN_THROTTLE_MS;
         resetWheelFoldSession();
+        // 等翻页动画完全收尾后再更新 React，避免 updateFromHtml 打断 99%→100%
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            setAnimating(false);
+            const pageFlip = getPageFlip();
+            const page =
+              pendingPageIndexRef.current ?? pageFlip?.getCurrentPageIndex();
+            if (page != null) {
+              syncSpreadFromFlip(page);
+            }
+            pendingPageIndexRef.current = null;
+          });
+        });
+        return;
       }
+
+      setAnimating(event.data === "flipping");
     },
-    [resetWheelFoldSession],
+    [getPageFlip, resetWheelFoldSession, syncSpreadFromFlip],
+  );
+
+  const flipBookPages = useMemo(
+    () =>
+      imgList.map((src, pageIndex) => (
+        <ComicFlipPage
+          key={`${tag}-${pageIndex}-${src}`}
+          src={src}
+          pageIndex={pageIndex}
+          filter={filter}
+          onLoad={onLoad}
+        />
+      )),
+    [imgList, tag, filter, onLoad],
   );
 
   const onInit = useCallback(
@@ -712,47 +753,41 @@ export default function HorizonReader({
       <StartUpPage className={classNames("z-10", { "!hidden": !loading })} />
       <div ref={bookAreaRef} className={styles.bookArea}>
         <div className={styles.flipBookShell} style={bookShellStyle}>
-          <HTMLFlipBook
-            key={`${tag}-${imgList.length}`}
-            ref={bookRef}
-            className={styles.flipBook}
-            style={{}}
-            width={bookSize.pageWidth}
-            height={bookSize.pageHeight}
-            size="stretch"
-            minWidth={240}
-            maxWidth={bookSize.pageWidth}
-            minHeight={320}
-            maxHeight={bookSize.pageHeight}
-            rtl
-            showCover
-            usePortrait={false}
-            drawShadow
-            flippingTime={FLIP_DURATION_MS}
-            maxShadowOpacity={0.55}
-            showPageCorners={false}
-            disableFlipByClick
-            useMouseEvents={false}
-            mobileScrollSupport={false}
-            startPage={firstElePosition}
-            startZIndex={0}
-            autoSize
-            clickEventForward={false}
-            swipeDistance={30}
-            onFlip={onFlip}
-            onChangeState={onChangeState}
-            onInit={onInit}
-          >
-            {imgList.map((src, pageIndex) => (
-              <ComicFlipPage
-                key={`${tag}-${pageIndex}-${src}`}
-                src={src}
-                pageIndex={pageIndex}
-                filter={filter}
-                onLoad={onLoad}
-              />
-            ))}
-          </HTMLFlipBook>
+          {bookSize ? (
+            <HTMLFlipBook
+              key={`${tag}-${imgList.length}-${bookSize.pageWidth}-${bookSize.pageHeight}`}
+              ref={bookRef}
+              className={styles.flipBook}
+              style={{}}
+              width={bookSize.pageWidth}
+              height={bookSize.pageHeight}
+              size="stretch"
+              minWidth={240}
+              maxWidth={bookSize.pageWidth}
+              minHeight={320}
+              maxHeight={bookSize.pageHeight}
+              rtl
+              showCover
+              usePortrait={false}
+              drawShadow
+              flippingTime={FLIP_DURATION_MS}
+              maxShadowOpacity={0.55}
+              showPageCorners={false}
+              disableFlipByClick
+              useMouseEvents={false}
+              mobileScrollSupport={false}
+              startPage={firstElePosition}
+              startZIndex={0}
+              autoSize
+              clickEventForward={false}
+              swipeDistance={30}
+              onFlip={onFlip}
+              onChangeState={onChangeState}
+              onInit={onInit}
+            >
+              {flipBookPages}
+            </HTMLFlipBook>
+          ) : null}
         </div>
       </div>
       <HorizonProgressPreview
