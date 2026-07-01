@@ -1,7 +1,7 @@
 {
   "name": "ElectronWebtoon",
   "productName": "electron-webtoon",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "packageManager": "pnpm@11.9.0",
   "description": "Electron Webtoon 漫画阅读器",
   "main": "./out/main/index.js",

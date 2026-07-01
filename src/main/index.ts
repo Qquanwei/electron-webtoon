@@ -18,7 +18,6 @@ if (process.platform === 'win32') {
   app.commandLine.appendSwitch('enable-zero-copy');
   app.commandLine.appendSwitch('ignore-gpu-blocklist');
 }
-app.enableHardwareAcceleration();
 
 registerComicFileScheme();
 
