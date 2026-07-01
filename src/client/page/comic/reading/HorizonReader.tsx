@@ -289,15 +289,14 @@ export default function HorizonReader({
 
       dragFoldPrepRef.current = prep;
       cornerDragRef.current.prepared = true;
-      setSpreadIndex(nextSpread);
       return true;
     },
     [getPageFlip, spreads.length, flipIndexOfSpread],
   );
 
-  const releaseActiveFold = useCallback((pageFlip: PageFlip, pos: BookPoint) => {
-      if (pageFlip.getState() !== "user_fold") return;
-      pageFlip.userStop(pos);
+  const releaseActiveFold = useCallback((pageFlip: PageFlip) => {
+    if (pageFlip.getState() !== "user_fold") return;
+    pageFlip.getFlipController().stopMove();
   }, []);
 
   useLayoutEffect(() => {
@@ -556,10 +555,10 @@ export default function HorizonReader({
           const bounds = pageFlip.getBoundsRect();
           const foldPos = mapMangaFoldDistPos(startPos, startPos, bounds, direction);
           pageFlip.userMove(foldPos, false);
-          pageFlip.userStop(foldPos);
+          pageFlip.getFlipController().stopMove();
         } else {
           pageFlip.userMove(startPos, false);
-          pageFlip.userStop(startPos);
+          pageFlip.getFlipController().stopMove();
         }
       }
       cornerDragRef.current.active = false;
@@ -635,7 +634,12 @@ export default function HorizonReader({
       );
 
       cornerDragRef.current.pos = pos;
-      pageFlip.userMove(foldPos, false);
+
+      if (pageFlip.getState() === "read") {
+        pageFlip.getFlipController().fold(foldPos);
+      } else {
+        pageFlip.userMove(foldPos, false);
+      }
     }
 
     function endCornerDrag() {
@@ -644,19 +648,21 @@ export default function HorizonReader({
       const pageFlip = getPageFlip();
       if (!pageFlip) return;
 
-      const { pos, direction, startPos } = cornerDragRef.current;
+      const { direction } = cornerDragRef.current;
+      const moved = pointerGestureRef.current.moved;
       cornerDragRef.current.active = false;
       cornerDragRef.current.prepared = false;
       cornerDragRef.current.direction = null;
 
-      if (direction) {
-        const bounds = pageFlip.getBoundsRect();
-        const foldPos = mapMangaFoldDistPos(pos, startPos, bounds, direction);
-        releaseActiveFold(pageFlip, foldPos);
+      if (direction && pageFlip.getState() === "user_fold") {
+        releaseActiveFold(pageFlip);
         return;
       }
 
-      releaseActiveFold(pageFlip, pos);
+      revertDragFoldPrep();
+      if (direction && moved) {
+        turnPageRef.current(direction);
+      }
     }
 
     function onMouseDown(event: MouseEvent) {
@@ -858,7 +864,7 @@ export default function HorizonReader({
   );
 
   const flipBookZoomStyle = {
-    transform: `scale(${zoomScale})`,
+    transform: `translate3d(0, 0, 0) scale(${zoomScale})`,
     transformOrigin: "center center",
   } as CSSProperties;
 
@@ -881,12 +887,15 @@ export default function HorizonReader({
         <div className={styles.coverBackdropDim} />
       </div>
       <div ref={bookAreaRef} className={styles.bookArea}>
-        <div className={styles.flipBookZoom} style={flipBookZoomStyle}>
+        <div
+          className={classNames(styles.flipBookZoom, "comic-horizon-flip-book-zoom")}
+          style={flipBookZoomStyle}
+        >
           {bookSize && pageAspectRatio !== null && !loading ? (
             <HorizonFlipBook
               key={`${tag}-${imgList.length}-${bookSize.pageWidth}-${bookSize.pageHeight}`}
               ref={bookRef}
-              className={styles.flipBook}
+              className={classNames(styles.flipBook, "comic-horizon-flip-book")}
               style={{}}
               width={bookSize.pageWidth}
               height={bookSize.pageHeight}

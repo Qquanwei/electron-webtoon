@@ -11,7 +11,11 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest]
+        include:
+          - os: windows-latest
+            args: --win
+          - os: macos-latest
+            args: --mac
 
     steps:
       - name: Checkout git repo
@@ -35,4 +39,4 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: pnpm exec electron-builder --win --publish always
+        run: pnpm exec electron-builder ${{ matrix.args }} --publish always

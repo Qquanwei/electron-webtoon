@@ -22,8 +22,7 @@
   height: 100%;
   object-fit: cover;
   object-position: center center;
-  filter: blur(18px) saturate(0.88) brightness(0.62);
-  transform: scale(1.1);
+  filter: saturate(0.88) brightness(0.62);
 }
 
 .coverBackdropDim {

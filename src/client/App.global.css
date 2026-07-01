@@ -20,6 +20,28 @@
     background-color: #0a0908;
   }
 
+  /* 横屏翻页：提升 GPU 合成层，减轻 Windows 上 clip-path 动画卡顿 */
+  html.comic-horizon-reading .comic-horizon-flip-book .stf__parent,
+  html.comic-horizon-reading .comic-horizon-flip-book .stf__block {
+    transform: translate3d(0, 0, 0);
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+  }
+
+  html.comic-horizon-flip-animating .comic-horizon-flip-book .stf__item,
+  html.comic-horizon-flip-animating .comic-horizon-flip-book .stf__outerShadow,
+  html.comic-horizon-flip-animating .comic-horizon-flip-book .stf__innerShadow,
+  html.comic-horizon-flip-animating .comic-horizon-flip-book .stf__hardShadow,
+  html.comic-horizon-flip-animating .comic-horizon-flip-book .stf__hardInnerShadow {
+    will-change: transform, clip-path;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  html.comic-horizon-flip-animating [data-horizon-preview] {
+    pointer-events: none;
+  }
+
 }
 
 

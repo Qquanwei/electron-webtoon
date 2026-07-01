@@ -13,6 +13,13 @@ import {
 // 与旧版一致，确保 electron-store 读写 ~/Library/Application Support/electron-webtoon/
 app.setName('electron-webtoon');
 
+if (process.platform === 'win32') {
+  app.commandLine.appendSwitch('enable-gpu-rasterization');
+  app.commandLine.appendSwitch('enable-zero-copy');
+  app.commandLine.appendSwitch('ignore-gpu-blocklist');
+}
+app.enableHardwareAcceleration();
+
 registerComicFileScheme();
 
 class AppUpdater {
@@ -55,6 +62,7 @@ const createWindow = async () => {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      backgroundThrottling: false,
     },
   });
   mainWindow.setMenuBarVisibility(false);

@@ -32,7 +32,12 @@
       "icon": "assets/icon.ico"
     },
     "mac": {
-      "icon": "assets/icon.icns"
+      "icon": "assets/icon.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "identity": null
     },
     "linux": {
       "icon": "assets/icons"
