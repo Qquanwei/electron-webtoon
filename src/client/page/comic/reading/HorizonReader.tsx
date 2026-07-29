@@ -49,6 +49,7 @@ import {
 } from "./horizonFlipSettings";
 
 const CLICK_TURN_THRESHOLD = 8;
+const WHEEL_TURN_THRESHOLD = 50;
 
 type TurnDirection = "forward" | "back";
 
@@ -217,6 +218,8 @@ export default function HorizonReader({
   });
   const prevFlipStateRef = useRef("read");
   const pendingPageIndexRef = useRef<number | null>(null);
+  const wheelAccumRef = useRef(0);
+  const wheelCooldownUntilRef = useRef(0);
 
   const [spreadIndex, setSpreadIndex] = useState(() =>
     getSpreadIndexForPage(spreads, firstElePosition),
@@ -738,12 +741,55 @@ export default function HorizonReader({
       resetPointerGesture();
     }
 
+    function onWheel(event: WheelEvent) {
+      if (event.ctrlKey) return;
+      if (Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+      if (!event.deltaY) return;
+
+      event.preventDefault();
+
+      const now = performance.now();
+      if (now < wheelCooldownUntilRef.current) return;
+
+      const pageFlip = getPageFlip();
+      if (!pageFlip || pageFlip.getState() === "flipping") return;
+
+      const scaledDelta =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? event.deltaY * 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? event.deltaY * window.innerHeight
+            : event.deltaY;
+
+      if (
+        wheelAccumRef.current !== 0 &&
+        Math.sign(wheelAccumRef.current) !== Math.sign(scaledDelta)
+      ) {
+        wheelAccumRef.current = 0;
+      }
+      wheelAccumRef.current += scaledDelta;
+
+      if (Math.abs(wheelAccumRef.current) < WHEEL_TURN_THRESHOLD) return;
+
+      const direction: TurnDirection =
+        wheelAccumRef.current > 0 ? "forward" : "back";
+      wheelAccumRef.current = 0;
+
+      const nextSpread =
+        spreadIndexRef.current + (direction === "forward" ? 1 : -1);
+      if (nextSpread < 0 || nextSpread >= spreads.length) return;
+
+      wheelCooldownUntilRef.current = now + HORIZON_FLIP_DURATION_MS;
+      turnPageRef.current(direction);
+    }
+
     area.addEventListener("mousedown", onMouseDown);
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
     area.addEventListener("touchstart", onTouchStart, { passive: false });
     window.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("touchend", onTouchEnd);
+    area.addEventListener("wheel", onWheel, { passive: false });
 
     return () => {
       area.removeEventListener("mousedown", onMouseDown);
@@ -752,11 +798,20 @@ export default function HorizonReader({
       area.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
+      area.removeEventListener("wheel", onWheel);
       cornerDragRef.current.active = false;
       cornerDragRef.current.prepared = false;
+      wheelAccumRef.current = 0;
       resetPointerGesture();
     };
-  }, [getPageFlip, loading, releaseActiveFold, prepareDragFold, revertDragFoldPrep]);
+  }, [
+    getPageFlip,
+    loading,
+    releaseActiveFold,
+    prepareDragFold,
+    revertDragFoldPrep,
+    spreads.length,
+  ]);
 
   useEffect(() => {
     if (!autoScroll || animating) return undefined;
