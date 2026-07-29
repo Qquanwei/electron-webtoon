@@ -208,6 +208,8 @@ export default function HorizonReader({
     direction: null as TurnDirection | null,
     pos: { x: 0, y: 0 },
     startPos: { x: 0, y: 0 },
+    distEl: null as HTMLElement | null,
+    bounds: null as BookBounds | null,
   });
   const dragFoldPrepRef = useRef<MangaDragFoldPrep | null>(null);
   const pointerGestureRef = useRef({
@@ -220,6 +222,8 @@ export default function HorizonReader({
   const pendingPageIndexRef = useRef<number | null>(null);
   const wheelAccumRef = useRef(0);
   const wheelCooldownUntilRef = useRef(0);
+  const animatingRef = useRef(false);
+  const windowPointerListeningRef = useRef(false);
 
   const [spreadIndex, setSpreadIndex] = useState(() =>
     getSpreadIndexForPage(spreads, firstElePosition),
@@ -430,39 +434,40 @@ export default function HorizonReader({
   );
 
   const turnPage = useCallback(
-    (direction: TurnDirection) => {
-      if (animating) return;
+    (direction: TurnDirection): boolean => {
+      if (animatingRef.current) return false;
 
       const pageFlip = getPageFlip();
-      if (!pageFlip) return;
+      if (!pageFlip || pageFlip.getState() === "flipping") return false;
 
       const delta = direction === "forward" ? 1 : -1;
       const nextSpread = spreadIndexRef.current + delta;
-      if (nextSpread < 0 || nextSpread >= spreads.length) return;
+      if (nextSpread < 0 || nextSpread >= spreads.length) return false;
 
       flipMangaSpread(
         pageFlip,
         flipIndexOfSpread(nextSpread),
         direction === "forward",
       );
+      return true;
     },
-    [animating, getPageFlip, spreads.length, flipIndexOfSpread],
+    [getPageFlip, spreads.length, flipIndexOfSpread],
   );
 
   const goToSpread = useCallback(
     (index: number) => {
-      if (animating || index === spreadIndexRef.current) {
+      if (animatingRef.current || index === spreadIndexRef.current) {
         return;
       }
 
       const pageFlip = getPageFlip();
-      if (!pageFlip) return;
+      if (!pageFlip || pageFlip.getState() === "flipping") return;
 
       const flipPageIndex = flipIndexOfSpread(index);
       pageFlip.turnToPage(flipPageIndex);
       syncSpreadFromFlip(flipPageIndex);
     },
-    [animating, getPageFlip, syncSpreadFromFlip, flipIndexOfSpread],
+    [getPageFlip, syncSpreadFromFlip, flipIndexOfSpread],
   );
 
   const turnPageRef = useRef(turnPage);
@@ -529,6 +534,11 @@ export default function HorizonReader({
       return area.querySelector<HTMLElement>(".stf__block");
     }
 
+    function clearCornerDragCache() {
+      cornerDragRef.current.distEl = null;
+      cornerDragRef.current.bounds = null;
+    }
+
     function resetPointerGesture() {
       pointerGestureRef.current.down = false;
       pointerGestureRef.current.moved = false;
@@ -567,6 +577,7 @@ export default function HorizonReader({
       cornerDragRef.current.active = false;
       cornerDragRef.current.prepared = false;
       cornerDragRef.current.direction = null;
+      clearCornerDragCache();
       revertDragFoldPrep();
     }
 
@@ -609,6 +620,8 @@ export default function HorizonReader({
         direction,
         pos,
         startPos: { ...pos },
+        distEl,
+        bounds,
       };
     }
 
@@ -616,13 +629,13 @@ export default function HorizonReader({
       if (!cornerDragRef.current.active) return;
 
       const pageFlip = getPageFlip();
-      const distEl = getDistElement();
-      if (!pageFlip || !distEl) return;
+      const distEl = cornerDragRef.current.distEl;
+      const bounds = cornerDragRef.current.bounds;
+      if (!pageFlip || !distEl || !bounds) return;
 
       const direction = cornerDragRef.current.direction;
       if (!direction) return;
 
-      const bounds = pageFlip.getBoundsRect();
       const raw = getDistPos(clientX, clientY, distEl);
       const pos = constrainCornerDragPos(
         raw,
@@ -656,6 +669,7 @@ export default function HorizonReader({
       cornerDragRef.current.active = false;
       cornerDragRef.current.prepared = false;
       cornerDragRef.current.direction = null;
+      clearCornerDragCache();
 
       if (direction && pageFlip.getState() === "user_fold") {
         releaseActiveFold(pageFlip);
@@ -666,6 +680,24 @@ export default function HorizonReader({
       if (direction && moved) {
         turnPageRef.current(direction);
       }
+    }
+
+    function detachWindowPointerListeners() {
+      if (!windowPointerListeningRef.current) return;
+      windowPointerListeningRef.current = false;
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    }
+
+    function attachWindowPointerListeners() {
+      if (windowPointerListeningRef.current) return;
+      windowPointerListeningRef.current = true;
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+      window.addEventListener("touchmove", onTouchMove, { passive: false });
+      window.addEventListener("touchend", onTouchEnd);
     }
 
     function onMouseDown(event: MouseEvent) {
@@ -682,6 +714,7 @@ export default function HorizonReader({
       if (cornerDragRef.current.active) {
         event.preventDefault();
       }
+      attachWindowPointerListeners();
     }
 
     function onMouseMove(event: MouseEvent) {
@@ -693,11 +726,13 @@ export default function HorizonReader({
       if (pointerGestureRef.current.down && !pointerGestureRef.current.moved) {
         tryClickTurn(event.clientX, event.clientY);
         resetPointerGesture();
+        detachWindowPointerListeners();
         return;
       }
 
       endCornerDrag();
       resetPointerGesture();
+      detachWindowPointerListeners();
     }
 
     function onTouchStart(event: TouchEvent) {
@@ -715,6 +750,7 @@ export default function HorizonReader({
       if (cornerDragRef.current.active) {
         event.preventDefault();
       }
+      attachWindowPointerListeners();
     }
 
     function onTouchMove(event: TouchEvent) {
@@ -734,11 +770,13 @@ export default function HorizonReader({
       if (pointerGestureRef.current.down && !pointerGestureRef.current.moved) {
         tryClickTurn(touch.clientX, touch.clientY);
         resetPointerGesture();
+        detachWindowPointerListeners();
         return;
       }
 
       endCornerDrag();
       resetPointerGesture();
+      detachWindowPointerListeners();
     }
 
     function onWheel(event: WheelEvent) {
@@ -750,9 +788,6 @@ export default function HorizonReader({
 
       const now = performance.now();
       if (now < wheelCooldownUntilRef.current) return;
-
-      const pageFlip = getPageFlip();
-      if (!pageFlip || pageFlip.getState() === "flipping") return;
 
       const scaledDelta =
         event.deltaMode === WheelEvent.DOM_DELTA_LINE
@@ -775,32 +810,23 @@ export default function HorizonReader({
         wheelAccumRef.current > 0 ? "forward" : "back";
       wheelAccumRef.current = 0;
 
-      const nextSpread =
-        spreadIndexRef.current + (direction === "forward" ? 1 : -1);
-      if (nextSpread < 0 || nextSpread >= spreads.length) return;
-
-      wheelCooldownUntilRef.current = now + HORIZON_FLIP_DURATION_MS;
-      turnPageRef.current(direction);
+      if (turnPageRef.current(direction)) {
+        wheelCooldownUntilRef.current = now + HORIZON_FLIP_DURATION_MS;
+      }
     }
 
     area.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
     area.addEventListener("touchstart", onTouchStart, { passive: false });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-    window.addEventListener("touchend", onTouchEnd);
     area.addEventListener("wheel", onWheel, { passive: false });
 
     return () => {
       area.removeEventListener("mousedown", onMouseDown);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
       area.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
       area.removeEventListener("wheel", onWheel);
+      detachWindowPointerListeners();
       cornerDragRef.current.active = false;
       cornerDragRef.current.prepared = false;
+      clearCornerDragCache();
       wheelAccumRef.current = 0;
       resetPointerGesture();
     };
@@ -810,21 +836,20 @@ export default function HorizonReader({
     releaseActiveFold,
     prepareDragFold,
     revertDragFoldPrep,
-    spreads.length,
   ]);
 
   useEffect(() => {
-    if (!autoScroll || animating) return undefined;
+    if (!autoScroll) return undefined;
 
     const timer = window.setInterval(() => {
-      if (animating) return;
+      if (animatingRef.current) return;
       const current = spreadIndexRef.current;
       if (current >= spreads.length - 1) return;
       turnPageRef.current("forward");
     }, HORIZON_FLIP_DURATION_MS + 900);
 
     return () => window.clearInterval(timer);
-  }, [autoScroll, animating, spreads.length]);
+  }, [autoScroll, spreads.length]);
 
   const onFlip = useCallback(
     (event: { data: number }) => {
@@ -855,6 +880,7 @@ export default function HorizonReader({
         // 等翻页动画完全收尾后再更新 React，避免 updateFromHtml 打断 99%→100%
         window.requestAnimationFrame(() => {
           window.requestAnimationFrame(() => {
+            animatingRef.current = false;
             setAnimating(false);
             const pageFlip = getPageFlip();
             const page =
@@ -874,7 +900,9 @@ export default function HorizonReader({
         }
       }
 
-      setAnimating(event.data === "flipping");
+      const isFlipping = event.data === "flipping";
+      animatingRef.current = isFlipping;
+      setAnimating(isFlipping);
     },
     [getPageFlip, syncSpreadFromFlip, syncFlipMotionClass, revertDragFoldPrep],
   );
