@@ -8,7 +8,6 @@ import {
   type RefObject,
   type SyntheticEvent,
 } from "react";
-import { createEventListener } from "tiny-event-manager";
 import useComicContext from "../useComicContext";
 import { EmptyFunction, UnaryFunction } from "@shared/type";
 
@@ -175,39 +174,6 @@ export function useVerticalReadingEnvironment(allowHorizontalScroll = false) {
   }, [allowHorizontalScroll]);
 }
 
-export function useHorizontalScrollLock() {
-  useEffect(() => {
-    document.body.classList.add("overflow-y-hidden");
-
-    const scrollingElement = document.scrollingElement;
-    if (!scrollingElement) {
-      return () => {
-        document.body.classList.remove("overflow-y-hidden");
-      };
-    }
-
-    const subscription = createEventListener(
-      scrollingElement,
-      "wheel",
-      (event: WheelEvent) => {
-        if (event.ctrlKey) return;
-        const container = document.querySelector<HTMLElement>(
-          ".comic-horizon-scroll",
-        );
-        if (event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL || !container) {
-          return;
-        }
-        container.scrollBy({ top: 0, left: -event.deltaY });
-      },
-    );
-
-    return () => {
-      subscription.unsubscribe();
-      document.body.classList.remove("overflow-y-hidden");
-    };
-  }, []);
-}
-
 export function useVerticalAutoScroll(active: boolean) {
   const activeRef = useRef(active);
   activeRef.current = active;
@@ -227,28 +193,6 @@ export function useVerticalAutoScroll(active: boolean) {
       cancelAnimationFrame(frameId);
     };
   }, [active]);
-}
-
-export function useHorizontalAutoScroll(
-  containerRef: RefObject<HTMLDivElement | null>,
-  active: boolean,
-) {
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!active || !container) return;
-
-    let cancelled = false;
-    function tick() {
-      if (cancelled || !containerRef.current) return;
-      containerRef.current.scrollLeft -= 4;
-      requestAnimationFrame(tick);
-    }
-
-    requestAnimationFrame(tick);
-    return () => {
-      cancelled = true;
-    };
-  }, [active, containerRef]);
 }
 
 export function useAutoNextPage(

@@ -74,7 +74,6 @@ export default function HorizonProgressPreview({
       <div
         ref={scrollerRef}
         className={styles.progressScroller}
-        onWheel={(event) => event.stopPropagation()}
       >
         <div
           className={styles.progressTrack}
